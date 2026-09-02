@@ -1,0 +1,116 @@
+"""
+Fixtures que dependem de Postgres.
+
+Ficam restritas ao pacote `integration` de proposito: os testes em `tests/unit/` nao
+podem exigir banco no ar. Se alguma destas fixtures subir para `tests/conftest.py`,
+`pytest tests/unit` passa a falhar com o `postgres-test` desligado.
+"""
+import os
+import subprocess
+from pathlib import Path
+
+import pytest
+from fastapi.testclient import TestClient
+from sqlalchemy import text
+from sqlalchemy.engine import URL
+from sqlmodel import Session
+
+from app.core.database import engine as app_engine, get_session
+from app.core.security import create_access_token, hash_password
+from app.main import app
+from app.modules.identity.models import User
+
+BACKEND_DIR = Path(__file__).resolve().parents[2]
+
+
+def exige_banco_de_teste(url: URL) -> None:
+    """
+    Aborta se a URL nao apontar para um banco descartavel.
+
+    A fixture `engine` roda `DROP SCHEMA public CASCADE`. O banco real do projeto e um
+    Postgres gerenciado (Supabase) cujo database chama `postgres`; rodar a suite contra
+    ele destruiria producao. Exigir o sufixo `_test` no nome do database torna esse
+    acidente impossivel, em vez de apenas improvavel.
+    """
+    nome = url.database or ""
+    if not nome.endswith("_test"):
+        raise RuntimeError(
+            f"Recusando destruir o schema do banco {nome!r} em {url.host!r}: "
+            f"a suite so roda contra um database cujo nome termina em '_test'. "
+            f"Verifique TEST_DATABASE_URL."
+        )
+
+
+@pytest.fixture(scope="session")
+def engine():
+    """
+    Zera o schema e o reconstroi rodando `alembic upgrade head`.
+
+    Usar as migracoes em vez de SQLModel.metadata.create_all e o ponto central do P5:
+    uma migracao quebrada falha aqui, e nao no deploy.
+    """
+    exige_banco_de_teste(app_engine.url)
+
+    with app_engine.begin() as conn:
+        conn.execute(text("DROP SCHEMA public CASCADE"))
+        conn.execute(text("CREATE SCHEMA public"))
+
+    subprocess.run(
+        ["alembic", "upgrade", "head"],
+        cwd=BACKEND_DIR,
+        check=True,
+        env=os.environ.copy(),
+    )
+
+    return app_engine
+
+
+@pytest.fixture(autouse=True)
+def _limpa_tabelas(engine):
+    """Esvazia as tabelas depois de cada teste, preservando alembic_version."""
+    yield
+    with engine.begin() as conn:
+        tabelas = list(
+            conn.execute(
+                text(
+                    "SELECT tablename FROM pg_tables "
+                    "WHERE schemaname = 'public' AND tablename <> 'alembic_version'"
+                )
+            ).scalars()
+        )
+        if tabelas:
+            alvos = ", ".join(f'"{t}"' for t in tabelas)
+            conn.execute(text(f"TRUNCATE {alvos} RESTART IDENTITY CASCADE"))
+
+
+@pytest.fixture
+def session(engine):
+    with Session(engine) as s:
+        yield s
+
+
+@pytest.fixture
+def client(session):
+    app.dependency_overrides[get_session] = lambda: session
+    with TestClient(app) as c:
+        yield c
+    app.dependency_overrides.clear()
+
+
+@pytest.fixture
+def usuario(session) -> User:
+    user = User(
+        email="atleta@teste.com",
+        password_hash=hash_password("senha12345"),
+        first_name="Jeh",
+        last_name="Rodrigues",
+    )
+    session.add(user)
+    session.commit()
+    session.refresh(user)
+    return user
+
+
+@pytest.fixture
+def auth_headers(usuario) -> dict[str, str]:
+    return {"Authorization": f"Bearer {create_access_token(str(usuario.id))}"}
