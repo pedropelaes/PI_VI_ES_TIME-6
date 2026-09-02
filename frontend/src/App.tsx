@@ -10,6 +10,7 @@ import InputPage from "./pages/input/input";
 import JobContainerPage from './pages/JobContainerPage/JobContainer';
 import ClipsHistory from './pages/clips-history/ClipsHistory';
 import NewPassword from './pages/NewPassword/NewPassword';
+import PublicProfile from './pages/PublicProfile/PublicProfile';
 
 export default function App() {
   return (
@@ -21,6 +22,7 @@ export default function App() {
         <Route path="/signup"         element={<SignUp />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/new-password" element={<NewPassword />} />
+        <Route path="/public-profile" element={<PublicProfile />} />
 
         <Route element={<PrivateRoute />}>
 
