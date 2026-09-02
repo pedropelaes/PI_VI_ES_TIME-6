@@ -87,9 +87,9 @@ Registradas porque afetaram decisões deste design:
 | P2 | Perfil exige autenticação | Totalmente público; público com dados reduzidos | `athlete_profiles` guarda data de nascimento, cidade e foto de atletas de base, potencialmente menores. O caso de uso real é scout logado avaliando atleta, então nada de produto se perde |
 | P3 | Módulo `social` novo para seguir/salvar | Colocar em `profiles` | Perfil é dado do atleta; seguir é relação entre usuários. Misturar viola a coesão que a D3 protege |
 | P4 | `profiles` estreia `service.py` + `repository.py` | Seguir o padrão atual (regra no router) | O teste unitário de service com repository fake (§10.3) é impossível sem essa separação |
-| P5 | SQLite em memória nos testes de integração | Postgres de teste no Compose; testcontainers | Ciclo vermelho-verde em segundos, que é o que sustenta TDD. O gap de migrações é fechado por verificação separada (§8) |
+| P5 | Postgres de teste no Compose, com schema montado por `alembic upgrade head` | SQLite em memória com `create_all`; SQLite rodando migrações; testcontainers | Faz cada execução da suíte exercitar as migrações, sem depender de ninguém lembrar de rodá-las. Mesmo banco da produção, então enum, JSON e `server_default` são testados como se comportam de verdade |
 | P6 | Adoção incremental do F3 | Seguir `services/api.ts`; fazer o F3 inteiro antes | Alinha com o alvo da §9 sem o custo de um sub-projeto tamanho G, e não engorda o arquivo que o F3 vai desmanchar |
-| P7 | `tags` como coluna JSON | `ARRAY` do Postgres; tabela `clip_tags` | Mantém o schema portátil ao banco de teste (P5). Tabela separada é over-engineering para uma lista de rótulos curta |
+| P7 | `tags` como coluna JSON | `ARRAY` do Postgres; tabela `clip_tags` | Lista curta de rótulos, sempre lida junto com o clipe e nunca consultada isoladamente — tabela separada seria over-engineering. `ARRAY` seria igualmente viável sob P5; JSON é escolhido por ser o tipo que o SQLModel expressa sem `sa_column` customizado |
 | P8 | `PUT` idempotente para seguir/salvar | `POST` | Casa com a PK composta e evita 409 em clique duplo |
 
 ### 3.1 Acréscimos fora da spec de origem
@@ -362,15 +362,30 @@ backend/tests/
 └─ integration/         TestClient + banco de teste
 ```
 
-### 8.2 Banco de teste e o gap assumido
+### 8.2 Banco de teste
 
-SQLite em memória (P5). O schema foi desenhado para permitir isso — é a razão de `tags`
-ser JSON e não `ARRAY` (P7).
+Serviço `postgres-test` no `docker-compose.yml`, isolado do banco de desenvolvimento
+(Supabase). A fixture de sessão monta o schema executando **`alembic upgrade head`**, não
+`SQLModel.metadata.create_all`.
 
-**Gap honesto:** o schema de teste nasce de `SQLModel.metadata.create_all`, não das
-migrações, portanto **as migrações Alembic não são exercitadas pelos testes**. Mitigação:
-`alembic upgrade head` contra o Postgres real, executado antes de fechar cada fatia. É
-barato e cobre o caso que mais dói — migração que quebra em produção e passa no teste.
+Essa escolha é deliberada e é o ponto central do P5: **as migrações passam a ser
+exercitadas a cada execução da suíte.** Uma migração que não aplica, um backfill que
+quebra ou um modelo que divergiu do schema versionado falham no teste, e não em produção.
+Com `create_all`, o schema de teste nasceria dos modelos e as migrações nunca rodariam —
+exatamente o cenário em que o teste passa e o deploy quebra.
+
+`backend/alembic/env.py:31` já lê a URL de `os.environ["DATABASE_URL"]`, sem nada
+hardcoded no `alembic.ini`, então apontar a suíte para o banco de teste é só variável de
+ambiente.
+
+**O loop rápido do TDD não paga por isso.** Os testes unitários usam repository fake e não
+tocam banco nenhum — rodam em milissegundos. O Postgres só é exigido pelos testes de
+integração, que são o loop externo. Uma versão anterior deste spec usava SQLite
+justificando velocidade de TDD; a justificativa era falsa, porque otimizava um loop que
+nunca teve banco.
+
+Cada migração ganha `downgrade()` implementado e testado — subir e descer o schema é o que
+garante que a migração é reversível quando algo dá errado em produção.
 
 ### 8.3 Casos por fatia
 
@@ -406,8 +421,14 @@ Vitest, com alvo em funções puras e hooks — não em marcação:
 ### 8.5 Ciclo
 
 Cada fatia roda vermelho → verde → refatorar, com commit nos verdes.
-Backend: `docker compose exec api pytest` (código montado como volume, sem rebuild).
-Frontend: `npm test`.
+
+| Loop | Comando | Banco |
+|---|---|---|
+| unitário (interno) | `docker compose exec api pytest tests/unit` | nenhum — repository fake |
+| integração (externo) | `docker compose exec api pytest tests/integration` | `postgres-test`, schema via `alembic upgrade head` |
+| frontend | `npm test` | — |
+
+O código está montado como volume, então nenhum dos comandos exige rebuild da imagem.
 
 ---
 
@@ -418,7 +439,7 @@ nada fica pela metade se o prazo apertar.
 
 | Fatia | Escopo | Entrega visível |
 |---|---|---|
-| **1** | Infra de testes (pytest + vitest), migrações 1 e 2, módulo `profiles`, `role` no registro, adoção incremental do F3 no front | Página renderiza identidade e estatísticas reais |
+| **1** | Infra de testes (pytest + vitest + serviço `postgres-test` no Compose), migrações 1 e 2, módulo `profiles`, `role` no registro, adoção incremental do F3 no front | Página renderiza identidade e estatísticas reais |
 | **2** | Migração 3, endpoint de videoteca, `ClipsTab` | Aba Videoteca com clipes reais |
 | **3** | Migração 4, módulo `social`, campos `is_followed_by_me` e `is_saved_by_me` entrando no contrato (§5.1), mutations no front | Seguir e Salvar funcionando |
 
@@ -432,7 +453,7 @@ spec de origem já identificou.
 
 | # | Risco | Mitigação |
 |---|---|---|
-| **PR1** | Migrações não cobertas pelos testes (P5) | `alembic upgrade head` contra Postgres antes de fechar cada fatia (§8.2) |
+| **PR1** | Suíte de integração mais lenta por exigir Postgres no ar | Aceito: o loop rápido do TDD são os unitários com repository fake, que não tocam banco (§8.2). Contêiner sobe uma vez e é reaproveitado entre execuções |
 | **PR2** | Alterar `POST /auth/register` quebra login/cadastro em produção | Testes de caracterização escritos antes da alteração (§8.3) |
 | **PR3** | Videoteca lista clipes que a retenção (§7 da spec de origem) apagará em 14 dias | Não resolvível aqui: a coluna `clips.status` nasce no F1/M2. Registrado como dependência conhecida |
 | **PR4** | `follows` e `saved_athletes` são tabelas fora do roadmap e podem conflitar com um módulo social futuro | Isoladas em módulo `social` próprio, acessível só por service (P3) |
