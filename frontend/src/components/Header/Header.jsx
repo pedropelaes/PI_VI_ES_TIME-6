@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import logoSmartScout from '../../assets/logo-smartscout.png';
 import {
   SquarePlay,
+  Compass,
   CircleUserRound,
   X,
   Mail
@@ -82,6 +83,12 @@ export function Header() {
               title="Meus Clipes"
             >
               <SquarePlay size={40} />
+            </button>
+          </Link>
+
+          <Link to="/feed">
+            <button className="iconButton" aria-label="Feed de talentos" title="Feed de talentos">
+              <Compass size={34} />
             </button>
           </Link>
 

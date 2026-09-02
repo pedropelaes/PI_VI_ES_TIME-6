@@ -11,6 +11,7 @@ import JobContainerPage from './pages/JobContainerPage/JobContainer';
 import ClipsHistory from './pages/clips-history/ClipsHistory';
 import NewPassword from './pages/NewPassword/NewPassword';
 import PublicProfile from './pages/PublicProfile/PublicProfile';
+import Feed from './pages/feed/feed';
 
 export default function App() {
   return (
@@ -28,6 +29,7 @@ export default function App() {
 
           <Route element={<MainLayout />}>
             <Route path="/app"              element={<InputPage />} />
+            <Route path="/feed"             element={<Feed />} />
             <Route path="/clips-history" element={<ClipsHistory />} />
           </Route>
 
