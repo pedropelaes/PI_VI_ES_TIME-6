@@ -260,7 +260,8 @@ Sempre por exceção de domínio, traduzida pelo handler único do `main.py`. **
 |---|---|---|
 | `user_id` inexistente, ou usuário sem perfil de atleta | `NotFoundError` | 404 |
 | Seguir ou salvar a si mesmo | `ValidationError` | 422 |
-| Requisição sem JWT válido | `get_current_user` | 401 |
+| Token ausente no header `Authorization` | `HTTPBearer` | 403 |
+| Token presente porém inválido ou expirado | `get_current_user` | 401 |
 
 Usuário existente porém com `role != ATHLETE` devolve **404**, não 403: não existe perfil
 de atleta para aquele id, e a distinção não interessa ao cliente.
