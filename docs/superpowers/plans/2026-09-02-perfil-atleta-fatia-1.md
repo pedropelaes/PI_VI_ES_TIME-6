@@ -20,7 +20,9 @@
 |---|---|
 | `backend/requirements/dev.txt` | dependências só de teste |
 | `backend/pytest.ini` | configuração do pytest |
-| `backend/tests/conftest.py` | fixtures: banco migrado, sessão, client, usuário autenticado |
+| `backend/tests/conftest.py` | apenas o setup de `DATABASE_URL`, que precisa ocorrer antes de qualquer import de `app.*` |
+| `backend/tests/integration/conftest.py` | fixtures que dependem de banco: engine migrada com guarda de destino, sessão, client, usuário autenticado |
+| `backend/tests/unit/test_infra.py` | teste puro que falha se algum fixture de banco voltar ao conftest compartilhado |
 | `backend/tests/integration/test_auth_caracterizacao.py` | trava o comportamento atual de register/login |
 | `backend/tests/integration/test_migrations.py` | prova que o schema veio das migrações |
 | `backend/app/modules/profiles/__init__.py` | pacote |
@@ -345,97 +347,69 @@ git commit -m "test: monta a suite com schema vindo das migracoes alembic"
 
 ---
 
-### Task 3: Testes de caracterização do fluxo de autenticação
+### Task 3: Consolidacao das duas arvores de teste
 
-Escritos **antes** de alterar `register`, porque a Task 5 mexe num fluxo que hoje não tem
-nenhuma cobertura.
+A Task 3 original escrevia testes de caracterizacao de `register`/`login`. Foi substituida:
+esses testes **ja existem** em `tests/unit/backend/test_auth.py` (14 casos). O trabalho real
+e consolidar as duas arvores antes que mais testes sejam escritos na errada.
 
 **Files:**
-- Test: `backend/tests/integration/test_auth_caracterizacao.py`
+- Move: `tests/unit/backend/*.py` -> `backend/tests/`
+- Modify: `pytest.ini` (raiz)
+- Modify: `backend/tests/integration/conftest.py`
+- Modify: `docs/F0-reestruturacao-explicado.md`
 
-- [ ] **Step 1: Escrever os testes**
+- [ ] **Step 1: Mover os testes de backend**
 
-`backend/tests/integration/test_auth_caracterizacao.py`:
+Mover `test_auth.py`, `test_exceptions.py`, `test_jobs.py`, `test_storage.py` e
+`test_tasks.py` de `tests/unit/backend/` para `backend/tests/`, distribuindo entre
+`unit/` e `integration/` conforme cada um precise ou nao de banco. Descartar
+`tests/unit/backend/conftest.py` (SQLite + create_all) -- as fixtures equivalentes ja
+existem em `backend/tests/integration/conftest.py`.
 
-```python
-"""
-Caracterizacao: trava o comportamento ATUAL de /auth/register e /auth/login.
-Estes testes existem para detectar regressao quando a Task 5 adicionar `role`.
-"""
+- [ ] **Step 2: Reescopar o pytest.ini da raiz**
 
-PAYLOAD = {
-    "email": "novo@teste.com",
-    "password": "senha12345",
-    "first_name": "Ana",
-    "last_name": "Souza",
-}
-
-
-def test_register_devolve_token_e_usuario(client):
-    resposta = client.post("/api/v1/auth/register", json=PAYLOAD)
-
-    assert resposta.status_code == 200
-    corpo = resposta.json()
-    assert corpo["token_type"] == "bearer"
-    assert corpo["access_token"]
-    assert corpo["user"]["email"] == "novo@teste.com"
-    assert corpo["user"]["first_name"] == "Ana"
-    assert "password" not in corpo["user"]
-
-
-def test_register_com_email_duplicado_devolve_400(client):
-    client.post("/api/v1/auth/register", json=PAYLOAD)
-
-    resposta = client.post("/api/v1/auth/register", json=PAYLOAD)
-
-    assert resposta.status_code == 400
-    assert resposta.json()["detail"] == "E-mail já cadastrado."
-
-
-def test_register_normaliza_email_para_minusculo(client):
-    resposta = client.post(
-        "/api/v1/auth/register", json={**PAYLOAD, "email": "MAIUSCULO@Teste.com"}
-    )
-
-    assert resposta.json()["user"]["email"] == "maiusculo@teste.com"
-
-
-def test_login_com_credenciais_validas(client):
-    client.post("/api/v1/auth/register", json=PAYLOAD)
-
-    resposta = client.post(
-        "/api/v1/auth/login",
-        json={"email": PAYLOAD["email"], "password": PAYLOAD["password"]},
-    )
-
-    assert resposta.status_code == 200
-    assert resposta.json()["access_token"]
-
-
-def test_login_com_senha_errada_devolve_401(client):
-    client.post("/api/v1/auth/register", json=PAYLOAD)
-
-    resposta = client.post(
-        "/api/v1/auth/login", json={"email": PAYLOAD["email"], "password": "errada00000"}
-    )
-
-    assert resposta.status_code == 401
+```ini
+[pytest]
+testpaths = tests/unit/ml tests/integration
+python_files = test_*.py
+python_classes = Test*
+python_functions = test_*
+addopts = -v
 ```
 
-- [ ] **Step 2: Rodar e verificar que passam contra o código atual**
+- [ ] **Step 3: Corrigir a guarda para cobrir tambem o subprocesso do Alembic**
+
+A guarda valida `app_engine.url`, mas `alembic upgrade head` roda num subprocesso que
+resolve a propria URL em `backend/alembic/env.py:31`. Hoje so e seguro porque
+`load_dotenv` usa `override=False`. Passar a URL explicitamente ao subprocesso, em vez
+de depender dessa semantica.
+
+- [ ] **Step 4: Dar sessao propria a cada requisicao no fixture `client`**
+
+Hoje `client` injeta a mesma `Session` do teste no handler, entao um endpoint que
+esquece de commitar passa mesmo assim, e um erro de transacao contamina as assercoes
+seguintes. Trocar por uma sessao nova por requisicao.
+
+- [ ] **Step 5: Atualizar a documentacao**
+
+`docs/F0-reestruturacao-explicado.md:225` manda rodar `../tests/unit/backend`, que deixa
+de existir. Documentar o comando real: `docker compose exec api pytest`.
+
+- [ ] **Step 6: Verificar**
 
 ```bash
-docker compose exec api pytest tests/integration/test_auth_caracterizacao.py -v
+docker compose exec api pytest -v
 ```
 
-Esperado: 5 passed. Caracterização descreve o que já existe — se algum falhar, o código
-não faz o que se pensava, e isso precisa ser investigado antes de seguir.
+Esperado: os 33 testes migrados mais os 7 da infra, todos verdes contra Postgres com
+schema vindo das migracoes.
 
-- [ ] **Step 3: Commit**
+- [ ] **Step 7: Commit**
 
 ```bash
-git add backend/tests/integration/test_auth_caracterizacao.py
-git commit -m "test(identity): caracteriza register e login antes de adicionar role"
+git add -A
+git commit -m "test: consolida as suites de backend em backend/tests"
 ```
 
 ---

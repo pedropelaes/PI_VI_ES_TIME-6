@@ -54,9 +54,21 @@ acréscimos sociais decididos pela equipe.
 
 Registradas porque afetaram decisões deste design:
 
-1. **§10.3 afirma que `tests/unit`, `tests/integration` e `conftest.py` já existem. É
-   falso.** Não há uma única linha de teste no repositório, nem pytest, nem vitest.
-   Montar a infraestrutura de testes faz parte desta entrega.
+1. **Existem duas árvores de teste de backend, mutuamente incompatíveis.** A §10.3 está
+   correta: `tests/unit`, `tests/integration` e `conftest.py` existem na **raiz** do
+   repositório, com 33 testes de backend verdes (14 deles cobrindo register, login,
+   logout e reset de senha em `tests/unit/backend/test_auth.py`), além de testes de ML.
+   Essa suíte usa SQLite em memória com `create_all` e roda no host.
+
+   Esta entrega cria uma segunda suíte em `backend/tests/`, com Postgres real e schema
+   vindo das migrações, rodando dentro do container. As duas **não coexistem numa mesma
+   execução do pytest**: ambas declaram um pacote `tests` de topo e a coleta conjunta
+   falha com `ImportPathMismatchError`. O `pytest.ini` da raiz tem `testpaths = tests`,
+   então quem roda pytest na raiz vê apenas a antiga.
+
+   **Decisão:** consolidar em `backend/tests/`, adaptando os testes de backend existentes
+   ao Postgres com migrações e reescopando o `pytest.ini` da raiz para ML e integração.
+   Não há cobertura de frontend em lugar nenhum — vitest continua sendo criado do zero.
 
 2. **Nenhum módulo tem `service.py` ou `repository.py`.** `identity` e `clips` têm apenas
    `router/models/schemas`, com a regra de negócio dentro do router — o problema #4 da
