@@ -24,6 +24,11 @@ def upgrade() -> None:
     """Upgrade schema."""
     user_role.create(op.get_bind(), checkfirst=True)
     # Nullable primeiro para nao quebrar as linhas existentes.
+    #
+    # Os tres passos rodam numa transacao so, entao o ACCESS EXCLUSIVE do add_column fica
+    # retido durante o UPDATE e o scan do SET NOT NULL. Irrelevante no tamanho atual da
+    # tabela; se `users` crescer muito, quebre isto em migracoes separadas com o UPDATE
+    # em lotes.
     op.add_column("users", sa.Column("role", user_role, nullable=True))
     op.execute("UPDATE users SET role = 'ATHLETE' WHERE role IS NULL")
     op.alter_column("users", "role", nullable=False)

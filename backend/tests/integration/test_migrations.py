@@ -15,6 +15,11 @@ from tests.integration.conftest import (
     url_validada_para_migracao,
 )
 
+# Primeira migracao da pilha, anterior a qualquer coluna adicionada depois. Serve de alvo
+# fixo para testes que precisam voltar o schema no tempo sem depender de quantas migracoes
+# existem hoje.
+BASELINE = "dc5867a2d8e8"
+
 
 def test_schema_foi_criado_pelas_migracoes(engine):
     with engine.connect() as conn:
@@ -142,7 +147,11 @@ def test_users_tem_coluna_role_nao_nula(engine):
     assert linha[0] == "NO"
 
 
-def test_usuario_existente_recebe_role_athlete_no_backfill(engine):
+def test_novo_usuario_sem_role_recebe_athlete_por_default(engine):
+    """
+    Cobre o default do lado Python (`Field(default=UserRole.ATHLETE)`) e o round-trip
+    do enum pelo psycopg2 -- nao o backfill SQL, que vive no teste abaixo.
+    """
     from app.modules.identity.models import User, UserRole
     from app.core.security import hash_password
     from sqlmodel import Session
@@ -182,8 +191,12 @@ def test_backfill_preenche_linhas_que_existiam_antes_da_migracao(engine):
         )
         assert resultado.returncode == 0, resultado.stderr[-1500:]
 
-    alembic("downgrade", "-1")
     try:
+        # Alvo fixo, nao "-1": a partir da Task 6 o topo da pilha e outra migracao, e um
+        # downgrade relativo deixaria de remover `role`. A baseline e o unico ponto que
+        # sempre descreve um `users` sem a coluna.
+        alembic("downgrade", BASELINE)
+
         with engine.begin() as conn:
             sobrou = conn.execute(
                 text(
