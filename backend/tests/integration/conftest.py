@@ -14,7 +14,7 @@ from sqlalchemy import text
 from sqlalchemy.engine import URL
 from sqlmodel import Session
 
-from app.core.database import engine as app_engine, get_session
+from app.core.database import engine as app_engine
 from app.core.security import create_access_token, hash_password
 from app.main import app
 from app.modules.identity.models import User
@@ -107,23 +107,20 @@ def session(engine):
 @pytest.fixture
 def client(engine):
     """
-    TestClient em que cada request abre a sua propria Session, como em producao.
+    TestClient sem override de dependencia: os handlers usam o `get_session` de producao.
 
-    Compartilhar a Session do teste com o handler (`lambda: session`) parece inofensivo e
-    nao e: o teste passa a ler pelo mesmo identity map do handler, entao um endpoint que
-    esquece o `commit()` continua "passando"; e um teste de caminho de erro (IntegrityError
-    de email duplicado, DomainError cujo tratador responde sem dar rollback) deixa a Session
-    em transacao abortada, fazendo as assercoes seguintes estourarem PendingRollbackError e
-    escondendo a causa real.
+    A engine da aplicacao ja e a de teste (tests/conftest.py aponta DATABASE_URL para o
+    postgres-test antes de qualquer import de `app.*`), entao qualquer override aqui apenas
+    reimplementaria `get_session` -- e no dia em que ele ganhar algo (um `SET LOCAL`, um
+    begin() explicito, uma unidade de trabalho por request), a suite continuaria exercitando
+    a copia velha e nao o codigo real. A fixture so garante que o schema existe.
+
+    O que ela deliberadamente NAO faz e reaproveitar a Session do teste: isso daria ao
+    handler o mesmo identity map do corpo do teste, e um endpoint que esquece o commit()
+    passaria a ficar verde. `test_fixtures.py` fixa essa propriedade.
     """
-    def get_session_override():
-        with Session(engine) as s:
-            yield s
-
-    app.dependency_overrides[get_session] = get_session_override
     with TestClient(app) as c:
         yield c
-    app.dependency_overrides.clear()
 
 
 @pytest.fixture

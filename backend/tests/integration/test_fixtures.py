@@ -1,9 +1,10 @@
 """
 Guarda-trilho das fixtures de banco: prova que o `client` nao compartilha a Session do teste.
 
-Em producao, `get_session` abre uma Session por request. Se a fixture sobrescrever a
-dependencia com a Session do proprio teste (`lambda: session`), o handler e o corpo do teste
-passam a dividir um identity map e uma transacao. As duas consequencias sao reais:
+A fixture `client` nao sobrescreve `get_session`: os handlers usam a dependencia de
+producao, que abre uma Session por request. Se alguem voltar a sobrescreve-la com a Session
+do proprio teste (`lambda: session`), o handler e o corpo do teste passam a dividir um
+identity map e uma transacao. As duas consequencias sao reais:
 
 - um endpoint que esquece o `commit()` continua verde, porque o teste le o objeto sujo da
   sessao compartilhada;
