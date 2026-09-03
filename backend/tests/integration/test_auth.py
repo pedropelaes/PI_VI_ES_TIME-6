@@ -341,16 +341,17 @@ def test_perfil_recem_criado_e_visivel_na_api(client):
 
 def test_register_e_atomico_se_a_criacao_do_perfil_falhar(client, session):
     """
-    Prova a transacao unica: se a construcao/insert do AthleteProfile falhar, o
-    usuario tambem nao pode existir no banco.
+    Prova a transacao unica: se a criacao do AthleteProfile falhar, o usuario tambem
+    nao pode existir no banco.
 
-    A falha e forcada substituindo `AthleteProfile` (no namespace do router) por um
-    callable que estoura RuntimeError -- equivalente, para fins deste teste, a uma
-    falha do insert em si (violacao de constraint, erro de conexao etc.): em ambos os
-    casos a excecao acontece depois do `session.flush()` do usuario e antes do
-    `session.commit()`, dentro da mesma transacao. Se o handler usasse `commit()` no
-    lugar do `flush()`, o usuario ja estaria persistido quando a falha do perfil
-    acontecesse -- e este teste falharia (ver verificacao de mutacao no relato).
+    A falha e forcada substituindo `provision_athlete_profile` (no namespace do router,
+    unico ponto por onde `identity` alcanca `profiles`, regra D3) por um callable que
+    estoura RuntimeError -- equivalente, para fins deste teste, a uma falha do insert em
+    si (violacao de constraint, erro de conexao etc.): em ambos os casos a excecao
+    acontece depois do `session.flush()` do usuario e antes do `session.commit()`,
+    dentro da mesma transacao. Se o handler usasse `commit()` no lugar do `flush()`, o
+    usuario ja estaria persistido quando a falha do perfil acontecesse -- e este teste
+    falharia (ver verificacao de mutacao no relato).
     """
     from sqlmodel import select
     from app.modules.identity.models import User
@@ -361,7 +362,9 @@ def test_register_e_atomico_se_a_criacao_do_perfil_falhar(client, session):
     def _perfil_quebrado(*args, **kwargs):
         raise RuntimeError("falha simulada na criacao do perfil")
 
-    with patch.object(identity_router, "AthleteProfile", side_effect=_perfil_quebrado):
+    with patch.object(
+        identity_router, "provision_athlete_profile", side_effect=_perfil_quebrado
+    ):
         try:
             resp = client.post(
                 "/api/v1/auth/register",

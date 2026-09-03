@@ -103,3 +103,17 @@ def test_put_me_com_altura_invalida_devolve_422(client, auth_headers, perfil):
         "/api/v1/profiles/me", headers=auth_headers, json={"height_cm": 12}
     )
     assert resposta.status_code == 422
+
+
+def test_put_me_sem_perfil_de_atleta_devolve_404(client, auth_headers, usuario):
+    """
+    Usuario autenticado mas sem linha em AthleteProfile -- caso real de quem foi
+    cadastrado antes de `register` passar a criar o perfil junto (ou de qualquer
+    inconsistencia equivalente). O repositorio devolve None e o service traduz para
+    NotFoundError; aqui so travamos o contrato HTTP desse caminho, que antes so
+    acontecia por construcao (fixture `perfil` sempre presente nos outros testes).
+    """
+    resposta = client.put(
+        "/api/v1/profiles/me", headers=auth_headers, json={"city": "Santos"}
+    )
+    assert resposta.status_code == 404

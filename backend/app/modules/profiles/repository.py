@@ -49,10 +49,22 @@ class AthleteProfileRepository(Protocol):
         self, user_id: uuid.UUID, changes: dict[str, Any]
     ) -> Optional[AthleteProfileRecord]: ...
 
+    def create(self, user_id: uuid.UUID) -> None: ...
+
 
 class SqlAthleteProfileRepository:
     def __init__(self, session: Session):
         self.session = session
+
+    def create(self, user_id: uuid.UUID) -> None:
+        """
+        Cria o perfil vazio de um atleta recem-cadastrado.
+
+        Mesma convencao de `update()`: so `add` + `flush`, sem `commit` -- quem chama
+        (`register`, no modulo `identity`) e dono da transacao e decide quando fechar.
+        """
+        self.session.add(AthleteProfile(user_id=user_id))
+        self.session.flush()
 
     def get_by_user_id(self, user_id: uuid.UUID) -> Optional[AthleteProfileRecord]:
         linha = self.session.exec(

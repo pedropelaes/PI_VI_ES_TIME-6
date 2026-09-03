@@ -7,9 +7,28 @@ from dataclasses import dataclass
 from datetime import date
 from typing import Any, Callable, Optional
 
+from sqlmodel import Session
+
 from app.core.exceptions import NotFoundError
 from app.modules.profiles.models import AthleteStatus, DominantFoot, Position
-from app.modules.profiles.repository import AthleteProfileRecord, AthleteProfileRepository
+from app.modules.profiles.repository import (
+    AthleteProfileRecord,
+    AthleteProfileRepository,
+    SqlAthleteProfileRepository,
+)
+
+
+def provision_athlete_profile(session: Session, user_id: uuid.UUID) -> None:
+    """
+    Cria o perfil vazio de um atleta recem-cadastrado, na transacao do chamador.
+
+    Ponto de entrada D3 para o modulo `identity`: `register()` precisa que o `User` e o
+    `AthleteProfile` nasçam na mesma transacao (por isso recebe a `Session` do chamador em
+    vez de abrir a sua), mas nao pode importar `profiles.models`/`profiles.repository`
+    diretamente. Esta funcao e o unico ponto de acoplamento entre os dois modulos: constroi
+    o repositorio e delega, mantendo `AthleteProfile` dentro de `profiles`.
+    """
+    SqlAthleteProfileRepository(session).create(user_id)
 
 
 @dataclass(frozen=True)
