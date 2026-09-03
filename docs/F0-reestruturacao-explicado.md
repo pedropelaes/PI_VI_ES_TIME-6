@@ -243,8 +243,18 @@ Os testes de ML e de pipeline continuam na raiz do repositório e rodam no host:
 pytest        # na raiz: tests/unit/ml + tests/integration
 ```
 
-> As duas suítes são independentes e não se colidem mais: o `pytest.ini` da raiz aponta só para
-> `tests/unit/ml` e `tests/integration`; o de `backend/` aponta para `backend/tests`.
+> **As duas suítes não podem ser invocadas num único comando `pytest`.** Ambas declaram um
+> pacote de topo chamado `tests`, então pedir as duas de uma vez
+> (`pytest tests backend/tests`) falha na coleta com `ImportPathMismatchError`. Não é um bug
+> a corrigir na pressa: as duas têm ambientes de execução diferentes — a de ML roda no host,
+> a de backend roda dentro do container `api`, que nem enxerga a pasta `tests/` da raiz.
+>
+> Quem for montar CI: são **dois passos**, não um.
+>
+> ```bash
+> pytest                            # passo 1 — ML e pipeline, no host
+> docker compose exec -T api pytest # passo 2 — backend, no container
+> ```
 
 ---
 
