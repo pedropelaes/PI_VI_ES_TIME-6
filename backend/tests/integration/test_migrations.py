@@ -123,3 +123,89 @@ def test_alembic_ignora_database_url_do_ambiente(engine):
 
     assert resultado.returncode == 0, resultado.stderr[-1500:]
     assert "host-que-nao-existe" not in resultado.stderr
+
+
+# ---------------------------------------------------------------------------
+# Coluna `role` em users (Task 4)
+# ---------------------------------------------------------------------------
+
+def test_users_tem_coluna_role_nao_nula(engine):
+    with engine.connect() as conn:
+        linha = conn.execute(
+            text(
+                "SELECT is_nullable FROM information_schema.columns "
+                "WHERE table_name = 'users' AND column_name = 'role'"
+            )
+        ).first()
+
+    assert linha is not None, "coluna role nao existe em users"
+    assert linha[0] == "NO"
+
+
+def test_usuario_existente_recebe_role_athlete_no_backfill(engine):
+    from app.modules.identity.models import User, UserRole
+    from app.core.security import hash_password
+    from sqlmodel import Session
+
+    with Session(engine) as s:
+        user = User(
+            email="backfill@teste.com",
+            password_hash=hash_password("senha12345"),
+            first_name="Bia",
+            last_name="Lima",
+        )
+        s.add(user)
+        s.commit()
+        s.refresh(user)
+
+        assert user.role == UserRole.ATHLETE
+
+
+def test_backfill_preenche_linhas_que_existiam_antes_da_migracao(engine):
+    """
+    A propriedade que justifica a migracao em tres passos (risco PR5).
+
+    O banco real e um Postgres externo com usuarios ja gravados. Adicionar `role` direto
+    como NOT NULL falharia la. Aqui a migracao e rodada de verdade sobre uma linha que
+    existia antes dela: se alguem trocar os tres passos por um `add_column(nullable=False)`,
+    este teste quebra -- os outros dois continuariam verdes, porque a base de teste esta
+    sempre vazia quando a suite sobe.
+    """
+    url = url_validada_para_migracao(engine.url)
+
+    def alembic(*args: str) -> None:
+        resultado = subprocess.run(
+            ["alembic", "-x", f"db_url={url}", *args],
+            cwd=BACKEND_DIR,
+            capture_output=True,
+            text=True,
+        )
+        assert resultado.returncode == 0, resultado.stderr[-1500:]
+
+    alembic("downgrade", "-1")
+    try:
+        with engine.begin() as conn:
+            sobrou = conn.execute(
+                text(
+                    "SELECT 1 FROM information_schema.columns "
+                    "WHERE table_name = 'users' AND column_name = 'role'"
+                )
+            ).first()
+            assert sobrou is None, "o downgrade nao removeu a coluna role"
+
+            conn.execute(
+                text(
+                    "INSERT INTO users (id, email, password_hash, first_name, last_name,"
+                    " max_clips_allowed, created_at) VALUES"
+                    " (gen_random_uuid(), 'antigo@teste.com', 'x', 'Ana', 'Antiga', 20, now())"
+                )
+            )
+    finally:
+        alembic("upgrade", "head")
+
+    with engine.connect() as conn:
+        papel = conn.execute(
+            text("SELECT role FROM users WHERE email = 'antigo@teste.com'")
+        ).scalar()
+
+    assert papel == "ATHLETE"
