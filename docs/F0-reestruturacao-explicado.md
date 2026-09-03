@@ -221,9 +221,30 @@ python -m uvicorn app.main:app --reload
 docker compose up        # na raiz do projeto: redis + api + web
 ```
 
-> Detalhe de ambiente: os testes do backend rodam a partir da pasta `backend/`
-> (`cd backend && python -m pytest ../tests/unit/backend`). Rodar da raiz falha na coleta por um
-> detalhe de caminho relativo do mount de `uploads` — é esperado, não é bug.
+### Como rodar os testes
+
+Os testes de backend vivem em `backend/tests/` e rodam **dentro do container `api`**, contra o
+Postgres descartável `postgres-test` (não é o banco de produção — a suíte se recusa a rodar
+contra um database cujo nome não termina em `_test`):
+
+```bash
+docker compose up -d postgres-test api   # o postgres-test é obrigatório para os integration
+docker compose exec api pytest           # suíte completa
+docker compose exec api pytest tests/unit          # loop rápido, não precisa de banco
+docker compose exec api pytest tests/integration   # exige o postgres-test no ar
+```
+
+O schema do banco de teste nasce de `alembic upgrade head`, não de `SQLModel.metadata.create_all`:
+uma migração quebrada falha na suíte, e não no deploy.
+
+Os testes de ML e de pipeline continuam na raiz do repositório e rodam no host:
+
+```bash
+pytest        # na raiz: tests/unit/ml + tests/integration
+```
+
+> As duas suítes são independentes e não se colidem mais: o `pytest.ini` da raiz aponta só para
+> `tests/unit/ml` e `tests/integration`; o de `backend/` aponta para `backend/tests`.
 
 ---
 
