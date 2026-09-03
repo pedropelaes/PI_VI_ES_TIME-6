@@ -61,4 +61,10 @@ class AthleteProfile(SQLModel, table=True):
     status: AthleteStatus = Field(default=AthleteStatus.DISPONIVEL)
     # Idade nunca e coluna: e derivada de `birth_date` na leitura.
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
-    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    # `onupdate` do SQLAlchemy roda no cliente a cada UPDATE emitido pela ORM, entao nao
+    # precisa de migracao nem trigger no banco -- mas so dispara quando o UPDATE passa pela
+    # Session (nao em um `UPDATE` via SQL cru).
+    updated_at: datetime = Field(
+        default_factory=lambda: datetime.now(timezone.utc),
+        sa_column_kwargs={"onupdate": lambda: datetime.now(timezone.utc)},
+    )
