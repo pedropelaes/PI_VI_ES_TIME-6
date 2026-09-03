@@ -832,8 +832,12 @@ import sqlalchemy as sa
 import sqlmodel
 from alembic import op
 
+# ATENCAO: o tipo nativo NAO pode se chamar "position" -- POSITION e palavra reservada
+# do Postgres em posicao de nome de tipo, e `CREATE TABLE t (p position)` da erro de
+# sintaxe. A classe Python continua `Position`; so o nome do tipo no banco muda.
 position = sa.Enum(
-    "GOLEIRO", "ZAGUEIRO", "LATERAL", "VOLANTE", "MEIA", "ATACANTE", name="position"
+    "GOLEIRO", "ZAGUEIRO", "LATERAL", "VOLANTE", "MEIA", "ATACANTE",
+    name="athleteposition",
 )
 dominant_foot = sa.Enum("DESTRO", "CANHOTO", "AMBIDESTRO", name="dominantfoot")
 athlete_status = sa.Enum(
@@ -842,11 +846,9 @@ athlete_status = sa.Enum(
 
 
 def upgrade() -> None:
-    bind = op.get_bind()
-    position.create(bind, checkfirst=True)
-    dominant_foot.create(bind, checkfirst=True)
-    athlete_status.create(bind, checkfirst=True)
-
+    # Nao chamar enum.create() aqui: op.create_table despacha before_create com
+    # checkfirst=False, entao os tipos ja nascem com o CREATE TABLE. Um create previo
+    # falharia com "type already exists". O downgrade, esse sim, precisa dropar os tres.
     op.create_table(
         "athlete_profiles",
         sa.Column("user_id", sa.Uuid(), nullable=False),
@@ -867,6 +869,7 @@ def upgrade() -> None:
     )
     op.create_index("ix_athlete_profiles_position", "athlete_profiles", ["position"])
     op.create_index("ix_athlete_profiles_birth_date", "athlete_profiles", ["birth_date"])
+    op.create_index("ix_athlete_profiles_state", "athlete_profiles", ["state"])
     op.create_index(
         "ix_athlete_profiles_position_state", "athlete_profiles", ["position", "state"]
     )
