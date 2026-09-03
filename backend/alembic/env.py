@@ -27,8 +27,15 @@ import app.modules.clips.models  # noqa: F401,E402
 # access to the values within the .ini file in use.
 config = context.config
 
-# URL do banco vem do ambiente (backend/.env), nunca hardcoded no alembic.ini.
-config.set_main_option("sqlalchemy.url", os.environ["DATABASE_URL"])
+# URL do banco: `-x db_url=...` na linha de comando vence tudo; senao vem do ambiente
+# (backend/.env), nunca hardcoded no alembic.ini.
+#
+# O `-x` existe para quem chama o alembic como subprocesso e precisa de certeza sobre o
+# alvo -- a suite de testes, por exemplo. Depender so de DATABASE_URL deixaria o alvo
+# refem da precedencia do `load_dotenv` acima: trocar `override=False` (o padrao) por
+# `override=True` faria o backend/.env de producao vencer silenciosamente.
+_x_args = context.get_x_argument(as_dictionary=True)
+config.set_main_option("sqlalchemy.url", _x_args.get("db_url") or os.environ["DATABASE_URL"])
 
 # Interpret the config file for Python logging.
 if config.config_file_name is not None:

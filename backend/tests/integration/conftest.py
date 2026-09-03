@@ -5,7 +5,6 @@ Ficam restritas ao pacote `integration` de proposito: os testes em `tests/unit/`
 podem exigir banco no ar. Se alguma destas fixtures subir para `tests/conftest.py`,
 `pytest tests/unit` passa a falhar com o `postgres-test` desligado.
 """
-import os
 import subprocess
 from pathlib import Path
 
@@ -41,6 +40,23 @@ def exige_banco_de_teste(url: URL) -> None:
         )
 
 
+def url_validada_para_migracao(url: URL) -> str:
+    """
+    Valida a URL e a serializa para ser passada explicitamente ao subprocesso do Alembic.
+
+    `alembic upgrade head` roda fora do processo do pytest e, por conta propria, resolveria
+    a URL em `alembic/env.py` -- que faz `load_dotenv(backend/.env)` e le DATABASE_URL. Isso
+    so nao aponta para producao porque `load_dotenv` usa `override=False` por padrao: uma
+    palavra trocada naquele arquivo mandaria as migracoes para o Supabase enquanto a guarda
+    aqui continuaria passando, porque ela valida a engine da aplicacao, nao a do subprocesso.
+
+    Passando a URL ja validada via `alembic -x db_url=...` (que tem precedencia sobre o
+    ambiente em env.py), o alvo do subprocesso e exatamente o que esta guarda aprovou.
+    """
+    exige_banco_de_teste(url)
+    return url.render_as_string(hide_password=False)
+
+
 @pytest.fixture(scope="session")
 def engine():
     """
@@ -49,17 +65,16 @@ def engine():
     Usar as migracoes em vez de SQLModel.metadata.create_all e o ponto central do P5:
     uma migracao quebrada falha aqui, e nao no deploy.
     """
-    exige_banco_de_teste(app_engine.url)
+    url_migracao = url_validada_para_migracao(app_engine.url)
 
     with app_engine.begin() as conn:
         conn.execute(text("DROP SCHEMA public CASCADE"))
         conn.execute(text("CREATE SCHEMA public"))
 
     subprocess.run(
-        ["alembic", "upgrade", "head"],
+        ["alembic", "-x", f"db_url={url_migracao}", "upgrade", "head"],
         cwd=BACKEND_DIR,
         check=True,
-        env=os.environ.copy(),
     )
 
     return app_engine
