@@ -5,6 +5,8 @@ from uuid import UUID
 
 from pydantic import BaseModel, EmailStr, Field
 
+from app.modules.identity.models import UserRole
+
 
 class UserCreate(BaseModel):
     """Payload para registro de usuário."""
@@ -13,6 +15,7 @@ class UserCreate(BaseModel):
     password: str = Field(..., min_length=8)
     first_name: str = Field(..., min_length=1)
     last_name: str = Field(..., min_length=1)
+    role: UserRole = UserRole.ATHLETE
 
 
 class UserLogin(BaseModel):
@@ -29,6 +32,7 @@ class UserResponse(BaseModel):
     email: str
     first_name: str
     last_name: str
+    role: UserRole
     max_clips_allowed: int
 
     class Config:

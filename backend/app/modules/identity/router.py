@@ -5,7 +5,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from app.core.deps import get_current_user
 from sqlmodel import Session, select
 from app.core.database import get_session
-from app.modules.identity.models import User, PasswordResetToken
+from app.core.exceptions import ValidationError
+from app.modules.identity.models import User, PasswordResetToken, UserRole
 from app.modules.identity.schemas import UserCreate, UserLogin, UserResponse, Token, TokenPayload
 from app.core.security import hash_password, verify_password, create_access_token
 from pydantic import BaseModel, Field
@@ -27,6 +28,11 @@ def register(data: UserCreate, session: Session = Depends(get_session)):
     """
     Registra um novo usuário. Retorna token e dados do usuário.
     """
+    if data.role is not UserRole.ATHLETE:
+        raise ValidationError(
+            "Nesta versao apenas o papel ATHLETE pode ser cadastrado."
+        )
+
     # Verifica se o e-mail já existe
     statement = select(User).where(User.email == data.email.lower())
     existing = session.exec(statement).first()
@@ -41,6 +47,7 @@ def register(data: UserCreate, session: Session = Depends(get_session)):
         password_hash=hash_password(data.password),
         first_name=data.first_name.strip(),
         last_name=data.last_name.strip(),
+        role=data.role,
     )
     session.add(user)
     session.commit()
@@ -55,6 +62,7 @@ def register(data: UserCreate, session: Session = Depends(get_session)):
             email=user.email,
             first_name=user.first_name,
             last_name=user.last_name,
+            role=user.role,
             max_clips_allowed=user.max_clips_allowed,
         ),
     )
@@ -82,6 +90,7 @@ def login(data: UserLogin, session: Session = Depends(get_session)):
             email=user.email,
             first_name=user.first_name,
             last_name=user.last_name,
+            role=user.role,
             max_clips_allowed=user.max_clips_allowed,
         ),
     )

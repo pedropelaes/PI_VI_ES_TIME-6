@@ -95,6 +95,49 @@ def test_register_email_case_insensitive(client: TestClient):
 
 
 # ---------------------------------------------------------------------------
+# Register — role
+# ---------------------------------------------------------------------------
+
+PAYLOAD = {
+    "email": "role@example.com",
+    "password": "securepass123",
+    "first_name": "Role",
+    "last_name": "Tester",
+}
+
+
+def test_register_sem_role_assume_athlete(client: TestClient):
+    resposta = client.post("/api/v1/auth/register", json=PAYLOAD)
+    assert resposta.json()["user"]["role"] == "ATHLETE"
+
+
+def test_register_com_role_athlete(client: TestClient):
+    resposta = client.post(
+        "/api/v1/auth/register",
+        json={**PAYLOAD, "email": "role-athlete@example.com", "role": "ATHLETE"},
+    )
+    assert resposta.status_code == 200
+    assert resposta.json()["user"]["role"] == "ATHLETE"
+
+
+def test_register_com_role_scout_e_rejeitado(client: TestClient):
+    resposta = client.post(
+        "/api/v1/auth/register",
+        json={**PAYLOAD, "email": "role-scout@example.com", "role": "SCOUT"},
+    )
+    assert resposta.status_code == 422
+    assert "ATHLETE" in resposta.json()["detail"]
+
+
+def test_register_com_role_club_e_rejeitado(client: TestClient):
+    resposta = client.post(
+        "/api/v1/auth/register",
+        json={**PAYLOAD, "email": "role-club@example.com", "role": "CLUB"},
+    )
+    assert resposta.status_code == 422
+
+
+# ---------------------------------------------------------------------------
 # Login
 # ---------------------------------------------------------------------------
 
