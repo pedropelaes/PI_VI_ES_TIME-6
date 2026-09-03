@@ -18,6 +18,7 @@ def perfil(session, usuario) -> AthleteProfile:
         state="SP",
         city="Campinas",
         bio="Atleta de base.",
+        avatar_path="avatars/jeh.png",
         status=AthleteStatus.DISPONIVEL,
     )
     session.add(p)
@@ -40,12 +41,17 @@ def test_devolve_o_perfil_do_atleta(client, auth_headers, usuario, perfil):
 
     assert resposta.status_code == 200
     corpo = resposta.json()
+    assert corpo["user_id"] == str(usuario.id)
     assert corpo["first_name"] == "Jeh"
     assert corpo["last_name"] == "Rodrigues"
     assert corpo["position"] == "ATACANTE"
     assert corpo["height_cm"] == 178
+    assert corpo["dominant_foot"] == "DESTRO"
     assert corpo["city"] == "Campinas"
     assert corpo["state"] == "SP"
+    assert corpo["current_club"] is None
+    assert corpo["bio"] == "Atleta de base."
+    assert corpo["avatar_url"] == "avatars/jeh.png"
     assert corpo["status"] == "DISPONIVEL"
     assert corpo["clips_count"] == 0
     assert isinstance(corpo["age"], int)
