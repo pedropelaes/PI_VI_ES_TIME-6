@@ -48,8 +48,11 @@ describe('httpClient', () => {
       new Response(JSON.stringify({ detail: 'nao achou' }), { status: 404 })
     );
 
-    const erro = await httpGet('/x').catch((e) => e as ApiError);
+    const erro = await httpGet('/x').catch((e: unknown) => e);
 
+    if (!(erro instanceof ApiError)) {
+      throw new Error('esperava que o erro fosse uma ApiError');
+    }
     expect(erro.notFound).toBe(true);
   });
 
@@ -79,13 +82,19 @@ describe('httpClient', () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
       new Response(JSON.stringify({ detail: 'sem permissao' }), { status: 401 })
     );
-    const erro401 = await httpGet('/x').catch((e) => e as ApiError);
+    const erro401 = await httpGet('/x').catch((e: unknown) => e);
+    if (!(erro401 instanceof ApiError)) {
+      throw new Error('esperava que o erro fosse uma ApiError');
+    }
     expect(erro401.unauthorized).toBe(true);
 
     vi.spyOn(globalThis, 'fetch').mockResolvedValueOnce(
       new Response(JSON.stringify({ detail: 'proibido' }), { status: 403 })
     );
-    const erro403 = await httpGet('/y').catch((e) => e as ApiError);
+    const erro403 = await httpGet('/y').catch((e: unknown) => e);
+    if (!(erro403 instanceof ApiError)) {
+      throw new Error('esperava que o erro fosse uma ApiError');
+    }
     expect(erro403.unauthorized).toBe(true);
   });
 
