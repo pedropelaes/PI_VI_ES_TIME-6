@@ -105,8 +105,22 @@ def session(engine):
 
 
 @pytest.fixture
-def client(session):
-    app.dependency_overrides[get_session] = lambda: session
+def client(engine):
+    """
+    TestClient em que cada request abre a sua propria Session, como em producao.
+
+    Compartilhar a Session do teste com o handler (`lambda: session`) parece inofensivo e
+    nao e: o teste passa a ler pelo mesmo identity map do handler, entao um endpoint que
+    esquece o `commit()` continua "passando"; e um teste de caminho de erro (IntegrityError
+    de email duplicado, DomainError cujo tratador responde sem dar rollback) deixa a Session
+    em transacao abortada, fazendo as assercoes seguintes estourarem PendingRollbackError e
+    escondendo a causa real.
+    """
+    def get_session_override():
+        with Session(engine) as s:
+            yield s
+
+    app.dependency_overrides[get_session] = get_session_override
     with TestClient(app) as c:
         yield c
     app.dependency_overrides.clear()
