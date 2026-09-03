@@ -47,7 +47,7 @@ def test_worker_entrypoint_resolves_all_mappers():
     import sys
     from pathlib import Path
 
-    backend_dir = Path(__file__).resolve().parents[3] / "backend"
+    backend_dir = Path(__file__).resolve().parents[2]
     code = (
         "import app.celery_app, app.modules.clips.tasks; "
         "from sqlalchemy.orm import configure_mappers; "
