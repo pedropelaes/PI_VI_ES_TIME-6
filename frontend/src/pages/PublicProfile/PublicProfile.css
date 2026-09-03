@@ -312,3 +312,61 @@
   .profile-actions { width: 100%; flex-direction: column; }
   .btn-primary, .btn-secondary { justify-content: center; }
 }
+/* Localizacao no cabecalho */
+.profile-location {
+  font-family: 'DM Sans', sans-serif;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 1.5rem;
+}
+
+/* Destaque do contador de clipes nas estatisticas rapidas */
+.stat-value-highlight {
+  color: #5BADDA;
+}
+
+/* Aba Sobre */
+.about-tab {
+  padding: 2rem 0;
+  color: rgba(255, 255, 255, 0.7);
+  line-height: 1.8;
+}
+
+.about-club {
+  margin-top: 1.5rem;
+}
+
+/* Icone dentro dos botoes de aba */
+.tab-icon {
+  display: inline;
+  margin-right: 6px;
+  margin-bottom: -4px;
+}
+
+/* Estados da pagina: carregando, nao encontrado, erro */
+.profile-state {
+  padding: 4rem 0;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* Abas ainda sem conteudo real */
+.placeholder-tab {
+  padding: 3rem 0;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.placeholder-tab h3 {
+  font-family: 'Outfit', sans-serif;
+  color: #fff;
+  font-size: 1.2rem;
+}
+
+.placeholder-tab svg {
+  opacity: 0.5;
+  margin-bottom: 1rem;
+}

@@ -23,7 +23,6 @@ export default function App() {
         <Route path="/signup"         element={<SignUp />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/new-password" element={<NewPassword />} />
-        <Route path="/public-profile" element={<PublicProfile />} />
 
         <Route element={<PrivateRoute />}>
 
@@ -31,6 +30,7 @@ export default function App() {
             <Route path="/app"              element={<InputPage />} />
             <Route path="/feed"             element={<Feed />} />
             <Route path="/clips-history" element={<ClipsHistory />} />
+            <Route path="/athletes/:userId" element={<PublicProfile />} />
           </Route>
 
           <Route path="/processing-clips/:jobId" element={<MainLayout />}>
