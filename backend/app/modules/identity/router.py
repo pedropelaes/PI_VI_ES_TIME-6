@@ -8,6 +8,7 @@ from app.core.database import get_session
 from app.core.exceptions import ValidationError
 from app.modules.identity.models import User, PasswordResetToken, UserRole
 from app.modules.identity.schemas import UserCreate, UserLogin, UserResponse, Token, TokenPayload
+from app.modules.profiles.models import AthleteProfile
 from app.core.security import hash_password, verify_password, create_access_token
 from pydantic import BaseModel, Field
 import secrets
@@ -50,6 +51,9 @@ def register(data: UserCreate, session: Session = Depends(get_session)):
         role=data.role,
     )
     session.add(user)
+    session.flush()  # atribui user.id sem encerrar a transacao
+
+    session.add(AthleteProfile(user_id=user.id))
     session.commit()
     session.refresh(user)
 

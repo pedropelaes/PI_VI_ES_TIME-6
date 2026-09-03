@@ -307,3 +307,80 @@ def test_reset_password_invalid_token(client: TestClient):
         json={"token": "totally-fake-nonexistent-token", "new_password": "newpassword99"},
     )
     assert resp.status_code == 400
+
+
+# ---------------------------------------------------------------------------
+# Register — perfil de atleta criado junto (mesma transacao)
+# ---------------------------------------------------------------------------
+
+def test_register_cria_o_perfil_de_atleta_junto(client, session):
+    import uuid as _uuid
+    from sqlmodel import select
+    from app.modules.profiles.models import AthleteProfile
+
+    corpo = client.post("/api/v1/auth/register", json=PAYLOAD).json()
+    user_id = _uuid.UUID(corpo["user"]["id"])
+
+    perfil = session.exec(
+        select(AthleteProfile).where(AthleteProfile.user_id == user_id)
+    ).first()
+
+    assert perfil is not None, "usuario ATHLETE sem perfil e estado invalido"
+    assert perfil.status.value == "DISPONIVEL"
+
+
+def test_perfil_recem_criado_e_visivel_na_api(client):
+    corpo = client.post("/api/v1/auth/register", json=PAYLOAD).json()
+    headers = {"Authorization": f"Bearer {corpo['access_token']}"}
+
+    resposta = client.get(f"/api/v1/profiles/athletes/{corpo['user']['id']}", headers=headers)
+
+    assert resposta.status_code == 200
+    assert resposta.json()["age"] is None
+
+
+def test_register_e_atomico_se_a_criacao_do_perfil_falhar(client, session):
+    """
+    Prova a transacao unica: se a construcao/insert do AthleteProfile falhar, o
+    usuario tambem nao pode existir no banco.
+
+    A falha e forcada substituindo `AthleteProfile` (no namespace do router) por um
+    callable que estoura RuntimeError -- equivalente, para fins deste teste, a uma
+    falha do insert em si (violacao de constraint, erro de conexao etc.): em ambos os
+    casos a excecao acontece depois do `session.flush()` do usuario e antes do
+    `session.commit()`, dentro da mesma transacao. Se o handler usasse `commit()` no
+    lugar do `flush()`, o usuario ja estaria persistido quando a falha do perfil
+    acontecesse -- e este teste falharia (ver verificacao de mutacao no relato).
+    """
+    from sqlmodel import select
+    from app.modules.identity.models import User
+    import app.modules.identity.router as identity_router
+
+    email = "atomic@example.com"
+
+    def _perfil_quebrado(*args, **kwargs):
+        raise RuntimeError("falha simulada na criacao do perfil")
+
+    with patch.object(identity_router, "AthleteProfile", side_effect=_perfil_quebrado):
+        try:
+            resp = client.post(
+                "/api/v1/auth/register",
+                json={**PAYLOAD, "email": email},
+            )
+        except RuntimeError:
+            # A excecao simulada pode subir sem handler dedicado -- o que importa e
+            # o estado do banco depois, nao o codigo de status da resposta.
+            pass
+        else:
+            assert resp.status_code >= 400, (
+                "esperava falha ao criar o perfil, mas o registro retornou sucesso"
+            )
+
+    usuario_criado = session.exec(
+        select(User).where(User.email == email)
+    ).first()
+
+    assert usuario_criado is None, (
+        "usuario foi persistido mesmo com falha na criacao do perfil -- "
+        "commit() e flush() nao estao na mesma transacao"
+    )
