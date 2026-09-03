@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import logoSmartScout from '../../assets/logo-smartscout.png';
+import { clearSession, getToken } from '../../services/api';
 import {
   SquarePlay,
   Compass,
@@ -33,9 +34,9 @@ export function Header() {
 
   async function handleLogout() {
     try {
-      const token = localStorage.getItem('token');
+      const token = getToken();
       if (token) {
-        await fetch('http://localhost:8000/auth/logout', {
+        await fetch(`${import.meta.env.VITE_API_PATH}/auth/logout`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -46,8 +47,9 @@ export function Header() {
       console.error('Erro ao chamar logout no backend:', error);
     }
 
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    // clearSession() apaga as chaves reais (access_token/user). A versao anterior
+    // removia 'token', chave que nao existe, deixando a sessao viva apos o logout.
+    clearSession();
     setShowProfileModal(false);
     navigate('/login');
   }
