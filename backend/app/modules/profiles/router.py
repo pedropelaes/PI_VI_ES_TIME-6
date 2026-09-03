@@ -11,7 +11,7 @@ from app.core.database import get_session
 from app.core.deps import get_current_user
 from app.modules.identity.models import User
 from app.modules.profiles.repository import SqlAthleteProfileRepository
-from app.modules.profiles.schemas import AthleteProfileResponse
+from app.modules.profiles.schemas import AthleteProfileResponse, AthleteProfileUpdate
 from app.modules.profiles.service import AthleteProfileView, ProfilesService
 
 router = APIRouter(prefix="/profiles", tags=["profiles"])
@@ -48,3 +48,26 @@ def get_athlete_profile(
 ):
     """Perfil de um atleta. Exige autenticacao (decisao P2 da spec)."""
     return _to_response(service.get_athlete_profile(user_id))
+
+
+@router.get("/me", response_model=AthleteProfileResponse)
+def get_my_profile(
+    service: ProfilesService = Depends(get_service),
+    current_user: User = Depends(get_current_user),
+):
+    """Proprio perfil, usado para popular o formulario de edicao."""
+    return _to_response(service.get_athlete_profile(current_user.id))
+
+
+@router.put("/me", response_model=AthleteProfileResponse)
+def update_my_profile(
+    payload: AthleteProfileUpdate,
+    service: ProfilesService = Depends(get_service),
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
+    """Atualizacao parcial: exclude_unset garante que campos ausentes nao sejam zerados."""
+    changes = payload.model_dump(exclude_unset=True)
+    resposta = _to_response(service.update_athlete_profile(current_user.id, changes))
+    session.commit()
+    return resposta

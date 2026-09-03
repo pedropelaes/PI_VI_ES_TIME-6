@@ -65,3 +65,35 @@ def test_id_inexistente_devolve_404(client, auth_headers):
 def test_usuario_sem_perfil_de_atleta_devolve_404(client, auth_headers, usuario):
     resposta = client.get(f"/api/v1/profiles/athletes/{usuario.id}", headers=auth_headers)
     assert resposta.status_code == 404
+
+
+def test_me_devolve_o_proprio_perfil(client, auth_headers, perfil):
+    resposta = client.get("/api/v1/profiles/me", headers=auth_headers)
+    assert resposta.status_code == 200
+    assert resposta.json()["city"] == "Campinas"
+
+
+def test_put_me_atualiza_apenas_os_campos_enviados(client, auth_headers, perfil):
+    resposta = client.put(
+        "/api/v1/profiles/me", headers=auth_headers, json={"city": "Santos"}
+    )
+    assert resposta.status_code == 200
+    corpo = resposta.json()
+    assert corpo["city"] == "Santos"
+    assert corpo["state"] == "SP"
+    assert corpo["height_cm"] == 178
+
+
+def test_put_me_reflete_no_get_seguinte(client, auth_headers, usuario, perfil):
+    client.put("/api/v1/profiles/me", headers=auth_headers, json={"status": "CONTRATADO"})
+    corpo = client.get(
+        f"/api/v1/profiles/athletes/{usuario.id}", headers=auth_headers
+    ).json()
+    assert corpo["status"] == "CONTRATADO"
+
+
+def test_put_me_com_altura_invalida_devolve_422(client, auth_headers, perfil):
+    resposta = client.put(
+        "/api/v1/profiles/me", headers=auth_headers, json={"height_cm": 12}
+    )
+    assert resposta.status_code == 422
