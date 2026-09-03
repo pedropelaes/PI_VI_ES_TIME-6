@@ -183,6 +183,7 @@ def test_update_retorna_none_para_perfil_inexistente(session: Session):
 
 
 def test_update_avanca_updated_at(session: Session, usuario: User):
+    """`onupdate` do SQLAlchemy dispara no flush, entao nao depende do commit do chamador."""
     perfil = _cria_perfil(session, usuario)
     created_at_original = perfil.created_at
     updated_at_original = perfil.updated_at
@@ -194,3 +195,24 @@ def test_update_avanca_updated_at(session: Session, usuario: User):
     perfil_atualizado = session.get(AthleteProfile, usuario.id)
     assert perfil_atualizado.updated_at > updated_at_original
     assert perfil_atualizado.updated_at > created_at_original
+
+
+def test_update_persiste_apenas_apos_commit_do_chamador(engine, session: Session, usuario: User):
+    """
+    `update()` nao commita mais (o chamador e dono da transacao). Sem este teste, "ninguem
+    commitar" passaria despercebido: a mudanca aparenta aplicada na Session do proprio teste
+    (flush + refresh bastam para isso), mas nunca chegaria ao banco para outra conexao ver.
+
+    Le de volta por uma Session **separada** para provar que o dado passou pelo commit, e nao
+    apenas pelo identity map da Session que fez o update.
+    """
+    _cria_perfil(session, usuario, city="Cidade Original")
+
+    repo = SqlAthleteProfileRepository(session)
+    repo.update(usuario.id, {"city": "Cidade Persistida"})
+    session.commit()  # o chamador decide fechar a transacao -- update() em si nao commita
+
+    with Session(engine) as outra_sessao:
+        perfil_de_outra_sessao = outra_sessao.get(AthleteProfile, usuario.id)
+        assert perfil_de_outra_sessao is not None
+        assert perfil_de_outra_sessao.city == "Cidade Persistida"

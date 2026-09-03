@@ -6,7 +6,7 @@ permite substituir esta implementacao por uma fake em dicionario nos testes unit
 """
 import uuid
 from dataclasses import dataclass
-from datetime import date, datetime, timezone
+from datetime import date
 from typing import Any, Optional, Protocol
 
 from sqlmodel import Session, func, select
@@ -87,8 +87,11 @@ class SqlAthleteProfileRepository:
         for campo, valor in changes.items():
             setattr(perfil, campo, valor)
 
+        # O chamador e dono da transacao (mesma convencao de `get_session` e do handler de
+        # `register`): so flush + refresh aqui, sem commit. Nao "ajude" adicionando um commit
+        # de volta -- quem chama update() decide quando fechar a transacao.
         self.session.add(perfil)
-        self.session.commit()
+        self.session.flush()
         self.session.refresh(perfil)
 
         user = self.session.get(User, user_id)
