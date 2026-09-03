@@ -272,8 +272,12 @@ Sempre por exceção de domínio, traduzida pelo handler único do `main.py`. **
 |---|---|---|
 | `user_id` inexistente, ou usuário sem perfil de atleta | `NotFoundError` | 404 |
 | Seguir ou salvar a si mesmo | `ValidationError` | 422 |
-| Token ausente no header `Authorization` | `HTTPBearer` | 403 |
+| Token ausente no header `Authorization` | `HTTPBearer` | 401 |
 | Token presente porém inválido ou expirado | `get_current_user` | 401 |
+
+Verificado no FastAPI 0.133.1 instalado: header ausente devolve `401 {"detail": "Not authenticated"}`.
+Versoes antigas devolviam 403, e e por isso que `test_auth.py:190` e `test_jobs.py:86` usam
+`assert status_code in (401, 403)`. Testes novos podem fixar 401.
 
 Usuário existente porém com `role != ATHLETE` devolve **404**, não 403: não existe perfil
 de atleta para aquele id, e a distinção não interessa ao cliente.

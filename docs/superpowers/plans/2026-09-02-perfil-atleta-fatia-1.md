@@ -1369,7 +1369,7 @@ def perfil(session, usuario) -> AthleteProfile:
 def test_sem_jwt_devolve_401(client, usuario):
     resposta = client.get(f"/api/v1/profiles/athletes/{usuario.id}")
 
-    assert resposta.status_code == 403
+    assert resposta.status_code == 401
 
 
 def test_devolve_o_perfil_do_atleta(client, auth_headers, usuario, perfil):
@@ -1415,8 +1415,9 @@ def test_usuario_sem_perfil_de_atleta_devolve_404(client, auth_headers, usuario)
     assert resposta.status_code == 404
 ```
 
-O 403 no primeiro teste não é engano: `HTTPBearer` do FastAPI responde 403 quando o header
-`Authorization` está ausente. O teste documenta o comportamento real, não o desejado.
+No FastAPI 0.133.1 instalado, header `Authorization` ausente devolve **401**
+(`{"detail": "Not authenticated"}`), nao 403. Versoes antigas devolviam 403, razao pela qual
+`test_auth.py:190` e `test_jobs.py:86` hedgeiam com `in (401, 403)`.
 
 - [ ] **Step 2: Rodar e verificar que falham**
 
