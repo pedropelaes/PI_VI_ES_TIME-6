@@ -12,6 +12,24 @@
 
 ---
 
+---
+
+> ## ⚠️ Alembic aponta para PRODUCAO por padrao
+>
+> O `DATABASE_URL` do container `api` e o Supabase **real**. O `alembic/env.py` usa essa
+> variavel quando nao recebe `-x db_url=`, e apenas o processo do pytest a reescreve.
+> Portanto `docker compose exec api alembic downgrade ...` **roda contra producao**.
+>
+> Toda invocacao de Alembic que toque o schema deve passar o banco de teste explicitamente:
+>
+> ```bash
+> docker compose exec api alembic -x db_url=postgresql://smartscout:smartscout@postgres-test:5432/smartscout_test upgrade head
+> ```
+>
+> `alembic revision -m "..."` (sem `--autogenerate`) nao conecta em banco nenhum e e seguro.
+
+---
+
 ## Estrutura de arquivos
 
 **Backend — criados**
@@ -539,7 +557,7 @@ Esperado: 4 passed.
 - [ ] **Step 7: Verificar que a migração é reversível**
 
 ```bash
-docker compose exec api alembic downgrade -1 && docker compose exec api alembic upgrade head
+docker compose exec api alembic -x db_url=postgresql://smartscout:smartscout@postgres-test:5432/smartscout_test downgrade -1 && \n  docker compose exec api alembic -x db_url=postgresql://smartscout:smartscout@postgres-test:5432/smartscout_test upgrade head
 ```
 
 Esperado: ambos terminam sem erro.
@@ -888,7 +906,7 @@ Esperado: 6 passed.
 - [ ] **Step 8: Verificar reversibilidade**
 
 ```bash
-docker compose exec api alembic downgrade -1 && docker compose exec api alembic upgrade head
+docker compose exec api alembic -x db_url=postgresql://smartscout:smartscout@postgres-test:5432/smartscout_test downgrade -1 && \n  docker compose exec api alembic -x db_url=postgresql://smartscout:smartscout@postgres-test:5432/smartscout_test upgrade head
 ```
 
 - [ ] **Step 9: Commit**
@@ -2845,7 +2863,7 @@ docker compose exec web npm test
 - [ ] **Migrações sobem e descem limpas**
 
 ```bash
-docker compose exec api alembic downgrade base && docker compose exec api alembic upgrade head
+docker compose exec api alembic -x db_url=postgresql://smartscout:smartscout@postgres-test:5432/smartscout_test downgrade base && \n  docker compose exec api alembic -x db_url=postgresql://smartscout:smartscout@postgres-test:5432/smartscout_test upgrade head
 ```
 
 - [ ] **Migrações aplicam no banco de desenvolvimento**
