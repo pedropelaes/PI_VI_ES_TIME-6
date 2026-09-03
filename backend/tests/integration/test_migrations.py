@@ -2,6 +2,7 @@
 Prova que o schema de teste nasce das migracoes Alembic, e nao de create_all.
 Se este teste passar, toda a suite esta exercitando as migracoes (P5 da spec).
 """
+import importlib.util
 import os
 import subprocess
 
@@ -19,6 +20,39 @@ from tests.integration.conftest import (
 # fixo para testes que precisam voltar o schema no tempo sem depender de quantas migracoes
 # existem hoje.
 BASELINE = "dc5867a2d8e8"
+
+# Ultima migracao antes de `athlete_profiles`: `users` ja tem `role`, mas nenhum perfil
+# existe ainda. Alvo fixo pelo mesmo motivo da BASELINE -- um "-1" passaria a apontar para
+# outra migracao assim que a proxima entrar na pilha.
+ANTES_DOS_PERFIS = "fe2302746d6a"
+
+
+def roda_alembic(url: str, *args: str) -> None:
+    """Executa o alembic como subprocesso contra a URL ja validada, exigindo sucesso."""
+    resultado = subprocess.run(
+        ["alembic", "-x", f"db_url={url}", *args],
+        cwd=BACKEND_DIR,
+        capture_output=True,
+        text=True,
+    )
+    assert resultado.returncode == 0, resultado.stderr[-1500:]
+
+
+def carrega_migracao(sufixo_do_arquivo: str):
+    """
+    Importa um modulo de migracao pelo nome do arquivo (o hash da revisao e gerado).
+
+    Serve para os testes reusarem o SQL exato que a migracao roda, em vez de uma copia
+    colada que pode divergir dela sem ninguem perceber.
+    """
+    caminhos = sorted((BACKEND_DIR / "alembic" / "versions").glob(f"*{sufixo_do_arquivo}"))
+    assert caminhos, f"nenhuma migracao casa com *{sufixo_do_arquivo}"
+    assert len(caminhos) == 1, f"mais de uma migracao casa com *{sufixo_do_arquivo}"
+
+    spec = importlib.util.spec_from_file_location(caminhos[0].stem, caminhos[0])
+    modulo = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(modulo)
+    return modulo
 
 
 def test_schema_foi_criado_pelas_migracoes(engine):
@@ -183,13 +217,7 @@ def test_backfill_preenche_linhas_que_existiam_antes_da_migracao(engine):
     url = url_validada_para_migracao(engine.url)
 
     def alembic(*args: str) -> None:
-        resultado = subprocess.run(
-            ["alembic", "-x", f"db_url={url}", *args],
-            cwd=BACKEND_DIR,
-            capture_output=True,
-            text=True,
-        )
-        assert resultado.returncode == 0, resultado.stderr[-1500:]
+        roda_alembic(url, *args)
 
     try:
         # Alvo fixo, nao "-1": a partir da Task 6 o topo da pilha e outra migracao, e um
@@ -222,3 +250,153 @@ def test_backfill_preenche_linhas_que_existiam_antes_da_migracao(engine):
         ).scalar()
 
     assert papel == "ATHLETE"
+
+
+# ---------------------------------------------------------------------------
+# Tabela `athlete_profiles` (Task 6)
+# ---------------------------------------------------------------------------
+
+def test_athlete_profiles_existe_com_pk_em_user_id(engine):
+    with engine.connect() as conn:
+        colunas = {
+            linha[0]: linha[1]
+            for linha in conn.execute(
+                text(
+                    "SELECT column_name, is_nullable FROM information_schema.columns "
+                    "WHERE table_name = 'athlete_profiles'"
+                )
+            )
+        }
+
+    assert colunas, "tabela athlete_profiles nao existe"
+    assert colunas["user_id"] == "NO"
+    assert colunas["status"] == "NO"
+    assert colunas["birth_date"] == "YES"
+    assert "age" not in colunas, "idade e derivada de birth_date, nunca uma coluna"
+
+    with engine.connect() as conn:
+        pk = list(
+            conn.execute(
+                text(
+                    "SELECT a.attname FROM pg_index i "
+                    "JOIN pg_attribute a ON a.attrelid = i.indrelid "
+                    "AND a.attnum = ANY(i.indkey) "
+                    "WHERE i.indrelid = 'athlete_profiles'::regclass AND i.indisprimary"
+                )
+            ).scalars()
+        )
+
+    assert pk == ["user_id"], f"a PK deveria ser user_id, e {pk}"
+
+
+def test_perfil_gravado_pelo_orm_volta_com_os_enums(engine, usuario):
+    """
+    O tipo nativo se chama `athleteposition` e a classe Python, `Position`. Se essa
+    ligacao quebrar (ou o round-trip do enum pelo psycopg2 falhar), o erro aparece aqui e
+    nao no primeiro endpoint que gravar perfil.
+    """
+    from sqlmodel import Session
+
+    from app.modules.profiles.models import AthleteProfile, AthleteStatus, Position
+
+    with Session(engine) as s:
+        s.add(AthleteProfile(user_id=usuario.id, position=Position.ATACANTE))
+        s.commit()
+
+        perfil = s.get(AthleteProfile, usuario.id)
+
+        assert perfil.position is Position.ATACANTE
+        assert perfil.status is AthleteStatus.DISPONIVEL
+        assert perfil.birth_date is None
+
+
+def test_backfill_cria_perfil_para_atleta_que_existia_antes_da_migracao(engine):
+    """
+    A propriedade que o `INSERT ... SELECT` da migracao existe para garantir (secao 5.1 da
+    spec de origem): todo usuario ATHLETE precisa de perfil, inclusive os que ja estavam
+    gravados antes da migracao rodar.
+
+    A base de teste esta vazia quando a suite sobe, entao um teste que apenas olhasse a
+    tabela depois do `upgrade head` passaria mesmo sem backfill nenhum. Aqui a migracao roda
+    de verdade sobre linhas inseridas antes dela: apagar o backfill quebra este teste.
+
+    O usuario SCOUT esta aqui de proposito -- o backfill nao pode inventar perfil de atleta
+    para quem nao e atleta.
+    """
+    url = url_validada_para_migracao(engine.url)
+
+    try:
+        roda_alembic(url, "downgrade", ANTES_DOS_PERFIS)
+
+        with engine.begin() as conn:
+            sobrou = conn.execute(
+                text("SELECT to_regclass('public.athlete_profiles')")
+            ).scalar()
+            assert sobrou is None, "o downgrade nao removeu a tabela athlete_profiles"
+
+            conn.execute(
+                text(
+                    "INSERT INTO users (id, email, password_hash, first_name, last_name,"
+                    " role, max_clips_allowed, created_at) VALUES"
+                    " (gen_random_uuid(), 'atleta.antigo@teste.com', 'x', 'Ana', 'Antiga',"
+                    " 'ATHLETE', 20, now()),"
+                    " (gen_random_uuid(), 'olheiro.antigo@teste.com', 'x', 'Bo', 'Antigo',"
+                    " 'SCOUT', 20, now())"
+                )
+            )
+    finally:
+        roda_alembic(url, "upgrade", "head")
+
+    with engine.connect() as conn:
+        perfis = {
+            linha[0]: linha[1]
+            for linha in conn.execute(
+                text(
+                    "SELECT u.email, p.status FROM athlete_profiles p"
+                    " JOIN users u ON u.id = p.user_id"
+                )
+            )
+        }
+
+    assert "atleta.antigo@teste.com" in perfis, (
+        "o backfill nao criou perfil para o atleta que existia antes da migracao"
+    )
+    assert perfis["atleta.antigo@teste.com"] == "DISPONIVEL"
+    assert "olheiro.antigo@teste.com" not in perfis, (
+        "o backfill criou perfil de atleta para um usuario SCOUT"
+    )
+
+
+def test_backfill_e_idempotente(engine):
+    """
+    O `ON CONFLICT DO NOTHING` da migracao (risco PR5): rodar o backfill de novo sobre uma
+    tabela ja populada nao pode estourar chave duplicada nem duplicar perfil.
+
+    O SQL vem do proprio modulo da migracao, e nao de uma copia colada aqui -- se alguem
+    tirar o ON CONFLICT de la, este teste falha com o UniqueViolation real.
+    """
+    migracao = carrega_migracao("_cria_athlete_profiles.py")
+
+    with engine.begin() as conn:
+        conn.execute(
+            text(
+                "INSERT INTO users (id, email, password_hash, first_name, last_name,"
+                " role, max_clips_allowed, created_at) VALUES"
+                " (gen_random_uuid(), 'atleta.idem@teste.com', 'x', 'Cid', 'Idem',"
+                " 'ATHLETE', 20, now())"
+            )
+        )
+
+    for _ in range(2):
+        with engine.begin() as conn:
+            conn.execute(text(migracao.BACKFILL_ATLETAS))
+
+    with engine.connect() as conn:
+        quantidade = conn.execute(
+            text(
+                "SELECT count(*) FROM athlete_profiles p JOIN users u ON u.id = p.user_id"
+                " WHERE u.email = 'atleta.idem@teste.com'"
+            )
+        ).scalar()
+
+    assert quantidade == 1
