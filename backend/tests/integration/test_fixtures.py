@@ -15,10 +15,14 @@ identity map e uma transacao. As duas consequencias sao reais:
 Este arquivo existe para que uma volta acidental aquele atalho falhe aqui, e nao la na frente
 como um falso verde em outro teste.
 """
+from sqlalchemy import text
 from sqlmodel import Session
 
+from app.core.database import engine as app_engine
 from app.core.security import hash_password
 from app.modules.identity.models import User
+
+from tests.integration.conftest import LOCK_TIMEOUT
 
 
 def test_handler_nao_enxerga_escrita_nao_commitada_do_teste(client, session: Session):
@@ -43,3 +47,22 @@ def test_handler_nao_enxerga_escrita_nao_commitada_do_teste(client, session: Ses
         "compartilhar a Session do teste"
     )
 
+
+def test_conexoes_tem_lock_timeout(engine, session: Session):
+    """
+    Contencao de lock tem que virar erro, nao pytest pendurado.
+
+    Postgres espera por um lock indefinidamente por padrao. Como o handler agora roda numa
+    Session propria, um teste que escreve sem commitar e depois faz um request que toca a
+    mesma linha trava para sempre: o request espera o lock do teste, o teste espera o
+    request. Com `lock_timeout` a espera termina num erro que nomeia a tabela.
+
+    Cobre as duas pontas porque as duas saem da mesma engine: a Session do teste e a que o
+    `get_session` de producao abre por request.
+    """
+    esperado = LOCK_TIMEOUT
+
+    assert session.exec(text("SHOW lock_timeout")).scalar() == esperado
+
+    with Session(app_engine) as por_request:
+        assert por_request.exec(text("SHOW lock_timeout")).scalar() == esperado

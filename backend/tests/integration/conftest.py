@@ -10,7 +10,7 @@ from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import text
+from sqlalchemy import event, text
 from sqlalchemy.engine import URL
 from sqlmodel import Session
 
@@ -20,6 +20,30 @@ from app.main import app
 from app.modules.identity.models import User
 
 BACKEND_DIR = Path(__file__).resolve().parents[2]
+
+# Postgres nao tem lock_timeout por padrao: ele espera para sempre. Com uma Session por
+# request (e nao mais a do teste compartilhada com o handler), um teste que escreve sem
+# commitar e depois faz um request que toca a mesma linha trava -- o request espera o lock
+# do teste, e o teste espera o request. Sem timeout isso e um pytest pendurado, sem
+# diagnostico. Com timeout vira um erro que nomeia a tabela.
+#
+# Vale para toda conexao da engine da aplicacao, que e a mesma usada pelas Sessions do teste
+# e pelas do `get_session` de producao.
+LOCK_TIMEOUT = "5s"
+
+
+@event.listens_for(app_engine, "connect")
+def _define_lock_timeout(dbapi_conn, _record):
+    # O autocommit temporario e obrigatorio: psycopg2 abre uma transacao implicita, e um
+    # `SET` (nao-LOCAL) dentro dela morre no rollback que o pool faz ao devolver a conexao.
+    # Sem isso o listener roda, nao da erro nenhum, e o lock_timeout continua 0.
+    anterior = dbapi_conn.autocommit
+    dbapi_conn.autocommit = True
+    try:
+        with dbapi_conn.cursor() as cur:
+            cur.execute(f"SET lock_timeout = '{LOCK_TIMEOUT}'")
+    finally:
+        dbapi_conn.autocommit = anterior
 
 
 def exige_banco_de_teste(url: URL) -> None:
