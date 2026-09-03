@@ -34,8 +34,16 @@ config = context.config
 # alvo -- a suite de testes, por exemplo. Depender so de DATABASE_URL deixaria o alvo
 # refem da precedencia do `load_dotenv` acima: trocar `override=False` (o padrao) por
 # `override=True` faria o backend/.env de producao vencer silenciosamente.
+#
+# O `.replace("%", "%%")` nao e supersticao: set_main_option escreve num ConfigParser com
+# BasicInterpolation, entao um `%` cru no valor estoura ali mesmo, com
+# "invalid interpolation syntax" -- e URLs codificam senha com percent-encoding (`@` vira
+# `%40`, `%` vira `%25`). Sem o escape, qualquer senha gerada quebra o alembic com um erro
+# que nao menciona senha nenhuma. Escapar aqui, no unico ponto onde o valor e escrito,
+# cobre tanto o `-x db_url` quanto o DATABASE_URL do ambiente.
 _x_args = context.get_x_argument(as_dictionary=True)
-config.set_main_option("sqlalchemy.url", _x_args.get("db_url") or os.environ["DATABASE_URL"])
+_db_url = _x_args.get("db_url") or os.environ["DATABASE_URL"]
+config.set_main_option("sqlalchemy.url", _db_url.replace("%", "%%"))
 
 # Interpret the config file for Python logging.
 if config.config_file_name is not None:

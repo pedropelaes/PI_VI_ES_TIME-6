@@ -74,8 +74,31 @@ def test_url_de_migracao_preserva_a_senha(engine):
     """Serializar com a senha mascarada faria o subprocesso falhar ao conectar."""
     serializada = url_validada_para_migracao(engine.url)
 
-    assert "***" not in serializada
-    assert serializada.endswith(engine.url.database)
+    assert make_url(serializada).password == engine.url.password
+
+
+def test_alembic_aceita_senha_com_percent():
+    """
+    `%` na URL nao pode virar sintaxe de interpolacao do ConfigParser.
+
+    `config.set_main_option` em alembic/env.py escreve num ConfigParser com
+    BasicInterpolation; um `%` cru estoura ali, antes de qualquer conexao. E URLs codificam
+    senha com percent-encoding, entao qualquer senha gerada com `@`, `%` ou `/` cai nesse
+    caso -- com um ValueError que nao menciona senha nenhuma.
+
+    A conexao aqui falha de proposito (porta 1, credencial falsa): o que importa e *como*
+    falha. Se o escape sumir de env.py, o erro passa a ser de interpolacao e este teste pega.
+    """
+    url = "postgresql://usr:p%40ss%25word@127.0.0.1:1/x_test"
+
+    resultado = subprocess.run(
+        ["alembic", "-x", f"db_url={url}", "current"],
+        cwd=BACKEND_DIR,
+        capture_output=True,
+        text=True,
+    )
+
+    assert "interpolation" not in resultado.stderr.lower(), resultado.stderr[-1500:]
 
 
 def test_alembic_ignora_database_url_do_ambiente(engine):
