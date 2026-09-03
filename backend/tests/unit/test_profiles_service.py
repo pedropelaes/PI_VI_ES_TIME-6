@@ -3,6 +3,7 @@ Testes unitarios do service: sem banco, sem HTTP. O repository e uma fake em dic
 Este e o loop rapido do TDD -- roda em milissegundos.
 """
 import uuid
+from dataclasses import replace
 from datetime import date
 from typing import Any, Optional
 
@@ -53,10 +54,13 @@ class FakeRepository:
     def update(
         self, user_id: uuid.UUID, changes: dict[str, Any]
     ) -> Optional[AthleteProfileRecord]:
-        if self.record is None:
+        # Espelha o repository real: `session.get(AthleteProfile, user_id)` retorna None
+        # para um id que nao bate, e o merge e um `setattr` campo a campo sobre a linha
+        # existente -- nunca uma reconstrucao que reintroduz defaults.
+        if self.record is None or self.record.user_id != user_id:
             return None
         self.ultima_atualizacao = changes
-        self.record = um_record(**changes)
+        self.record = replace(self.record, **changes)
         return self.record
 
 
@@ -132,3 +136,25 @@ def test_atualizar_perfil_inexistente_levanta_not_found():
     service = ProfilesService(FakeRepository(None), hoje=lambda: date(2026, 9, 2))
     with pytest.raises(NotFoundError):
         service.update_athlete_profile(USER_ID, {"city": "Santos"})
+
+
+def test_atualizacao_preserva_campos_nao_enviados():
+    # O repository real faz um merge via setattr sobre a linha existente -- so os campos
+    # enviados mudam, o resto do registro sobrevive. A fake precisa honrar o mesmo
+    # contrato, senao o service passaria em testes contra uma fake que mente.
+    repo = FakeRepository(um_record(current_club="Santos FC"))
+    service = ProfilesService(repo, hoje=lambda: date(2026, 9, 2))
+    perfil = service.update_athlete_profile(USER_ID, {"city": "Santos"})
+    assert perfil.current_club == "Santos FC"
+    assert perfil.city == "Santos"
+
+
+def test_atualizar_perfil_com_id_diferente_do_registro_levanta_not_found():
+    # Espelha `get_by_user_id`: um id que nao bate com o registro guardado deve se
+    # comportar como "nao encontrado", assim como `session.get` faria no repository real.
+    outro_user_id = uuid.UUID("22222222-2222-2222-2222-222222222222")
+    service = ProfilesService(
+        FakeRepository(um_record()), hoje=lambda: date(2026, 9, 2)
+    )
+    with pytest.raises(NotFoundError):
+        service.update_athlete_profile(outro_user_id, {"city": "Santos"})
