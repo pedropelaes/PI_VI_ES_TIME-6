@@ -1,4 +1,9 @@
-import { httpGet, httpPut } from '../../shared/lib/httpClient';
+import {
+  httpDelete,
+  httpGet,
+  httpPostForm,
+  httpPut,
+} from '../../shared/lib/httpClient';
 import type { AthleteProfileDTO, ClubProfileDTO, ScoutProfileDTO } from './types';
 
 /**
@@ -38,4 +43,20 @@ export function getMyProfile(): Promise<MyProfileDTO> {
  */
 export function updateMyProfile(changes: Record<string, unknown>): Promise<MyProfileDTO> {
   return httpPut<MyProfileDTO>('/profiles/me', changes);
+}
+
+/**
+ * Um unico endpoint de avatar para os tres papeis (decisao E4): o papel vem do
+ * JWT. Devolve o perfil atualizado no mesmo formato de `GET /profiles/me`.
+ */
+export function uploadMyAvatar(file: File): Promise<MyProfileDTO> {
+  const form = new FormData();
+  form.append('file', file);
+
+  return httpPostForm<MyProfileDTO>('/profiles/me/avatar', form);
+}
+
+/** Idempotente: sem avatar, o servidor tambem responde 204. */
+export function deleteMyAvatar(): Promise<void> {
+  return httpDelete<void>('/profiles/me/avatar');
 }

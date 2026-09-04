@@ -13,6 +13,7 @@ import NewPassword from './pages/NewPassword/NewPassword';
 import PublicProfile from './pages/PublicProfile/PublicProfile';
 import ScoutProfile from './pages/ScoutProfile/ScoutProfile';
 import ClubProfile from './pages/ClubProfile/ClubProfile';
+import EditProfile from './pages/EditProfile/EditProfile';
 import Feed from './pages/feed/feed';
 
 export default function App() {
@@ -35,6 +36,7 @@ export default function App() {
             <Route path="/athletes/:userId" element={<PublicProfile />} />
             <Route path="/scouts/:userId"   element={<ScoutProfile />} />
             <Route path="/clubs/:userId"    element={<ClubProfile />} />
+            <Route path="/profiles/me/edit" element={<EditProfile />} />
           </Route>
 
           <Route path="/processing-clips/:jobId" element={<MainLayout />}>

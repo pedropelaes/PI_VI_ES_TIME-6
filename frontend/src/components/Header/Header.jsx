@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import logoSmartScout from '../../assets/logo-smartscout.png';
 import { clearSession, getToken, getUser } from '../../services/api';
-import { getProfilePath } from '../../shared/lib/profileRoutes';
+import { getProfilePath, PROFILE_EDIT_PATH } from '../../shared/lib/profileRoutes';
 import { isUserRole } from '../../shared/lib/userRole';
 import {
   SquarePlay,
@@ -42,6 +42,11 @@ export function Header() {
     setShowProfileModal(false);
     // getProfilePath e o unico lugar que monta rota de perfil (decisao Q6).
     navigate(getProfilePath(storedUser));
+  }
+
+  function handleEditProfile() {
+    setShowProfileModal(false);
+    navigate(PROFILE_EDIT_PATH);
   }
 
   async function handleLogout() {
@@ -158,6 +163,11 @@ export function Header() {
                   Ver meu perfil
                 </button>
               )}
+
+              {/* Edicao nao depende do papel: o /profiles/me descobre sozinho. */}
+              <button className="secondaryButton" onClick={handleEditProfile}>
+                Editar perfil
+              </button>
 
               <button className="logoutButton" onClick={handleLogout}>
                 Sair da conta

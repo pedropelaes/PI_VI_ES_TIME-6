@@ -1,5 +1,6 @@
 import { useParams } from 'react-router-dom';
 import { Search } from 'lucide-react';
+import { EditProfileButton } from '../../features/profiles/components/EditProfileButton';
 import {
   ProfileShell,
   ProfileStateScreen,
@@ -30,9 +31,11 @@ export default function ScoutProfile() {
   return (
     <ProfileShell
       initial={profile.initial}
+      avatarUrl={profile.avatarUrl}
       fullName={profile.fullName}
       location={profile.location}
       bio={profile.bio}
+      actions={<EditProfileButton userId={userId} />}
       bioFallback="Este scout ainda não escreveu uma bio."
       badges={
         <span className="badge badge-primary">

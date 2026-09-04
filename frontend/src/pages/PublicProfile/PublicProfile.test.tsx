@@ -114,3 +114,78 @@ describe('PublicProfile', () => {
     expect(screen.queryByText('Atleta não encontrado.')).not.toBeInTheDocument();
   });
 });
+
+describe('PublicProfile — avatar', () => {
+  it('mostra a foto do atleta quando ha avatar', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(
+        JSON.stringify({ ...DTO, avatar_url: '/uploads/avatars/abc.png' }),
+        { status: 200 }
+      )
+    );
+
+    renderProfile();
+
+    const imagem = await screen.findByAltText('Foto de perfil de Jeh Rodrigues');
+    expect(imagem.getAttribute('src')).toContain('/uploads/avatars/abc.png');
+  });
+
+  it('cai para a inicial do nome quando nao ha avatar', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify(DTO), { status: 200 })
+    );
+
+    renderProfile();
+
+    await screen.findByText('Jeh Rodrigues');
+    expect(screen.queryByAltText('Foto de perfil de Jeh Rodrigues')).not.toBeInTheDocument();
+    expect(screen.getByText('J')).toBeInTheDocument();
+  });
+});
+
+describe('PublicProfile — atalho de edicao', () => {
+  function entrarComo(id: string) {
+    localStorage.setItem(
+      'user',
+      JSON.stringify({ id, email: 'a@b.c', first_name: 'Jeh', last_name: 'Rodrigues', role: 'ATHLETE' })
+    );
+  }
+
+  it('oferece "Editar perfil" para o dono do perfil', async () => {
+    // O id da rota e "abc": o dono e quem tem esse mesmo id na sessao.
+    entrarComo('abc');
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify(DTO), { status: 200 })
+    );
+
+    renderProfile();
+
+    expect(await screen.findByRole('link', { name: /Editar perfil/ })).toHaveAttribute(
+      'href',
+      '/profiles/me/edit'
+    );
+  });
+
+  it('nao oferece "Editar perfil" para visitante', async () => {
+    entrarComo('outro-usuario');
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify(DTO), { status: 200 })
+    );
+
+    renderProfile();
+
+    await screen.findByText('Jeh Rodrigues');
+    expect(screen.queryByText(/Editar perfil/)).not.toBeInTheDocument();
+  });
+
+  it('nao oferece "Editar perfil" quando nao ha sessao gravada', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify(DTO), { status: 200 })
+    );
+
+    renderProfile();
+
+    await screen.findByText('Jeh Rodrigues');
+    expect(screen.queryByText(/Editar perfil/)).not.toBeInTheDocument();
+  });
+});

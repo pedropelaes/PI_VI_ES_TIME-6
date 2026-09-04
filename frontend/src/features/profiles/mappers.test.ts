@@ -6,6 +6,7 @@ import {
   formatHeight,
   formatLocation,
   formatPosition,
+  resolveAvatarUrl,
   toAthleteProfileView,
   toClubProfileView,
   toScoutProfileView,
@@ -24,6 +25,7 @@ const DTO: AthleteProfileDTO = {
   city: 'Campinas',
   state: 'SP',
   current_club: null,
+  club_history: null,
   bio: null,
   avatar_url: null,
   clips_count: 42,
@@ -204,5 +206,33 @@ describe('toClubProfileView', () => {
 
     expect(view.legalNameLabel).toBe('—');
     expect(view.cnpjLabel).toBe('—');
+  });
+});
+
+describe('resolveAvatarUrl', () => {
+  it('prefixa o caminho relativo com a base da API', () => {
+    // O backend devolve "/uploads/avatars/...", servido sob o prefixo da API.
+    expect(resolveAvatarUrl('/uploads/avatars/abc.png')).toContain(
+      '/uploads/avatars/abc.png'
+    );
+    expect(resolveAvatarUrl('/uploads/avatars/abc.png')).not.toBe(
+      '/uploads/avatars/abc.png'
+    );
+  });
+
+  it('devolve null quando nao ha avatar', () => {
+    expect(resolveAvatarUrl(null)).toBeNull();
+  });
+
+  it('deixa passar uma URL absoluta', () => {
+    expect(resolveAvatarUrl('https://cdn.exemplo.com/a.png')).toBe(
+      'https://cdn.exemplo.com/a.png'
+    );
+  });
+
+  it('o view model do atleta ja entrega a URL pronta para o img', () => {
+    const view = toAthleteProfileView({ ...DTO, avatar_url: '/uploads/avatars/abc.png' });
+
+    expect(view.avatarUrl).toContain('/uploads/avatars/abc.png');
   });
 });

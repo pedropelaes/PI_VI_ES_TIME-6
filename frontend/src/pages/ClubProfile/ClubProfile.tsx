@@ -1,6 +1,7 @@
 import { useParams } from 'react-router-dom';
 import { Shield } from 'lucide-react';
 import { ClubDetails } from '../../features/profiles/components/ClubDetails';
+import { EditProfileButton } from '../../features/profiles/components/EditProfileButton';
 import {
   ProfileShell,
   ProfileStateScreen,
@@ -30,9 +31,11 @@ export default function ClubProfile() {
   return (
     <ProfileShell
       initial={profile.initial}
+      avatarUrl={profile.avatarUrl}
       fullName={profile.fullName}
       location={profile.location}
       bio={profile.bio}
+      actions={<EditProfileButton userId={userId} />}
       bioFallback="Este clube ainda não escreveu uma bio."
       badges={
         <span className="badge badge-primary">

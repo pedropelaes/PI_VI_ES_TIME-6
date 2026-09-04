@@ -1,3 +1,4 @@
+import { API_BASE } from '../../shared/lib/httpClient';
 import type {
   AthleteProfileDTO,
   AthleteProfileView,
@@ -13,7 +14,7 @@ import type {
 
 const SEM_VALOR = '—';
 
-const POSITION_LABELS: Record<Position, string> = {
+export const POSITION_LABELS: Record<Position, string> = {
   GOLEIRO: 'Goleiro',
   ZAGUEIRO: 'Zagueiro',
   LATERAL: 'Lateral',
@@ -22,13 +23,13 @@ const POSITION_LABELS: Record<Position, string> = {
   ATACANTE: 'Atacante',
 };
 
-const FOOT_LABELS: Record<DominantFoot, string> = {
+export const FOOT_LABELS: Record<DominantFoot, string> = {
   DESTRO: 'Destro',
   CANHOTO: 'Canhoto',
   AMBIDESTRO: 'Ambidestro',
 };
 
-const STATUS_LABELS: Record<AthleteStatus, string> = {
+export const STATUS_LABELS: Record<AthleteStatus, string> = {
   DISPONIVEL: 'Disponível para Clube',
   CONTRATADO: 'Contratado',
   NAO_DISPONIVEL: 'Não disponível',
@@ -50,6 +51,24 @@ export function formatHeight(heightCm: number | null): string {
   const centimetersLabel = String(centimeters).padStart(2, '0');
 
   return `${meters},${centimetersLabel} m`;
+}
+
+/**
+ * `avatar_url` chega relativo (`/uploads/avatars/...`) porque o backend monta o
+ * StaticFiles sob o prefixo da API. Concatenar com VITE_API_PATH e a mesma
+ * convencao ja usada para clipes e thumbnails.
+ */
+export function resolveAvatarUrl(avatarUrl: string | null): string | null {
+  if (!avatarUrl) {
+    return null;
+  }
+
+  // Uma URL absoluta (outro storage, no futuro) ja esta pronta para uso.
+  if (/^https?:\/\//i.test(avatarUrl)) {
+    return avatarUrl;
+  }
+
+  return `${API_BASE}${avatarUrl}`;
 }
 
 export function formatLocation(city: string | null, state: string | null): string {
@@ -93,12 +112,12 @@ export function toAthleteProfileView(dto: AthleteProfileDTO): AthleteProfileView
     footLabel: formatFoot(dto.dominant_foot),
     currentClub: dto.current_club,
     bio: dto.bio,
-    avatarUrl: dto.avatar_url,
+    avatarUrl: resolveAvatarUrl(dto.avatar_url),
     clipsCount: dto.clips_count,
   };
 }
 
-const CATEGORY_LABELS: Record<ClubCategory, string> = {
+export const CATEGORY_LABELS: Record<ClubCategory, string> = {
   SUB_15: 'Sub-15',
   SUB_17: 'Sub-17',
   SUB_20: 'Sub-20',
@@ -150,7 +169,7 @@ export function toScoutProfileView(dto: ScoutProfileDTO): ScoutProfileView {
     credentialLabel: textOrDash(dto.credential),
     location: formatLocation(dto.city, dto.state),
     bio: dto.bio,
-    avatarUrl: dto.avatar_url,
+    avatarUrl: resolveAvatarUrl(dto.avatar_url),
   };
 }
 
@@ -164,6 +183,6 @@ export function toClubProfileView(dto: ClubProfileDTO): ClubProfileView {
     categoryLabels: formatCategories(dto.categories),
     location: formatLocation(dto.city, dto.state),
     bio: dto.bio,
-    avatarUrl: dto.avatar_url,
+    avatarUrl: resolveAvatarUrl(dto.avatar_url),
   };
 }

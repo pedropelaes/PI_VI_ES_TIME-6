@@ -5,6 +5,13 @@ import type { UserRole } from './userRole';
  * Nenhum componente monta `/athletes/...`, `/scouts/...` ou `/clubs/...` na mao:
  * se a estrutura de rotas mudar, muda so aqui.
  */
+/**
+ * Edicao do proprio perfil. Nao depende do papel — quem descobre o papel e o
+ * `GET /profiles/me` — mas mora aqui pela mesma razao das rotas por papel:
+ * nenhuma tela escreve o caminho na mao.
+ */
+export const PROFILE_EDIT_PATH = '/profiles/me/edit';
+
 const SEGMENT_BY_ROLE: Record<UserRole, string> = {
   ATHLETE: 'athletes',
   SCOUT: 'scouts',

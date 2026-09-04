@@ -28,8 +28,10 @@ export function ProfileStateScreen({ message }: { message: string }) {
 }
 
 interface ProfileShellProps {
-  /** Inicial exibida no avatar enquanto nao ha upload de imagem (fora de escopo). */
+  /** Inicial exibida no avatar quando o usuario ainda nao enviou imagem. */
   initial: string;
+  /** Ja absoluta (o mapper concatena VITE_API_PATH); null cai para a inicial. */
+  avatarUrl?: string | null;
   fullName: string;
   location: string;
   bio: string | null;
@@ -50,6 +52,7 @@ interface ProfileShellProps {
  */
 export function ProfileShell({
   initial,
+  avatarUrl,
   fullName,
   location,
   bio,
@@ -61,7 +64,17 @@ export function ProfileShell({
   return (
     <ProfileFrame>
       <div className="profile-header-card">
-        <div className="public-avatar">{initial}</div>
+        <div className="public-avatar">
+          {avatarUrl ? (
+            <img
+              className="public-avatar-image"
+              src={avatarUrl}
+              alt={`Foto de perfil de ${fullName}`}
+            />
+          ) : (
+            initial
+          )}
+        </div>
 
         <div className="profile-main-info">
           {badges && <div className="profile-badges">{badges}</div>}

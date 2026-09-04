@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { ApiError, httpGet, httpPut } from './httpClient';
+import { ApiError, httpDelete, httpGet, httpPostForm, httpPut } from './httpClient';
 
 describe('httpClient', () => {
   beforeEach(() => {
@@ -96,6 +96,31 @@ describe('httpClient', () => {
       throw new Error('esperava que o erro fosse uma ApiError');
     }
     expect(erro403.unauthorized).toBe(true);
+  });
+
+  it('nao fixa Content-Type no multipart, para o browser definir o boundary', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify({}), { status: 200 })
+    );
+    const form = new FormData();
+    form.append('file', new File(['x'], 'a.png', { type: 'image/png' }));
+
+    await httpPostForm('/profiles/me/avatar', form);
+
+    const [, init] = fetchSpy.mock.calls[0];
+    const headers = (init?.headers ?? {}) as Record<string, string>;
+    expect(headers['Content-Type']).toBeUndefined();
+    expect(headers.Authorization).toBe('Bearer token-de-teste');
+    expect(init?.body).toBe(form);
+  });
+
+  it('faz DELETE com o JWT e aceita 204 sem corpo', async () => {
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(null, { status: 204 })
+    );
+
+    await expect(httpDelete('/profiles/me/avatar')).resolves.toBeUndefined();
+    expect(fetchSpy.mock.calls[0][1]?.method).toBe('DELETE');
   });
 
   it('devolve undefined para resposta 204 sem corpo', async () => {

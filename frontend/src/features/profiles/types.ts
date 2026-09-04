@@ -23,9 +23,17 @@ export interface AthleteProfileDTO {
   city: string | null;
   state: string | null;
   current_club: string | null;
+  /** Texto livre multilinha (decisao E1 da spec de edicao de perfil). */
+  club_history: string | null;
   bio: string | null;
   avatar_url: string | null;
   clips_count: number;
+  /**
+   * Opcional de proposito: a resposta publica expoe `age` derivada, nao a data.
+   * O formulario de edicao escreve `birth_date` no PUT, entao o campo comeca
+   * vazio quando a API nao o devolve — e so vai no payload se o usuario mexer.
+   */
+  birth_date?: string | null;
 }
 
 /** O que a tela consome: tudo ja formatado, sem logica no JSX. */

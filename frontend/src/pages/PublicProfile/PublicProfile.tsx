@@ -10,6 +10,7 @@ import {
   Shield,
 } from 'lucide-react';
 import { AthleteStats } from '../../features/profiles/components/AthleteStats';
+import { EditProfileButton } from '../../features/profiles/components/EditProfileButton';
 import {
   ProfileShell,
   ProfileStateScreen,
@@ -42,6 +43,7 @@ export default function PublicProfile() {
   return (
     <ProfileShell
       initial={profile.initial}
+      avatarUrl={profile.avatarUrl}
       fullName={profile.fullName}
       location={profile.location}
       bio={profile.bio}
@@ -64,6 +66,7 @@ export default function PublicProfile() {
       actions={
         // Seguir/Salvar chegam na fatia 3 e Enviar Mensagem pertence ao M5.
         <>
+          <EditProfileButton userId={userId} />
           <button className="btn-secondary" disabled title="Disponível em breve">
             <Check size={18} /> Seguir
           </button>
