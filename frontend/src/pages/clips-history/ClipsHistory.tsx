@@ -2,20 +2,28 @@ import React, { useEffect, useMemo, useState } from "react";
 import { ClipCard, ClipData } from "../../components/clip-card/ClipCard";
 import { Grid } from "../../components/grid/Grid";
 import './ClipsHistory.css'
-import { Search, ChevronDown } from "lucide-react";
-import { listClips, ClipHistoryGroup } from "../../services/api";
+import { Search, ChevronDown, Trash2 } from "lucide-react";
+import { listClips, deleteJobClips, ClipHistoryGroup } from "../../services/api";
 
-type ClipWithDate = ClipData & { generatedAt: string; videoUrl?: string };
+type ClipWithDate = ClipData & { generatedAt: string; videoUrl?: string; jobId: string };
+
+function parseGeneratedAt(generatedAt: string): number {
+    const [datePart, timePart] = generatedAt.split(" - ");
+    const [day, month, year] = datePart.split("/").map(Number);
+    const [hour, minute] = timePart.split(":").map(Number);
+    return new Date(year, month - 1, day, hour, minute).getTime();
+}
 
 function groupToClips(group: ClipHistoryGroup): ClipWithDate[] {
     return group.clips.map((clip, i) => ({
         id:           clip.id,
         title:        `CLIP#${String(i + 1).padStart(3, "0")}`,
-        status:       "completed" as const,
+        status:       (clip.status === 'DELETED' || !clip.file_url) ? 'expired' : 'completed',
         thumbnailUrl: undefined,
         duration:     clip.duration,
         generatedAt:  group.generated_at,
-        videoUrl:     clip.file_url,
+        videoUrl:     clip.file_url || undefined,
+        jobId:        group.job_id,
     }));
 }
 
@@ -38,14 +46,49 @@ export default function ClipsHistory() {
         return groups.flatMap(groupToClips);
     }, [groups]);
 
+    function handleClipDeleted(clipId: string) {
+        setGroups(prev =>
+            prev
+                .map(group => ({ ...group, clips: group.clips.filter(c => c.id !== clipId) }))
+                .filter(group => group.clips.length > 0)
+        );
+        setModalSession(prev => {
+            if (!prev) return prev;
+            const clips = prev.clips.filter(c => c.id !== clipId);
+            return clips.length > 0 ? { ...prev, clips } : null;
+        });
+    }
+
+    async function handleDeleteJobs(jobIds: string[], clipCount: number) {
+        const label = jobIds.length > 1 ? "essa sessão" : "esse job";
+        const confirmed = window.confirm(
+            `Apagar ${label} do histórico? Isso vai apagar permanentemente os ${clipCount} clipe(s) gerados. Essa ação não pode ser desfeita.`
+        );
+        if (!confirmed) return;
+
+        try {
+            await Promise.all(jobIds.map(id => deleteJobClips(id)));
+            const idsToRemove = new Set(jobIds);
+            setGroups(prev => prev.filter(g => !idsToRemove.has(g.job_id)));
+            setModalSession(prev => {
+                if (!prev) return prev;
+                const clips = prev.clips.filter(c => !idsToRemove.has(c.jobId));
+                return clips.length > 0 ? { ...prev, clips } : null;
+            });
+        } catch (err) {
+            console.error("Erro ao apagar job:", err);
+            alert("Não foi possível apagar os clipes desse job. Tente novamente.");
+        }
+    }
+
     const filteredClips = useMemo(() => {
         const normalized = search.trim().toLowerCase();
         const filtered = allClips.filter(clip =>
             !normalized || clip.title.toLowerCase().includes(normalized)
         );
         return filtered.sort((a, b) => {
-            if (sortBy === "recent") return b.generatedAt.localeCompare(a.generatedAt);
-            return a.generatedAt.localeCompare(b.generatedAt);
+            const diff = parseGeneratedAt(a.generatedAt) - parseGeneratedAt(b.generatedAt);
+            return sortBy === "recent" ? -diff : diff;
         });
     }, [allClips, search, sortBy]);
 
@@ -122,11 +165,19 @@ export default function ClipsHistory() {
                                 <div className="clip-group-header">
                                     <span>Clipes gerados em: </span>
                                     <span className="clip-group-date">{date}</span>
+                                    <button
+                                        className="clip-group-delete-button"
+                                        onClick={() => handleDeleteJobs([...new Set(clips.map(c => c.jobId))], clips.length)}
+                                        title="Apagar todos os clipes dessa sessão"
+                                        aria-label={`Apagar todos os clipes gerados em ${date}`}
+                                    >
+                                        <Trash2 size={18} />
+                                    </button>
                                 </div>
 
                                 <Grid>
                                     {clips.slice(0, 5).map(clip => (
-                                        <ClipCard key={clip.id} clip={clip} />
+                                        <ClipCard key={clip.id} clip={clip} onDeleted={handleClipDeleted} />
                                     ))}
                                     <div
                                         className="see-all-card"
@@ -157,11 +208,21 @@ export default function ClipsHistory() {
                     <div className="modal-content" onClick={e => e.stopPropagation()}>
                         <div className="modal-header">
                             <span>Clipes gerados em: <strong>{modalSession.date}</strong></span>
-                            <button onClick={() => setModalSession(null)}>✕</button>
+                            <div className="modal-header-actions">
+                                <button
+                                    className="modal-delete-button"
+                                    onClick={() => handleDeleteJobs([...new Set(modalSession.clips.map(c => c.jobId))], modalSession.clips.length)}
+                                    title="Apagar todos os clipes dessa sessão"
+                                    aria-label="Apagar todos os clipes dessa sessão"
+                                >
+                                    <Trash2 size={20} />
+                                </button>
+                                <button onClick={() => setModalSession(null)}>✕</button>
+                            </div>
                         </div>
                         <Grid>
                             {modalSession.clips.map(clip => (
-                                <ClipCard key={clip.id} clip={clip} />
+                                <ClipCard key={clip.id} clip={clip} onDeleted={handleClipDeleted} />
                             ))}
                         </Grid>
                     </div>

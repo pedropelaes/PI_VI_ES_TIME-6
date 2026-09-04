@@ -1,14 +1,14 @@
-import { AlertCircle, Download } from "lucide-react";
+import { AlertCircle, Download, Trash2 } from "lucide-react";
 import './ClipCard.css';
-import { downloadClip } from "../../services/api";
+import { downloadClip, deleteClip } from "../../services/api";
 
-export type ClipStatus = 'generating' | 'completed' | 'error';
+export type ClipStatus = 'generating' | 'completed' | 'error' | 'expired';
 
 export interface ClipData {
     id: string;
     title: string;
     status: ClipStatus;
-    progress?: number; 
+    progress?: number;
     thumbnailUrl?: string;
     duration?: string;
     videoUrl?: string;
@@ -16,9 +16,10 @@ export interface ClipData {
 
 interface ClipCardProps {
     clip: ClipData;
+    onDeleted?: (clipId: string) => void;
 }
 
-export function ClipCard({ clip }: ClipCardProps) {
+export function ClipCard({ clip, onDeleted }: ClipCardProps) {
 
     async function handleDownload() {
         if (!clip.videoUrl) return;
@@ -29,7 +30,18 @@ export function ClipCard({ clip }: ClipCardProps) {
                 alert("Não foi possível baixar o clipe. Tente novamente.");
             }
     }
-    
+
+    async function handleDelete() {
+        if (!window.confirm(`Apagar o clipe "${clip.title}"? Essa ação não pode ser desfeita.`)) return;
+        try {
+            await deleteClip(clip.id);
+            onDeleted?.(clip.id);
+        } catch (err) {
+            console.error("Erro ao apagar clipe:", err);
+            alert("Não foi possível apagar o clipe. Tente novamente.");
+        }
+    }
+
     // EARLY RETURN: Renderiza o Skeleton se estiver processando
     if (clip.status === 'generating') {
         return (
@@ -45,7 +57,7 @@ export function ClipCard({ clip }: ClipCardProps) {
         );
     }
 
-    // Renderização normal para Concluído ou Erro
+    // Renderização normal para Concluído, Erro ou Expirado
     return (
         <div className="clip-card">
             
@@ -54,6 +66,13 @@ export function ClipCard({ clip }: ClipCardProps) {
                     <div className="media-overlay error">
                         <AlertCircle size={32} color="#EF4444" />
                         <span>Falha ao separar clipe</span>
+                    </div>
+                )}
+
+                {clip.status === 'expired' && (
+                    <div className="media-overlay expired">
+                        <AlertCircle size={32} color="#9ca3af" />
+                        <span style={{ marginTop: '8px' }}>Clipe expirado</span>
                     </div>
                 )}
 
@@ -67,18 +86,28 @@ export function ClipCard({ clip }: ClipCardProps) {
                 )}
             </div>
 
-            {clip.status === 'completed' && (
+            {(clip.status === 'completed' || clip.status === 'expired') && (
                 <div className="clip-card-info">
                     <h3 className="clip-title">{clip.title}</h3>
                     <div className="clip-actions">
+                        {clip.status === 'completed' && (
+                            <button
+                                className="download-button"
+                                onClick={handleDownload}
+                                disabled={!clip.videoUrl}
+                                title={clip.videoUrl ? "Baixar clipe" : "URL do clipe não disponível"}
+                                aria-label={`Baixar ${clip.title}`}
+                            >
+                                <Download size={18} />
+                            </button>
+                        )}
                         <button
-                            className="download-button"
-                            onClick={handleDownload}
-                            disabled={!clip.videoUrl}
-                            title={clip.videoUrl ? "Baixar clipe" : "URL do clipe não disponível"}
-                            aria-label={`Baixar ${clip.title}`}
+                            className="delete-button"
+                            onClick={handleDelete}
+                            title="Apagar clipe"
+                            aria-label={`Apagar ${clip.title}`}
                         >
-                            <Download size={18} />
+                            <Trash2 size={18} />
                         </button>
                     </div>
                 </div>
