@@ -42,6 +42,30 @@ function renderProfile() {
   );
 }
 
+/**
+ * A pagina dispara dois GETs distintos (perfil e clipes), entao o mock de
+ * `fetch` precisa responder cada rota com um corpo proprio — um unico
+ * `mockResolvedValue` faria o clipe receber o DTO do perfil (nao e array) e
+ * quebrar `useAthleteClips`. Por padrao a rota de clipes devolve lista vazia:
+ * os testes que nao sao sobre a aba de clipes nao precisam se preocupar com ela.
+ */
+function mockFetch(
+  profileBody: unknown,
+  options: { profileStatus?: number; clips?: unknown[] } = {}
+) {
+  const { profileStatus = 200, clips = [] } = options;
+
+  vi.spyOn(globalThis, 'fetch').mockImplementation((input) => {
+    const url = typeof input === 'string' ? input : input.toString();
+
+    if (url.includes('/clips/athletes/')) {
+      return Promise.resolve(new Response(JSON.stringify(clips), { status: 200 }));
+    }
+
+    return Promise.resolve(new Response(JSON.stringify(profileBody), { status: profileStatus }));
+  });
+}
+
 afterEach(() => {
   vi.restoreAllMocks();
   localStorage.clear();
@@ -57,9 +81,7 @@ describe('PublicProfile', () => {
   });
 
   it('mostra atleta nao encontrado no 404', async () => {
-    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-      new Response(JSON.stringify({ detail: 'Atleta não encontrado.' }), { status: 404 })
-    );
+    mockFetch({ detail: 'Atleta não encontrado.' }, { profileStatus: 404 });
 
     renderProfile();
 
@@ -67,9 +89,7 @@ describe('PublicProfile', () => {
   });
 
   it('mostra nome e altura formatada quando o perfil carrega', async () => {
-    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-      new Response(JSON.stringify(DTO), { status: 200 })
-    );
+    mockFetch(DTO);
 
     renderProfile();
 
@@ -78,9 +98,7 @@ describe('PublicProfile', () => {
   });
 
   it('mostra os numeros do atleta, que sao especificos do papel', async () => {
-    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-      new Response(JSON.stringify(DTO), { status: 200 })
-    );
+    mockFetch(DTO);
 
     renderProfile();
 
@@ -91,9 +109,7 @@ describe('PublicProfile', () => {
   });
 
   it('usa o texto neutro quando o atleta nao escreveu bio', async () => {
-    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-      new Response(JSON.stringify(DTO), { status: 200 })
-    );
+    mockFetch(DTO);
 
     renderProfile();
 
@@ -103,9 +119,7 @@ describe('PublicProfile', () => {
   });
 
   it('mostra o erro generico no 500, e nao a mensagem de nao encontrado', async () => {
-    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-      new Response(JSON.stringify({ detail: 'boom' }), { status: 500 })
-    );
+    mockFetch({ detail: 'boom' }, { profileStatus: 500 });
 
     renderProfile();
 
@@ -118,12 +132,7 @@ describe('PublicProfile', () => {
 
 describe('PublicProfile — avatar', () => {
   it('mostra a foto do atleta quando ha avatar', async () => {
-    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-      new Response(
-        JSON.stringify({ ...DTO, avatar_url: '/uploads/avatars/abc.png' }),
-        { status: 200 }
-      )
-    );
+    mockFetch({ ...DTO, avatar_url: '/uploads/avatars/abc.png' });
 
     renderProfile();
 
@@ -132,9 +141,7 @@ describe('PublicProfile — avatar', () => {
   });
 
   it('cai para a inicial do nome quando nao ha avatar', async () => {
-    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-      new Response(JSON.stringify(DTO), { status: 200 })
-    );
+    mockFetch(DTO);
 
     renderProfile();
 
@@ -155,9 +162,7 @@ describe('PublicProfile — atalho de edicao', () => {
   it('oferece "Editar perfil" para o dono do perfil', async () => {
     // O id da rota e "abc": o dono e quem tem esse mesmo id na sessao.
     entrarComo('abc');
-    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-      new Response(JSON.stringify(DTO), { status: 200 })
-    );
+    mockFetch(DTO);
 
     renderProfile();
 
@@ -169,9 +174,7 @@ describe('PublicProfile — atalho de edicao', () => {
 
   it('nao oferece "Editar perfil" para visitante', async () => {
     entrarComo('outro-usuario');
-    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-      new Response(JSON.stringify(DTO), { status: 200 })
-    );
+    mockFetch(DTO);
 
     renderProfile();
 
@@ -180,9 +183,7 @@ describe('PublicProfile — atalho de edicao', () => {
   });
 
   it('nao oferece "Editar perfil" quando nao ha sessao gravada', async () => {
-    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-      new Response(JSON.stringify(DTO), { status: 200 })
-    );
+    mockFetch(DTO);
 
     renderProfile();
 
@@ -191,17 +192,70 @@ describe('PublicProfile — atalho de edicao', () => {
   });
 });
 
+describe('PublicProfile — aba de clipes', () => {
+  function entrarComo(id: string) {
+    localStorage.setItem(
+      'user',
+      JSON.stringify({ id, email: 'a@b.c', first_name: 'Jeh', last_name: 'Rodrigues', role: 'ATHLETE' })
+    );
+  }
+
+  it('rotula a aba como "Seus clipes" para o dono do perfil', async () => {
+    // O id da rota e "abc": o dono e quem tem esse mesmo id na sessao.
+    entrarComo('abc');
+    mockFetch(DTO);
+
+    renderProfile();
+
+    expect(await screen.findByText('Seus clipes')).toBeInTheDocument();
+    expect(screen.queryByText('Clipes')).not.toBeInTheDocument();
+  });
+
+  it('rotula a aba como "Clipes" para um visitante', async () => {
+    entrarComo('outro-usuario');
+    mockFetch(DTO);
+
+    renderProfile();
+
+    await screen.findByText('Jeh Rodrigues');
+    expect(screen.getByText('Clipes')).toBeInTheDocument();
+    expect(screen.queryByText('Seus clipes')).not.toBeInTheDocument();
+  });
+
+  it('mostra o estado vazio quando o atleta nao tem clipes', async () => {
+    mockFetch(DTO, { clips: [] });
+
+    renderProfile();
+
+    expect(
+      await screen.findByText('Este atleta ainda não publicou clipes.')
+    ).toBeInTheDocument();
+  });
+
+  it('mostra os clipes quando ha dados', async () => {
+    mockFetch(DTO, {
+      clips: [
+        {
+          id: 'clip-1',
+          duration_seconds: 65,
+          file_url: '/uploads/clips/job-1/clip-1.mp4',
+          created_at: '2026-09-01T10:00:00Z',
+        },
+      ],
+    });
+
+    renderProfile();
+
+    expect(await screen.findByText('1:05')).toBeInTheDocument();
+  });
+});
+
 describe('PublicProfile — histórico de clubes', () => {
   it('mostra o historico quando o atleta escreveu', async () => {
-    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-      new Response(
-        JSON.stringify({
-          ...DTO,
-          club_history: 'Base - Clube Local (2022-2024)\nSub-20 - Regional FC (2024-2025)',
-        }),
-        { status: 200 }
-      )
-    );
+    mockFetch({
+      ...DTO,
+      club_history: 'Base - Clube Local (2022-2024)\nSub-20 - Regional FC (2024-2025)',
+    });
 
     renderProfile();
 
@@ -219,9 +273,7 @@ describe('PublicProfile — histórico de clubes', () => {
   });
 
   it('nao mostra nada relacionado a historico quando o campo e nulo', async () => {
-    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-      new Response(JSON.stringify(DTO), { status: 200 })
-    );
+    mockFetch(DTO);
 
     renderProfile();
 

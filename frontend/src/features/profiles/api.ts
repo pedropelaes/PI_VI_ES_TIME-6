@@ -4,7 +4,12 @@ import {
   httpPostForm,
   httpPut,
 } from '../../shared/lib/httpClient';
-import type { AthleteProfileDTO, ClubProfileDTO, ScoutProfileDTO } from './types';
+import type {
+  AthleteClipDTO,
+  AthleteProfileDTO,
+  ClubProfileDTO,
+  ScoutProfileDTO,
+} from './types';
 
 /**
  * Uma rota publica por papel (decisao Q2). Cada uma devolve 404 quando o id nao
@@ -21,6 +26,15 @@ export function getScoutProfile(userId: string): Promise<ScoutProfileDTO> {
 
 export function getClubProfile(userId: string): Promise<ClubProfileDTO> {
   return httpGet<ClubProfileDTO>(`/profiles/clubs/${userId}`);
+}
+
+/**
+ * Clipes publicados pelo atleta, mais novo primeiro. Atleta sem clipes devolve
+ * lista vazia com 200; id inexistente ou sem papel de atleta devolve 404,
+ * igual a `GET /profiles/athletes/{user_id}` que renderiza a mesma pagina.
+ */
+export function getAthleteClips(userId: string): Promise<AthleteClipDTO[]> {
+  return httpGet<AthleteClipDTO[]>(`/clips/athletes/${userId}`);
 }
 
 /**

@@ -55,6 +55,21 @@ export interface AthleteProfileView {
   clipsCount: number;
 }
 
+/** Resposta crua de GET /clips/athletes/{user_id}, um item da lista. */
+export interface AthleteClipDTO {
+  id: string;
+  duration_seconds: number;
+  file_url: string;
+  created_at: string;
+}
+
+/** O que a aba de clipes consome: duracao formatada e URL pronta para o `<video>`. */
+export interface AthleteClipView {
+  id: string;
+  durationLabel: string;
+  videoUrl: string;
+}
+
 export type ClubCategory = 'SUB_15' | 'SUB_17' | 'SUB_20' | 'PROFISSIONAL';
 
 /** Resposta crua de GET /profiles/scouts/{id}. */

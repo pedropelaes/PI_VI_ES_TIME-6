@@ -1,5 +1,7 @@
 import { API_BASE } from '../../shared/lib/httpClient';
 import type {
+  AthleteClipDTO,
+  AthleteClipView,
   AthleteProfileDTO,
   AthleteProfileView,
   AthleteStatus,
@@ -69,6 +71,40 @@ export function resolveAvatarUrl(avatarUrl: string | null): string | null {
   }
 
   return `${API_BASE}${avatarUrl}`;
+}
+
+/**
+ * `file_url` do clipe chega relativo (`/uploads/clips/{job_id}/{arquivo}`), mesma
+ * convencao do avatar: prefixar com VITE_API_PATH, ja usada em `feed.tsx` e `ClipCard`.
+ * Diferente do avatar, o clipe sempre tem arquivo (soft-deletados sao excluidos no
+ * servidor), entao a entrada nunca e null.
+ */
+export function resolveClipUrl(fileUrl: string): string {
+  if (/^https?:\/\//i.test(fileUrl)) {
+    return fileUrl;
+  }
+
+  return `${API_BASE}${fileUrl}`;
+}
+
+/**
+ * Formata segundos (a API devolve `duration_seconds` como numero, possivelmente
+ * fracionario) como "m:ss", ex. 65.4 -> "1:05".
+ */
+export function formatDuration(durationSeconds: number): string {
+  const totalSeconds = Math.max(0, Math.round(durationSeconds));
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+
+  return `${minutes}:${String(seconds).padStart(2, '0')}`;
+}
+
+export function toAthleteClipView(dto: AthleteClipDTO): AthleteClipView {
+  return {
+    id: dto.id,
+    durationLabel: formatDuration(dto.duration_seconds),
+    videoUrl: resolveClipUrl(dto.file_url),
+  };
 }
 
 export function formatLocation(city: string | null, state: string | null): string {

@@ -2,16 +2,24 @@ import { describe, expect, it } from 'vitest';
 import {
   formatCategories,
   formatCnpj,
+  formatDuration,
   formatFoot,
   formatHeight,
   formatLocation,
   formatPosition,
   resolveAvatarUrl,
+  resolveClipUrl,
+  toAthleteClipView,
   toAthleteProfileView,
   toClubProfileView,
   toScoutProfileView,
 } from './mappers';
-import type { AthleteProfileDTO, ClubProfileDTO, ScoutProfileDTO } from './types';
+import type {
+  AthleteClipDTO,
+  AthleteProfileDTO,
+  ClubProfileDTO,
+  ScoutProfileDTO,
+} from './types';
 
 const DTO: AthleteProfileDTO = {
   user_id: 'abc',
@@ -244,5 +252,57 @@ describe('resolveAvatarUrl', () => {
     const view = toAthleteProfileView({ ...DTO, avatar_url: '/uploads/avatars/abc.png' });
 
     expect(view.avatarUrl).toContain('/uploads/avatars/abc.png');
+  });
+});
+
+describe('formatDuration', () => {
+  it('formata segundos como m:ss', () => {
+    expect(formatDuration(65)).toBe('1:05');
+  });
+
+  it('arredonda um valor fracionario', () => {
+    expect(formatDuration(65.6)).toBe('1:06');
+  });
+
+  it('preenche o zero a esquerda nos segundos', () => {
+    expect(formatDuration(5)).toBe('0:05');
+  });
+
+  it('lida com duracao zero', () => {
+    expect(formatDuration(0)).toBe('0:00');
+  });
+});
+
+describe('resolveClipUrl', () => {
+  it('prefixa o caminho relativo com a base da API', () => {
+    expect(resolveClipUrl('/uploads/clips/job-1/clip.mp4')).toContain(
+      '/uploads/clips/job-1/clip.mp4'
+    );
+    expect(resolveClipUrl('/uploads/clips/job-1/clip.mp4')).not.toBe(
+      '/uploads/clips/job-1/clip.mp4'
+    );
+  });
+
+  it('deixa passar uma URL absoluta', () => {
+    expect(resolveClipUrl('https://cdn.exemplo.com/clip.mp4')).toBe(
+      'https://cdn.exemplo.com/clip.mp4'
+    );
+  });
+});
+
+describe('toAthleteClipView', () => {
+  const CLIP_DTO: AthleteClipDTO = {
+    id: 'clip-1',
+    duration_seconds: 65,
+    file_url: '/uploads/clips/job-1/clip-1.mp4',
+    created_at: '2026-09-01T10:00:00Z',
+  };
+
+  it('monta o view model a partir do DTO', () => {
+    const view = toAthleteClipView(CLIP_DTO);
+
+    expect(view.id).toBe('clip-1');
+    expect(view.durationLabel).toBe('1:05');
+    expect(view.videoUrl).toContain('/uploads/clips/job-1/clip-1.mp4');
   });
 });

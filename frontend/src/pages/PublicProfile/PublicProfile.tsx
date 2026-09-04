@@ -9,13 +9,16 @@ import {
   Play,
   Shield,
 } from 'lucide-react';
+import { getUser } from '../../services/api';
 import { AthleteStats } from '../../features/profiles/components/AthleteStats';
+import { ClipsTab } from '../../features/profiles/components/ClipsTab';
 import { ClubHistory } from '../../features/profiles/components/ClubHistory';
 import { EditProfileButton } from '../../features/profiles/components/EditProfileButton';
 import {
   ProfileShell,
   ProfileStateScreen,
 } from '../../features/profiles/components/ProfileShell';
+import { useAthleteClips } from '../../features/profiles/hooks/useAthleteClips';
 import { useAthleteProfile } from '../../features/profiles/hooks/useAthleteProfile';
 
 type Tab = 'clips' | 'analysis';
@@ -23,7 +26,16 @@ type Tab = 'clips' | 'analysis';
 export default function PublicProfile() {
   const { userId } = useParams<{ userId: string }>();
   const { profile, isLoading, isError, notFound } = useAthleteProfile(userId);
+  const { clips, isLoading: clipsLoading, isError: clipsError } = useAthleteClips(userId);
   const [activeTab, setActiveTab] = useState<Tab>('clips');
+
+  // Mesma comparacao de `EditProfileButton`: o dono do perfil e quem tem esse
+  // mesmo id na sessao gravada. "Seus clipes" so faz sentido para o dono — no
+  // visitante (ex. um scout) o rotulo se referiria aos clipes do atleta como
+  // se fossem do proprio visitante.
+  const storedUser = getUser();
+  const isOwner = Boolean(userId && storedUser && storedUser.id === userId);
+  const clipsTabLabel = isOwner ? 'Seus clipes' : 'Clipes';
 
   if (isLoading) {
     return <ProfileStateScreen message="Carregando perfil..." />;
@@ -90,7 +102,7 @@ export default function PublicProfile() {
           onClick={() => setActiveTab('clips')}
         >
           <Play size={18} className="tab-icon" />
-          Videoteca
+          {clipsTabLabel}
         </button>
         <button
           className={`tab-btn ${activeTab === 'analysis' ? 'active' : ''}`}
@@ -103,11 +115,7 @@ export default function PublicProfile() {
 
       <div className="tabs-content">
         {activeTab === 'clips' && (
-          <div className="placeholder-tab">
-            <Play size={48} />
-            <h3>Videoteca em Construcao</h3>
-            <p>Os clipes deste atleta chegam na proxima fatia.</p>
-          </div>
+          <ClipsTab clips={clips} isLoading={clipsLoading} isError={clipsError} />
         )}
 
         {activeTab === 'analysis' && (
