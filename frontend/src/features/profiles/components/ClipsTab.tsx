@@ -46,7 +46,13 @@ export function ClipsTab({ clips, isLoading, isError }: ClipsTabProps) {
       {clips.map((clip) => (
         <div className="profile-clip-card" key={clip.id}>
           <div className="profile-clip-thumbnail">
-            <video src={clip.videoUrl} preload="metadata" muted />
+            {/*
+              `controls` e o que torna o clipe assistivel: sem ele o <video>
+              servia so de thumbnail e clicar no card nao fazia nada, apesar do
+              cursor: pointer. `preload="metadata"` continua carregando apenas o
+              primeiro quadro ate alguem dar play.
+            */}
+            <video src={clip.videoUrl} preload="metadata" controls />
           </div>
           <div className="profile-clip-info">
             <div className="profile-clip-meta">

@@ -19,10 +19,13 @@ interface UseMyProfileResult {
  * Le `GET /profiles/me`, que devolve `{ role, profile }` conforme o papel do
  * JWT. Previsto na fatia anterior e construido aqui, com a tela de edicao.
  */
-export function useMyProfile(): UseMyProfileResult {
+export function useMyProfile({ enabled = true }: { enabled?: boolean } = {}): UseMyProfileResult {
   const { data, isPending, isError, error, fetchStatus } = useQuery({
     queryKey: MY_PROFILE_QUERY_KEY,
     queryFn: getMyProfile,
+    // A landing e publica: sem `enabled` um visitante deslogado dispararia
+    // GET /profiles/me so para receber 401.
+    enabled,
   });
 
   return {

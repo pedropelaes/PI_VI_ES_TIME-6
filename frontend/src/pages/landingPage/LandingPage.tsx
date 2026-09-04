@@ -18,6 +18,8 @@ import {
 import "./LandingPage.css";
 import logo from "../../assets/logo-smartscout.png";
 import { isAuthenticated, getUser, clearSession } from "../../services/api";
+import { useMyProfile } from "../../features/profiles/hooks/useMyProfile";
+import { resolveAvatarUrl } from "../../features/profiles/mappers";
 
 export default function LandingPage() {
   const navigate = useNavigate();
@@ -30,6 +32,12 @@ export default function LandingPage() {
     ? `${user.first_name} ${user.last_name}`
     : "Usuário";
   const userInitial = userName.charAt(0).toUpperCase();
+
+  // A landing tem navegacao propria, fora do Header compartilhado, entao
+  // precisa buscar o avatar por conta. `enabled` evita chamar /profiles/me
+  // para visitante deslogado, que so receberia 401.
+  const { data: meuPerfil } = useMyProfile({ enabled: loggedIn });
+  const avatarUrl = resolveAvatarUrl(meuPerfil?.profile.avatar_url ?? null);
 
   function handleLogout() {
     clearSession();
@@ -75,7 +83,11 @@ export default function LandingPage() {
                 onClick={() => setShowProfileModal(true)}
                 title="Perfil"
               >
-                <div className="nav-avatar">{userInitial}</div>
+                <div className="nav-avatar">
+                  {avatarUrl
+                    ? <img src={avatarUrl} alt={`Foto de perfil de ${userName}`} className="nav-avatar-img" />
+                    : userInitial}
+                </div>
               </button>
             </>
           ) : (
@@ -95,7 +107,11 @@ export default function LandingPage() {
             </button>
 
             <div className="landing-profile-top">
-              <div className="landing-profile-avatar">{userInitial}</div>
+              <div className="landing-profile-avatar">
+                {avatarUrl
+                  ? <img src={avatarUrl} alt={`Foto de perfil de ${userName}`} className="landing-profile-avatar-img" />
+                  : userInitial}
+              </div>
               <h2 className="landing-profile-name">{userName}</h2>
               <p className="landing-profile-sub">Informações da conta</p>
             </div>
