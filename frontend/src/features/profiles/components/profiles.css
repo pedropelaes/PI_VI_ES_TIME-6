@@ -1,10 +1,17 @@
 /* Estilos compartilhados pelas tres paginas de perfil (atleta, scout, clube). */
+/*
+ * Nao criar um segundo container de scroll aqui. O `.content` do MainLayout ja
+ * e o unico que rola (ver "CHAVE DO SCROLL" em index.css). Com `overflow-y:
+ * auto` e `min-height: 100vh` esta regra virava um scroll aninhado: o interno
+ * consumia seus ~355px e, ao esgotar, o externo deslizava o resto, arrastando o
+ * card do perfil para tras do header fixo -- de onde nao dava para voltar,
+ * porque o ponteiro sobre a area interna rola o container errado.
+ */
 .public-profile-root {
   width: 100%;
-  min-height: 100vh;
+  min-height: 100%;
   background: #0a0f1e;
   position: relative;
-  overflow-y: auto;
   overflow-x: hidden;
   padding-bottom: 4rem;
 }
