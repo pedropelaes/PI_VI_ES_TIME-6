@@ -202,6 +202,29 @@ describe('EditProfile — salvamento parcial', () => {
     expect(Object.keys(JSON.parse(String(writeCalls()[0].body)))).toEqual(['bio']);
   });
 
+  it('depois de salvar, a resposta vira a nova base: salvar de novo nao reenvia', async () => {
+    // A resposta do PUT entra no cache e substitui o `initial` do formulario.
+    mockApi(
+      {
+        ...ATHLETE_ME,
+        profile: { ...ATHLETE_ME.profile, city: 'Santos' },
+      }
+    );
+
+    renderEdit();
+
+    fireEvent.change(await screen.findByLabelText('Cidade'), {
+      target: { value: 'Santos' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar alterações' }));
+
+    await screen.findByText('Perfil atualizado com sucesso.');
+    fireEvent.click(screen.getByRole('button', { name: 'Salvar alterações' }));
+
+    await waitFor(() => expect(writeCalls()).toHaveLength(2));
+    expect(JSON.parse(String(writeCalls()[1].body))).toEqual({});
+  });
+
   it('confirma o sucesso do salvamento', async () => {
     mockApi(ATHLETE_ME);
 
