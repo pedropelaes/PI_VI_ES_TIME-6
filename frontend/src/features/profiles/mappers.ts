@@ -2,8 +2,13 @@ import type {
   AthleteProfileDTO,
   AthleteProfileView,
   AthleteStatus,
+  ClubCategory,
+  ClubProfileDTO,
+  ClubProfileView,
   DominantFoot,
   Position,
+  ScoutProfileDTO,
+  ScoutProfileView,
 } from './types';
 
 const SEM_VALOR = '—';
@@ -90,5 +95,75 @@ export function toAthleteProfileView(dto: AthleteProfileDTO): AthleteProfileView
     bio: dto.bio,
     avatarUrl: dto.avatar_url,
     clipsCount: dto.clips_count,
+  };
+}
+
+const CATEGORY_LABELS: Record<ClubCategory, string> = {
+  SUB_15: 'Sub-15',
+  SUB_17: 'Sub-17',
+  SUB_20: 'Sub-20',
+  PROFISSIONAL: 'Profissional',
+};
+
+/** Campo opcional de texto: vazio ou ausente vira travessao. */
+function textOrDash(value: string | null): string {
+  const trimmed = value?.trim();
+
+  return trimmed ? trimmed : SEM_VALOR;
+}
+
+/**
+ * Formata os 14 digitos do CNPJ como 00.000.000/0000-00. O backend guarda o
+ * campo sem validar digito verificador (fora de escopo desta fatia), entao um
+ * valor com tamanho diferente e devolvido como veio, em vez de ser mutilado.
+ */
+export function formatCnpj(cnpj: string | null): string {
+  if (cnpj == null) {
+    return SEM_VALOR;
+  }
+
+  const digits = cnpj.replace(/\D/g, '');
+
+  if (digits.length !== 14) {
+    return textOrDash(cnpj);
+  }
+
+  return `${digits.slice(0, 2)}.${digits.slice(2, 5)}.${digits.slice(5, 8)}/${digits.slice(8, 12)}-${digits.slice(12)}`;
+}
+
+/**
+ * Traduz as categorias de base para rotulos legiveis. Uma categoria que o front
+ * ainda nao conhece aparece como veio, em vez de sumir da tela.
+ */
+export function formatCategories(categories: string[]): string[] {
+  return categories.map(
+    (category) => CATEGORY_LABELS[category as ClubCategory] ?? category
+  );
+}
+
+export function toScoutProfileView(dto: ScoutProfileDTO): ScoutProfileView {
+  return {
+    userId: dto.user_id,
+    fullName: `${dto.first_name} ${dto.last_name}`.trim(),
+    initial: dto.first_name.charAt(0).toUpperCase(),
+    organizationLabel: textOrDash(dto.organization),
+    credentialLabel: textOrDash(dto.credential),
+    location: formatLocation(dto.city, dto.state),
+    bio: dto.bio,
+    avatarUrl: dto.avatar_url,
+  };
+}
+
+export function toClubProfileView(dto: ClubProfileDTO): ClubProfileView {
+  return {
+    userId: dto.user_id,
+    fullName: `${dto.first_name} ${dto.last_name}`.trim(),
+    initial: dto.first_name.charAt(0).toUpperCase(),
+    legalNameLabel: textOrDash(dto.legal_name),
+    cnpjLabel: formatCnpj(dto.cnpj),
+    categoryLabels: formatCategories(dto.categories),
+    location: formatLocation(dto.city, dto.state),
+    bio: dto.bio,
+    avatarUrl: dto.avatar_url,
   };
 }

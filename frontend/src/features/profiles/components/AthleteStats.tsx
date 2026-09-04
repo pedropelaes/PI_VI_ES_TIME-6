@@ -4,8 +4,8 @@ interface Props {
   profile: AthleteProfileView;
 }
 
-/** Faixa de numeros do perfil. Todos os valores ja chegam formatados do mapper. */
-export function QuickStats({ profile }: Props) {
+/** Numeros do atleta. Todos os valores ja chegam formatados do mapper. */
+export function AthleteStats({ profile }: Props) {
   return (
     <div className="quick-stats-grid">
       <div className="stat-box">

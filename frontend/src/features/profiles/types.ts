@@ -44,3 +44,55 @@ export interface AthleteProfileView {
   avatarUrl: string | null;
   clipsCount: number;
 }
+
+export type ClubCategory = 'SUB_15' | 'SUB_17' | 'SUB_20' | 'PROFISSIONAL';
+
+/** Resposta crua de GET /profiles/scouts/{id}. */
+export interface ScoutProfileDTO {
+  user_id: string;
+  first_name: string;
+  last_name: string;
+  organization: string | null;
+  credential: string | null;
+  city: string | null;
+  state: string | null;
+  bio: string | null;
+  avatar_url: string | null;
+}
+
+export interface ScoutProfileView {
+  userId: string;
+  fullName: string;
+  initial: string;
+  organizationLabel: string;
+  credentialLabel: string;
+  location: string;
+  bio: string | null;
+  avatarUrl: string | null;
+}
+
+/** Resposta crua de GET /profiles/clubs/{id}. */
+export interface ClubProfileDTO {
+  user_id: string;
+  first_name: string;
+  last_name: string;
+  legal_name: string | null;
+  cnpj: string | null;
+  categories: string[];
+  city: string | null;
+  state: string | null;
+  bio: string | null;
+  avatar_url: string | null;
+}
+
+export interface ClubProfileView {
+  userId: string;
+  fullName: string;
+  initial: string;
+  legalNameLabel: string;
+  cnpjLabel: string;
+  categoryLabels: string[];
+  location: string;
+  bio: string | null;
+  avatarUrl: string | null;
+}

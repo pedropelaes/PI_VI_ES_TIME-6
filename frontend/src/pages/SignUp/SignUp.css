@@ -320,3 +320,71 @@
   .signup-header { margin-bottom: 1.5rem; }
   .signup-row { flex-direction: column; gap: 1.1rem; }
 }
+/* Selecao de papel: imutavel apos o cadastro, entao vem com aviso explicito */
+.role-fieldset {
+  border: none;
+  margin: 0;
+  padding: 0;
+}
+
+.role-fieldset legend {
+  padding: 0;
+  margin-bottom: 0.5rem;
+}
+
+.role-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.6rem;
+}
+
+.role-option {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.03);
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.role-option:hover {
+  border-color: rgba(40, 114, 161, 0.6);
+}
+
+.role-option.selected {
+  border-color: #2872A1;
+  background: rgba(40, 114, 161, 0.15);
+}
+
+.role-option input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.role-option-name {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.role-option-hint {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.55);
+  line-height: 1.4;
+}
+
+.role-warning {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0.6rem 0 0 0;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.78rem;
+  color: rgba(255, 255, 255, 0.6);
+}

@@ -11,6 +11,8 @@ import JobContainerPage from './pages/JobContainerPage/JobContainer';
 import ClipsHistory from './pages/clips-history/ClipsHistory';
 import NewPassword from './pages/NewPassword/NewPassword';
 import PublicProfile from './pages/PublicProfile/PublicProfile';
+import ScoutProfile from './pages/ScoutProfile/ScoutProfile';
+import ClubProfile from './pages/ClubProfile/ClubProfile';
 import Feed from './pages/feed/feed';
 
 export default function App() {
@@ -31,6 +33,8 @@ export default function App() {
             <Route path="/feed"             element={<Feed />} />
             <Route path="/clips-history" element={<ClipsHistory />} />
             <Route path="/athletes/:userId" element={<PublicProfile />} />
+            <Route path="/scouts/:userId"   element={<ScoutProfile />} />
+            <Route path="/clubs/:userId"    element={<ClubProfile />} />
           </Route>
 
           <Route path="/processing-clips/:jobId" element={<MainLayout />}>

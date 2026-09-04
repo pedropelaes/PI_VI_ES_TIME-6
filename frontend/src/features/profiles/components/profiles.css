@@ -1,4 +1,4 @@
-/* PublicProfile.css */
+/* Estilos compartilhados pelas tres paginas de perfil (atleta, scout, clube). */
 .public-profile-root {
   width: 100%;
   min-height: 100vh;
@@ -369,4 +369,76 @@
 .placeholder-tab svg {
   opacity: 0.5;
   margin-bottom: 1rem;
+}
+
+/* Bio compartilhada pelos tres perfis, logo abaixo do cabecalho */
+.profile-bio {
+  margin-top: 2rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 1.5rem;
+}
+
+.profile-bio h2 {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.1rem;
+  color: #ffffff;
+  margin: 0 0 0.75rem 0;
+}
+
+.profile-bio p {
+  font-family: 'DM Sans', sans-serif;
+  color: rgba(255, 255, 255, 0.7);
+  line-height: 1.8;
+  margin: 0;
+  white-space: pre-line;
+}
+
+/* Blocos de detalhe especificos de scout e clube */
+.profile-details {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.detail-box {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 1.25rem;
+}
+
+.detail-label {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.4rem;
+}
+
+.detail-value {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #ffffff;
+  word-break: break-word;
+}
+
+.detail-box-wide {
+  grid-column: 1 / -1;
+}
+
+.category-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.badge-neutral {
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.15);
 }

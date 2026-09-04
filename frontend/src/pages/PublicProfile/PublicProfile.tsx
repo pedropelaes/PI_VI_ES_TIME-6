@@ -1,27 +1,22 @@
 import { useState } from 'react';
-import type { ReactNode } from 'react';
 import { useParams } from 'react-router-dom';
-import { Activity, Info, Play } from 'lucide-react';
-import { AboutTab } from '../../features/profiles/components/AboutTab';
-import { ProfileHeader } from '../../features/profiles/components/ProfileHeader';
-import { QuickStats } from '../../features/profiles/components/QuickStats';
+import {
+  Activity,
+  Bookmark,
+  Check,
+  Info,
+  MessageCircle,
+  Play,
+  Shield,
+} from 'lucide-react';
+import { AthleteStats } from '../../features/profiles/components/AthleteStats';
+import {
+  ProfileShell,
+  ProfileStateScreen,
+} from '../../features/profiles/components/ProfileShell';
 import { useAthleteProfile } from '../../features/profiles/hooks/useAthleteProfile';
-import './PublicProfile.css';
 
-type Tab = 'clips' | 'analysis' | 'about';
-
-/** Capa + container: comum a todos os estados, inclusive carregando e erro. */
-function ProfileShell({ children }: { children: ReactNode }) {
-  return (
-    <div className="public-profile-root">
-      <div className="profile-cover">
-        <div className="profile-cover-pattern"></div>
-      </div>
-
-      <div className="public-profile-container">{children}</div>
-    </div>
-  );
-}
+type Tab = 'clips' | 'analysis';
 
 export default function PublicProfile() {
   const { userId } = useParams<{ userId: string }>();
@@ -29,38 +24,59 @@ export default function PublicProfile() {
   const [activeTab, setActiveTab] = useState<Tab>('clips');
 
   if (isLoading) {
-    return (
-      <ProfileShell>
-        <div className="profile-state">Carregando perfil...</div>
-      </ProfileShell>
-    );
+    return <ProfileStateScreen message="Carregando perfil..." />;
   }
 
   // notFound antes de isError: um 404 tambem marca isError, e a mensagem
   // especifica ajuda mais do que a generica.
   if (notFound) {
-    return (
-      <ProfileShell>
-        <div className="profile-state">Atleta nao encontrado.</div>
-      </ProfileShell>
-    );
+    return <ProfileStateScreen message="Atleta nao encontrado." />;
   }
 
   if (isError || !profile) {
     return (
-      <ProfileShell>
-        <div className="profile-state">
-          Nao foi possivel carregar o perfil. Tente novamente em instantes.
-        </div>
-      </ProfileShell>
+      <ProfileStateScreen message="Nao foi possivel carregar o perfil. Tente novamente em instantes." />
     );
   }
 
   return (
-    <ProfileShell>
-      <ProfileHeader profile={profile} />
-
-      <QuickStats profile={profile} />
+    <ProfileShell
+      initial={profile.initial}
+      fullName={profile.fullName}
+      location={profile.location}
+      bio={profile.bio}
+      bioFallback="Este atleta ainda nao escreveu uma bio."
+      badges={
+        <>
+          <span className="badge badge-primary">
+            <Shield size={14} /> {profile.positionLabel}
+          </span>
+          <span className="badge badge-success">
+            <Activity size={14} /> {profile.statusLabel}
+          </span>
+          {profile.currentClub && (
+            <span className="badge badge-neutral">
+              <Info size={14} /> {profile.currentClub}
+            </span>
+          )}
+        </>
+      }
+      actions={
+        // Seguir/Salvar chegam na fatia 3 e Enviar Mensagem pertence ao M5.
+        <>
+          <button className="btn-secondary" disabled title="Disponivel em breve">
+            <Check size={18} /> Seguir
+          </button>
+          <button className="btn-secondary" disabled title="Disponivel em breve">
+            <Bookmark size={18} /> Salvar Atleta
+          </button>
+          <button className="btn-primary" disabled title="Disponivel em breve">
+            <MessageCircle size={18} /> Enviar Mensagem
+          </button>
+        </>
+      }
+    >
+      <AthleteStats profile={profile} />
 
       <div className="tabs-nav">
         <button
@@ -76,13 +92,6 @@ export default function PublicProfile() {
         >
           <Activity size={18} className="tab-icon" />
           Analise Cinematica
-        </button>
-        <button
-          className={`tab-btn ${activeTab === 'about' ? 'active' : ''}`}
-          onClick={() => setActiveTab('about')}
-        >
-          <Info size={18} className="tab-icon" />
-          Sobre
         </button>
       </div>
 
@@ -102,8 +111,6 @@ export default function PublicProfile() {
             <p>Os radares de desempenho ainda estao em desenvolvimento.</p>
           </div>
         )}
-
-        {activeTab === 'about' && <AboutTab profile={profile} />}
       </div>
     </ProfileShell>
   );

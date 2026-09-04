@@ -76,6 +76,31 @@ describe('PublicProfile', () => {
     expect(screen.getByText('1,78 m')).toBeInTheDocument();
   });
 
+  it('mostra os numeros do atleta, que sao especificos do papel', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify(DTO), { status: 200 })
+    );
+
+    renderProfile();
+
+    await screen.findByText('Jeh Rodrigues');
+    expect(screen.getByText('Clipes Gerados IA')).toBeInTheDocument();
+    expect(screen.getByText('42')).toBeInTheDocument();
+    expect(screen.getByText('Atacante')).toBeInTheDocument();
+  });
+
+  it('usa o texto neutro quando o atleta nao escreveu bio', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify(DTO), { status: 200 })
+    );
+
+    renderProfile();
+
+    expect(
+      await screen.findByText('Este atleta ainda nao escreveu uma bio.')
+    ).toBeInTheDocument();
+  });
+
   it('mostra o erro generico no 500, e nao a mensagem de nao encontrado', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(
       new Response(JSON.stringify({ detail: 'boom' }), { status: 500 })
