@@ -120,21 +120,22 @@ def test_register_com_role_athlete(client: TestClient):
     assert resposta.json()["user"]["role"] == "ATHLETE"
 
 
-def test_register_com_role_scout_e_rejeitado(client: TestClient):
+def test_register_com_role_scout(client: TestClient):
     resposta = client.post(
         "/api/v1/auth/register",
         json={**PAYLOAD, "email": "role-scout@example.com", "role": "SCOUT"},
     )
-    assert resposta.status_code == 422
-    assert "ATHLETE" in resposta.json()["detail"]
+    assert resposta.status_code == 200
+    assert resposta.json()["user"]["role"] == "SCOUT"
 
 
-def test_register_com_role_club_e_rejeitado(client: TestClient):
+def test_register_com_role_club(client: TestClient):
     resposta = client.post(
         "/api/v1/auth/register",
         json={**PAYLOAD, "email": "role-club@example.com", "role": "CLUB"},
     )
-    assert resposta.status_code == 422
+    assert resposta.status_code == 200
+    assert resposta.json()["user"]["role"] == "CLUB"
 
 
 # ---------------------------------------------------------------------------
@@ -339,12 +340,13 @@ def test_perfil_recem_criado_e_visivel_na_api(client):
     assert resposta.json()["age"] is None
 
 
-def test_register_e_atomico_se_a_criacao_do_perfil_falhar(client, session):
+@pytest.mark.parametrize("role", ["ATHLETE", "SCOUT", "CLUB"])
+def test_register_e_atomico_se_a_criacao_do_perfil_falhar(client, session, role):
     """
-    Prova a transacao unica: se a criacao do AthleteProfile falhar, o usuario tambem
-    nao pode existir no banco.
+    Prova a transacao unica: se a criacao do perfil falhar, o usuario tambem nao pode
+    existir no banco -- para qualquer um dos tres papeis.
 
-    A falha e forcada substituindo `provision_athlete_profile` (no namespace do router,
+    A falha e forcada substituindo `provision_profile` (no namespace do router,
     unico ponto por onde `identity` alcanca `profiles`, regra D3) por um callable que
     estoura RuntimeError -- equivalente, para fins deste teste, a uma falha do insert em
     si (violacao de constraint, erro de conexao etc.): em ambos os casos a excecao
@@ -357,18 +359,18 @@ def test_register_e_atomico_se_a_criacao_do_perfil_falhar(client, session):
     from app.modules.identity.models import User
     import app.modules.identity.router as identity_router
 
-    email = "atomic@example.com"
+    email = f"atomic-{role.lower()}@example.com"
 
     def _perfil_quebrado(*args, **kwargs):
         raise RuntimeError("falha simulada na criacao do perfil")
 
     with patch.object(
-        identity_router, "provision_athlete_profile", side_effect=_perfil_quebrado
+        identity_router, "provision_profile", side_effect=_perfil_quebrado
     ):
         try:
             resp = client.post(
                 "/api/v1/auth/register",
-                json={**PAYLOAD, "email": email},
+                json={**PAYLOAD, "email": email, "role": role},
             )
         except RuntimeError:
             # A excecao simulada pode subir sem handler dedicado -- o que importa e
@@ -387,3 +389,68 @@ def test_register_e_atomico_se_a_criacao_do_perfil_falhar(client, session):
         "usuario foi persistido mesmo com falha na criacao do perfil -- "
         "commit() e flush() nao estao na mesma transacao"
     )
+
+
+# ---------------------------------------------------------------------------
+# Register — cada papel cria o perfil da sua tabela, e so dela
+# ---------------------------------------------------------------------------
+
+@pytest.mark.parametrize(
+    "role, tabela_do_papel",
+    [("ATHLETE", "athlete"), ("SCOUT", "scout"), ("CLUB", "club")],
+)
+def test_register_cria_perfil_apenas_na_tabela_do_papel(
+    client, session, role, tabela_do_papel
+):
+    """
+    Secao 4.3: `register` aceita os tres papeis e cria o perfil correspondente. O que
+    este teste trava alem disso e a exclusividade -- um usuario com linha em duas
+    tabelas de perfil e tao invalido quanto um sem nenhuma.
+    """
+    import uuid as _uuid
+    from sqlmodel import select
+    from app.modules.profiles.models import AthleteProfile, ClubProfile, ScoutProfile
+
+    tabelas = {"athlete": AthleteProfile, "scout": ScoutProfile, "club": ClubProfile}
+
+    corpo = client.post(
+        "/api/v1/auth/register",
+        json={**PAYLOAD, "email": f"perfil-{role.lower()}@example.com", "role": role},
+    ).json()
+    user_id = _uuid.UUID(corpo["user"]["id"])
+
+    for nome, modelo in tabelas.items():
+        linha = session.exec(
+            select(modelo).where(modelo.user_id == user_id)
+        ).first()
+        if nome == tabela_do_papel:
+            assert linha is not None, f"{role} sem perfil em {nome}_profiles"
+        else:
+            assert linha is None, f"{role} nao pode ter linha em {nome}_profiles"
+
+
+def test_perfil_de_scout_recem_criado_e_visivel_na_api(client):
+    corpo = client.post(
+        "/api/v1/auth/register",
+        json={**PAYLOAD, "email": "scout-visivel@example.com", "role": "SCOUT"},
+    ).json()
+    headers = {"Authorization": f"Bearer {corpo['access_token']}"}
+
+    resposta = client.get(f"/api/v1/profiles/scouts/{corpo['user']['id']}", headers=headers)
+
+    assert resposta.status_code == 200
+    assert resposta.json()["organization"] is None
+
+
+def test_perfil_de_clube_recem_criado_e_visivel_na_api(client):
+    corpo = client.post(
+        "/api/v1/auth/register",
+        json={**PAYLOAD, "email": "clube-visivel@example.com", "role": "CLUB"},
+    ).json()
+    headers = {"Authorization": f"Bearer {corpo['access_token']}"}
+
+    resposta = client.get(f"/api/v1/profiles/clubs/{corpo['user']['id']}", headers=headers)
+
+    assert resposta.status_code == 200
+    # `categories` nasce como lista vazia (server_default '[]'), nunca nulo.
+    assert resposta.json()["categories"] == []

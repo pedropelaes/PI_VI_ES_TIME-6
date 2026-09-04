@@ -5,10 +5,9 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from app.core.deps import get_current_user
 from sqlmodel import Session, select
 from app.core.database import get_session
-from app.core.exceptions import ValidationError
-from app.modules.identity.models import User, PasswordResetToken, UserRole
+from app.modules.identity.models import User, PasswordResetToken
 from app.modules.identity.schemas import UserCreate, UserLogin, UserResponse, Token, TokenPayload
-from app.modules.profiles.service import provision_athlete_profile
+from app.modules.profiles.service import provision_profile
 from app.core.security import hash_password, verify_password, create_access_token
 from pydantic import BaseModel, Field
 import secrets
@@ -29,11 +28,6 @@ def register(data: UserCreate, session: Session = Depends(get_session)):
     """
     Registra um novo usuário. Retorna token e dados do usuário.
     """
-    if data.role is not UserRole.ATHLETE:
-        raise ValidationError(
-            "Nesta versao apenas o papel ATHLETE pode ser cadastrado."
-        )
-
     # Verifica se o e-mail já existe
     statement = select(User).where(User.email == data.email.lower())
     existing = session.exec(statement).first()
@@ -53,7 +47,10 @@ def register(data: UserCreate, session: Session = Depends(get_session)):
     session.add(user)
     session.flush()  # atribui user.id sem encerrar a transacao
 
-    provision_athlete_profile(session, user.id)
+    # Perfil do papel na MESMA transacao: um usuario sem perfil do seu papel e estado
+    # invalido (secao 1 da spec). O `flush()` acima e o que garante a atomicidade --
+    # trocar por `commit()` deixaria o usuario persistido se o perfil falhasse.
+    provision_profile(session, user.id, user.role)
     session.commit()
     session.refresh(user)
 
