@@ -78,17 +78,23 @@ export default function PublicProfile() {
       }
       actions={
         // Seguir/Salvar chegam na fatia 3 e Enviar Mensagem pertence ao M5.
+        // Os tres so aparecem para visitante: seguir, salvar ou mandar mensagem
+        // para si mesmo nao existe como acao.
         <>
           <EditProfileButton userId={userId} />
-          <button className="btn-secondary" disabled title="Disponível em breve">
-            <Check size={18} /> Seguir
-          </button>
-          <button className="btn-secondary" disabled title="Disponível em breve">
-            <Bookmark size={18} /> Salvar Atleta
-          </button>
-          <button className="btn-primary" disabled title="Disponível em breve">
-            <MessageCircle size={18} /> Enviar Mensagem
-          </button>
+          {!isOwner && (
+            <>
+              <button className="btn-secondary" disabled title="Disponível em breve">
+                <Check size={18} /> Seguir
+              </button>
+              <button className="btn-secondary" disabled title="Disponível em breve">
+                <Bookmark size={18} /> Salvar Atleta
+              </button>
+              <button className="btn-primary" disabled title="Disponível em breve">
+                <MessageCircle size={18} /> Enviar Mensagem
+              </button>
+            </>
+          )}
         </>
       }
     >

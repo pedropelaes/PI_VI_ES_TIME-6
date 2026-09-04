@@ -42,14 +42,14 @@ export function ClipsTab({ clips, isLoading, isError }: ClipsTabProps) {
   }
 
   return (
-    <div className="clips-grid">
+    <div className="profile-clips-grid">
       {clips.map((clip) => (
-        <div className="clip-card" key={clip.id}>
-          <div className="clip-thumbnail">
+        <div className="profile-clip-card" key={clip.id}>
+          <div className="profile-clip-thumbnail">
             <video src={clip.videoUrl} preload="metadata" muted />
           </div>
-          <div className="clip-info">
-            <div className="clip-meta">
+          <div className="profile-clip-info">
+            <div className="profile-clip-meta">
               <Clock3 size={14} /> {clip.durationLabel}
             </div>
           </div>

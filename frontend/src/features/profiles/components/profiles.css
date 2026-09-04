@@ -266,14 +266,20 @@
 }
 
 /* Grid de Clipes */
-.clips-grid {
+/*
+ * Prefixo `profile-` obrigatorio: ClipCard.css (do feed) define `.clip-card`
+ * com `aspect-ratio: 16/10` e `overflow: hidden`, e CSS importado no Vite e
+ * global. Sem o prefixo, o card do perfil herdava aquela altura fixa e cortava
+ * a faixa de informacoes embaixo do video.
+ */
+.profile-clips-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 1.5rem;
   margin-top: 2rem;
 }
 
-.clip-card {
+.profile-clip-card {
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 16px;
@@ -282,12 +288,12 @@
   cursor: pointer;
 }
 
-.clip-card:hover {
+.profile-clip-card:hover {
   transform: translateY(-4px);
   border-color: rgba(40, 114, 161, 0.4);
 }
 
-.clip-thumbnail {
+.profile-clip-thumbnail {
   width: 100%;
   height: 160px;
   background: #111827;
@@ -298,7 +304,7 @@
 }
 
 /* Primeiro quadro do clipe como thumbnail (sem coluna de thumbnail no backend). */
-.clip-thumbnail video {
+.profile-clip-thumbnail video {
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -316,11 +322,11 @@
   backdrop-filter: blur(4px);
 }
 
-.clip-info {
+.profile-clip-info {
   padding: 1rem;
 }
 
-.clip-title {
+.profile-clip-title {
   font-family: 'Outfit', sans-serif;
   font-weight: 600;
   color: #fff;
@@ -328,7 +334,7 @@
   font-size: 1rem;
 }
 
-.clip-meta {
+.profile-clip-meta {
   font-family: 'DM Sans', sans-serif;
   font-size: 0.8rem;
   color: rgba(255, 255, 255, 0.4);
