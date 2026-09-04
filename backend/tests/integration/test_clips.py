@@ -102,14 +102,22 @@ def test_delete_clip_success_removes_row_and_file(client: TestClient, session: S
     Path(clip.storage_path).parent.mkdir(parents=True, exist_ok=True)
     Path(clip.storage_path).write_bytes(b"fake mp4 bytes")
 
+    # Capturados antes do expire_all: depois dele, ler um atributo do objeto cuja linha
+    # sumiu (em vez de um id/str plano) dispara ObjectDeletedError ao tentar recarregar.
+    clip_id = clip.id
+    clip_storage_path = clip.storage_path
+
     login = client.post("/api/v1/auth/login", json={"email": user.email, "password": "password123"})
     token = login.json()["access_token"]
 
-    resp = client.delete(f"/api/v1/clips/{clip.id}", headers=auth_headers(token))
+    resp = client.delete(f"/api/v1/clips/{clip_id}", headers=auth_headers(token))
 
     assert resp.status_code == 204
-    assert session.get(Clip, clip.id) is None
-    assert not Path(clip.storage_path).exists()
+    # O request rodou numa Session diferente da do teste; sem isso, session.get devolve o
+    # objeto que ja estava no identity map em vez de consultar o banco de novo.
+    session.expire_all()
+    assert session.get(Clip, clip_id) is None
+    assert not Path(clip_storage_path).exists()
 
 
 def test_delete_clip_empties_job_from_history_list(client: TestClient, session: Session):
@@ -130,6 +138,8 @@ def test_delete_clip_empties_job_from_history_list(client: TestClient, session: 
 def test_delete_clip_last_clip_also_deletes_job_and_video(client: TestClient, session: Session):
     """Apagar o último clipe de um job também apaga o job e o vídeo original (sem outro job usando)."""
     user, job, clip = _create_completed_job_with_clip(session, "deleteclip_owner5@example.com")
+    job_id = job.id
+    clip_id = clip.id
     video_id = job.video_id
     video_path = session.get(Video, video_id).storage_path
     Path(video_path).parent.mkdir(parents=True, exist_ok=True)
@@ -138,10 +148,12 @@ def test_delete_clip_last_clip_also_deletes_job_and_video(client: TestClient, se
     login = client.post("/api/v1/auth/login", json={"email": user.email, "password": "password123"})
     token = login.json()["access_token"]
 
-    resp = client.delete(f"/api/v1/clips/{clip.id}", headers=auth_headers(token))
+    resp = client.delete(f"/api/v1/clips/{clip_id}", headers=auth_headers(token))
 
     assert resp.status_code == 204
-    assert session.get(ProcessingJob, job.id) is None
+    # Idem: forca releitura do banco em vez do identity map desatualizado do teste.
+    session.expire_all()
+    assert session.get(ProcessingJob, job_id) is None
     assert session.get(Video, video_id) is None
     assert not Path(video_path).exists()
 
@@ -193,15 +205,20 @@ def test_delete_job_clips_success_removes_all_rows_and_files(client: TestClient,
         Path(clip.storage_path).parent.mkdir(parents=True, exist_ok=True)
         Path(clip.storage_path).write_bytes(b"fake mp4 bytes")
 
+    # Capturados antes do expire_all: os objetos `clip` tem a linha apagada pelo request, e
+    # ler um atributo deles depois do expire dispara ObjectDeletedError ao tentar recarregar.
+    clip_ids_and_paths = [(clip.id, clip.storage_path) for clip in clips]
+
     login = client.post("/api/v1/auth/login", json={"email": user.email, "password": "password123"})
     token = login.json()["access_token"]
 
     resp = client.delete(f"/api/v1/jobs/{job.id}/clips", headers=auth_headers(token))
 
     assert resp.status_code == 204
-    for clip in clips:
-        assert session.get(Clip, clip.id) is None
-        assert not Path(clip.storage_path).exists()
+    session.expire_all()
+    for clip_id, clip_storage_path in clip_ids_and_paths:
+        assert session.get(Clip, clip_id) is None
+        assert not Path(clip_storage_path).exists()
 
 
 def test_delete_job_clips_removes_job_from_history_list(client: TestClient, session: Session):
@@ -222,6 +239,7 @@ def test_delete_job_clips_removes_job_from_history_list(client: TestClient, sess
 
 def test_delete_job_clips_also_deletes_job_and_video(client: TestClient, session: Session):
     user, job, clips = _create_completed_job_with_clips(session, "deletejob_owner5@example.com", n=2)
+    job_id = job.id
     video_id = job.video_id
     video_path = session.get(Video, video_id).storage_path
     Path(video_path).parent.mkdir(parents=True, exist_ok=True)
@@ -230,10 +248,11 @@ def test_delete_job_clips_also_deletes_job_and_video(client: TestClient, session
     login = client.post("/api/v1/auth/login", json={"email": user.email, "password": "password123"})
     token = login.json()["access_token"]
 
-    resp = client.delete(f"/api/v1/jobs/{job.id}/clips", headers=auth_headers(token))
+    resp = client.delete(f"/api/v1/jobs/{job_id}/clips", headers=auth_headers(token))
 
     assert resp.status_code == 204
-    assert session.get(ProcessingJob, job.id) is None
+    session.expire_all()
+    assert session.get(ProcessingJob, job_id) is None
     assert session.get(Video, video_id) is None
     assert not Path(video_path).exists()
 
@@ -255,16 +274,24 @@ def test_delete_job_clips_keeps_video_when_shared_by_another_job(client: TestCli
     session.add(other_clip)
     session.commit()
 
+    # Capturados antes do expire_all: job1 tem a linha apagada pelo request, e ler um
+    # atributo dele depois do expire dispara ObjectDeletedError ao tentar recarregar.
+    job1_id = job1.id
+    job1_video_id = job1.video_id
+    job2_id = job2.id
+    other_clip_id = other_clip.id
+
     login = client.post("/api/v1/auth/login", json={"email": user.email, "password": "password123"})
     token = login.json()["access_token"]
 
-    resp = client.delete(f"/api/v1/jobs/{job1.id}/clips", headers=auth_headers(token))
+    resp = client.delete(f"/api/v1/jobs/{job1_id}/clips", headers=auth_headers(token))
 
     assert resp.status_code == 204
-    assert session.get(ProcessingJob, job1.id) is None
-    assert session.get(ProcessingJob, job2.id) is not None
-    assert session.get(Video, job1.video_id) is not None
-    assert session.get(Clip, other_clip.id) is not None
+    session.expire_all()
+    assert session.get(ProcessingJob, job1_id) is None
+    assert session.get(ProcessingJob, job2_id) is not None
+    assert session.get(Video, job1_video_id) is not None
+    assert session.get(Clip, other_clip_id) is not None
 
 
 def test_delete_job_clips_cascades_candidates(client: TestClient, session: Session):
@@ -281,10 +308,16 @@ def test_delete_job_clips_cascades_candidates(client: TestClient, session: Sessi
     session.commit()
     session.refresh(candidate)
 
+    # Capturado antes do expire_all: ler candidate.id depois do expire dispara
+    # ObjectDeletedError ao tentar recarregar a linha ja apagada pelo request.
+    candidate_id = candidate.id
+    job_id = job.id
+
     login = client.post("/api/v1/auth/login", json={"email": user.email, "password": "password123"})
     token = login.json()["access_token"]
 
-    resp = client.delete(f"/api/v1/jobs/{job.id}/clips", headers=auth_headers(token))
+    resp = client.delete(f"/api/v1/jobs/{job_id}/clips", headers=auth_headers(token))
 
     assert resp.status_code == 204
-    assert session.get(Candidate, candidate.id) is None
+    session.expire_all()
+    assert session.get(Candidate, candidate_id) is None
