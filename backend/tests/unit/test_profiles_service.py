@@ -29,6 +29,7 @@ def um_record(**overrides: Any) -> AthleteProfileRecord:
         state="SP",
         city="Campinas",
         current_club=None,
+        club_history=None,
         bio=None,
         avatar_path=None,
         status=AthleteStatus.DISPONIVEL,
@@ -116,6 +117,24 @@ def test_perfil_inexistente_levanta_not_found():
     service = ProfilesService(FakeRepository(None), hoje=lambda: date(2026, 9, 2))
     with pytest.raises(NotFoundError):
         service.get_athlete_profile(USER_ID)
+
+
+def test_view_inclui_a_data_de_nascimento_bruta():
+    # `age` e derivada, mas o dono do perfil precisa reler a data exata que digitou
+    # (revisao: o formulario de edicao vinha sempre vazio). A View carrega o valor cru
+    # para que o schema do dono decida se ele sai na resposta.
+    service = ProfilesService(
+        FakeRepository(um_record(birth_date=date(2007, 3, 10))),
+        hoje=lambda: date(2026, 9, 2),
+    )
+    assert service.get_athlete_profile(USER_ID).birth_date == date(2007, 3, 10)
+
+
+def test_view_com_data_de_nascimento_nula():
+    service = ProfilesService(
+        FakeRepository(um_record(birth_date=None)), hoje=lambda: date(2026, 9, 2)
+    )
+    assert service.get_athlete_profile(USER_ID).birth_date is None
 
 
 def test_inclui_a_contagem_de_clipes():

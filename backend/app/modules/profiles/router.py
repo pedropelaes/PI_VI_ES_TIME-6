@@ -7,13 +7,14 @@ from dataclasses import dataclass
 from typing import Any, Callable
 
 import pydantic
-from fastapi import APIRouter, Body, Depends
+from fastapi import APIRouter, Body, Depends, File, UploadFile
 from pydantic import BaseModel
 from sqlmodel import Session
 
 from app.core.database import get_session
 from app.core.deps import get_current_user
 from app.core.exceptions import ValidationError
+from app.core.storage import StorageBackend, get_storage
 from app.modules.identity.models import User, UserRole
 from app.modules.profiles.repository import (
     SqlAthleteProfileRepository,
@@ -21,16 +22,19 @@ from app.modules.profiles.repository import (
     SqlScoutProfileRepository,
 )
 from app.modules.profiles.schemas import (
+    AthleteProfileOwnerResponse,
     AthleteProfileResponse,
     AthleteProfileUpdate,
     ClubProfileResponse,
     ClubProfileUpdate,
     MyProfileResponse,
-    ProfileResponse,
+    OwnerProfileResponse,
     ScoutProfileResponse,
     ScoutProfileUpdate,
 )
 from app.modules.profiles.service import (
+    TAMANHO_MAXIMO_DE_AVATAR,
+    AvatarService,
     ClubProfilesService,
     ProfilesService,
     ScoutProfilesService,
@@ -49,6 +53,12 @@ def get_scout_service(session: Session = Depends(get_session)) -> ScoutProfilesS
 
 def get_club_service(session: Session = Depends(get_session)) -> ClubProfilesService:
     return ClubProfilesService(SqlClubProfileRepository(session))
+
+
+def get_avatar_service(
+    storage: StorageBackend = Depends(get_storage),
+) -> AvatarService:
+    return AvatarService(storage)
 
 
 @router.get("/athletes/{user_id}", response_model=AthleteProfileResponse)
@@ -93,7 +103,7 @@ class _Papel:
     ler: Callable[[Any, uuid.UUID], Any]
     atualizar: Callable[[Any, uuid.UUID, dict[str, Any]], Any]
     schema_update: type[BaseModel]
-    resposta: Callable[[Any], ProfileResponse]
+    resposta: Callable[[Any], OwnerProfileResponse]
 
 
 _POR_PAPEL: dict[UserRole, _Papel] = {
@@ -102,7 +112,9 @@ _POR_PAPEL: dict[UserRole, _Papel] = {
         ler=lambda svc, uid: svc.get_athlete_profile(uid),
         atualizar=lambda svc, uid, ch: svc.update_athlete_profile(uid, ch),
         schema_update=AthleteProfileUpdate,
-        resposta=AthleteProfileResponse.from_view,
+        # Variante do dono (traz `birth_date`): `/me` e os endpoints de avatar so
+        # atendem o proprio autenticado, nunca um perfil alheio.
+        resposta=AthleteProfileOwnerResponse.from_view,
     ),
     UserRole.SCOUT: _Papel(
         servico=get_scout_service,
@@ -173,3 +185,73 @@ def update_my_profile(
     # daqui, senao a alteracao some quando a Session do request e descartada.
     session.commit()
     return resposta
+
+
+# ---------------------------------------------------------------------------
+# Avatar: um endpoint para os três papéis (decisão E4)
+# ---------------------------------------------------------------------------
+
+@router.post("/me/avatar", response_model=MyProfileResponse)
+async def upload_my_avatar(
+    file: UploadFile = File(...),
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+    avatares: AvatarService = Depends(get_avatar_service),
+):
+    """
+    Grava o avatar do autenticado e devolve o perfil no formato de `GET /profiles/me`.
+
+    O papel vem do JWT, como no `PUT /me`: nada na URL diz se é atleta, scout ou clube.
+    """
+    papel = _papel_de(current_user)
+    servico = papel.servico(session)
+
+    # Ler antes de gravar faz duas coisas: dá o 404 de quem não tem perfil do próprio
+    # papel sem deixar arquivo órfão em disco, e é a única chance de descobrir qual era
+    # o avatar anterior -- depois do update ele já foi sobrescrito.
+    anterior = papel.ler(servico, current_user.id).avatar_path
+
+    # Um byte além do limite já basta para o `salvar` recusar, então não há motivo para
+    # trazer um envio gigante inteiro para a memória. A regra de tamanho continua sendo
+    # do AvatarService; aqui isso é só o teto da leitura.
+    conteudo = await file.read(TAMANHO_MAXIMO_DE_AVATAR + 1)
+    novo = avatares.salvar(current_user.id, conteudo, file.content_type)
+
+    view = papel.atualizar(servico, current_user.id, {"avatar_path": novo})
+    resposta = MyProfileResponse(role=current_user.role, profile=papel.resposta(view))
+    # O repositório só faz flush (a transação é do chamador), como no `PUT /me`.
+    session.commit()
+
+    # Só depois do commit: apagar antes deixaria o perfil apontando para um arquivo que
+    # não existe mais se a transação falhasse. E só quando o caminho mudou -- trocar um
+    # JPEG por outro JPEG reaproveita a mesma chave, e apagá-la removeria o arquivo
+    # recém-gravado.
+    if anterior != novo:
+        avatares.remover(anterior)
+
+    return resposta
+
+
+@router.delete("/me/avatar", status_code=204)
+def delete_my_avatar(
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+    avatares: AvatarService = Depends(get_avatar_service),
+):
+    """
+    Remove o avatar do autenticado. Idempotente: sem avatar, 204 do mesmo jeito.
+
+    404 continua valendo para quem não tem perfil do próprio papel -- é inconsistência
+    de cadastro, não ausência de avatar.
+    """
+    papel = _papel_de(current_user)
+    servico = papel.servico(session)
+
+    anterior = papel.ler(servico, current_user.id).avatar_path
+    if anterior is None:
+        return None
+
+    papel.atualizar(servico, current_user.id, {"avatar_path": None})
+    session.commit()
+    avatares.remover(anterior)
+    return None

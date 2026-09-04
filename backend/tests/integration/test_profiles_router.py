@@ -154,6 +154,16 @@ def test_campos_sociais_nao_estao_no_contrato_da_fatia_1(client, auth_headers, u
     assert "is_saved_by_me" not in corpo
 
 
+def test_perfil_publico_do_atleta_nao_traz_birth_date(client, auth_headers, usuario, perfil):
+    """
+    `athlete_profiles` guarda data de nascimento de atletas de base, potencialmente
+    menores (decisao P2 da spec de perfil publico). `age` e o que um scout precisa;
+    a data exata nao pode vazar para quem so tem `GET /profiles/athletes/{id}`.
+    """
+    corpo = client.get(f"/api/v1/profiles/athletes/{usuario.id}", headers=auth_headers).json()
+    assert "birth_date" not in corpo
+
+
 def test_id_inexistente_devolve_404(client, auth_headers):
     resposta = client.get(f"/api/v1/profiles/athletes/{uuid.uuid4()}", headers=auth_headers)
     assert resposta.status_code == 404
@@ -279,6 +289,16 @@ def test_me_devolve_role_e_perfil_do_atleta(client, auth_headers, usuario, perfi
     assert corpo["profile"]["clips_count"] == 0
 
 
+def test_me_do_atleta_devolve_birth_date(client, auth_headers, perfil):
+    """
+    Assimetria deliberada (decisao P2): `birth_date` volta em `/me` porque ai e o dono
+    lendo o proprio dado -- o mesmo campo nao aparece em `/athletes/{id}` (teste acima).
+    """
+    corpo = client.get("/api/v1/profiles/me", headers=auth_headers).json()
+    assert corpo["profile"]["birth_date"] == "2007-03-10"
+    assert isinstance(corpo["profile"]["age"], int)
+
+
 def test_me_devolve_role_e_perfil_do_scout(client, headers_scout, perfil_scout):
     resposta = client.get("/api/v1/profiles/me", headers=headers_scout)
 
@@ -310,6 +330,25 @@ def test_put_me_atualiza_apenas_os_campos_enviados(client, auth_headers, perfil)
     assert corpo["city"] == "Santos"
     assert corpo["state"] == "SP"
     assert corpo["height_cm"] == 178
+
+
+def test_put_me_echoa_birth_date_atualizada(client, auth_headers, perfil):
+    """Corrigir uma data digitada errada e o proprio motivo desta fatia existir."""
+    resposta = client.put(
+        "/api/v1/profiles/me", headers=auth_headers, json={"birth_date": "2008-05-20"}
+    )
+    assert resposta.status_code == 200
+    assert resposta.json()["profile"]["birth_date"] == "2008-05-20"
+
+
+def test_put_me_sem_mudar_birth_date_continua_devolvendo_a_gravada(
+    client, auth_headers, perfil
+):
+    resposta = client.put(
+        "/api/v1/profiles/me", headers=auth_headers, json={"city": "Santos"}
+    )
+    assert resposta.status_code == 200
+    assert resposta.json()["profile"]["birth_date"] == "2007-03-10"
 
 
 def test_put_me_reflete_no_get_seguinte(client, auth_headers, usuario, perfil):
@@ -429,3 +468,99 @@ def test_put_me_sem_perfil_de_atleta_devolve_404(client, auth_headers, usuario):
 def test_get_me_sem_perfil_do_papel_devolve_404(client, headers_scout):
     """Mesma inconsistencia do caso acima, agora pelo caminho polimorfico de leitura."""
     assert client.get("/api/v1/profiles/me", headers=headers_scout).status_code == 404
+
+
+# ---------------------------------------------------------------------------
+# Historico de clubes (decisao E1) e avatar_path fora do PUT (secao 3.2)
+# ---------------------------------------------------------------------------
+
+def test_put_me_grava_club_history_e_volta_no_get(client, auth_headers, usuario, perfil):
+    """Texto livre multilinha: o que o atleta escrever volta byte a byte."""
+    historia = "Santos (2019-2021)\nPonte Preta (2022)\nGuarani (2023-)"
+
+    resposta = client.put(
+        "/api/v1/profiles/me", headers=auth_headers, json={"club_history": historia}
+    )
+    assert resposta.status_code == 200
+    assert resposta.json()["profile"]["club_history"] == historia
+
+    corpo = client.get(
+        f"/api/v1/profiles/athletes/{usuario.id}", headers=auth_headers
+    ).json()
+    assert corpo["club_history"] == historia
+
+
+def test_perfil_de_atleta_nasce_sem_club_history(client, auth_headers, usuario, perfil):
+    """Sem backfill (secao 3.1): os perfis que ja existiam ficam com NULL."""
+    corpo = client.get(
+        f"/api/v1/profiles/athletes/{usuario.id}", headers=auth_headers
+    ).json()
+    assert corpo["club_history"] is None
+
+
+def test_put_me_com_avatar_path_devolve_422(client, auth_headers, perfil):
+    """
+    Secao 3.2: o caminho e derivado do arquivo gravado, nao escolhido pelo cliente.
+    Quem quiser trocar o avatar usa POST /profiles/me/avatar.
+    """
+    resposta = client.put(
+        "/api/v1/profiles/me",
+        headers=auth_headers,
+        json={"avatar_path": "/uploads/avatars/qualquer.png"},
+    )
+    assert resposta.status_code == 422
+
+
+def test_put_me_com_avatar_url_devolve_422(client, auth_headers, perfil):
+    """Nem pelo nome de saida: `avatar_url` tambem nao e campo de escrita."""
+    resposta = client.put(
+        "/api/v1/profiles/me",
+        headers=auth_headers,
+        json={"avatar_url": "/uploads/avatars/qualquer.png"},
+    )
+    assert resposta.status_code == 422
+
+
+def test_put_me_com_avatar_path_nao_altera_o_avatar_gravado(
+    client, auth_headers, usuario, perfil
+):
+    """O 422 rejeita o payload inteiro: a coluna continua com o valor da fixture."""
+    client.put(
+        "/api/v1/profiles/me",
+        headers=auth_headers,
+        json={"city": "Santos", "avatar_path": "/uploads/avatars/invasor.png"},
+    )
+
+    corpo = client.get(
+        f"/api/v1/profiles/athletes/{usuario.id}", headers=auth_headers
+    ).json()
+    assert corpo["avatar_url"] == "avatars/jeh.png"
+    assert corpo["city"] == "Campinas"
+
+
+def test_put_me_de_scout_com_avatar_path_devolve_422(
+    client, headers_scout, perfil_scout
+):
+    resposta = client.put(
+        "/api/v1/profiles/me",
+        headers=headers_scout,
+        json={"avatar_path": "/uploads/avatars/qualquer.png"},
+    )
+    assert resposta.status_code == 422
+
+
+def test_put_me_de_clube_com_avatar_path_devolve_422(client, headers_clube, perfil_clube):
+    resposta = client.put(
+        "/api/v1/profiles/me",
+        headers=headers_clube,
+        json={"avatar_path": "/uploads/avatars/qualquer.png"},
+    )
+    assert resposta.status_code == 422
+
+
+def test_put_me_de_scout_com_club_history_devolve_422(client, headers_scout, perfil_scout):
+    """`club_history` e do atleta (secao 3.1): scout que mandar bate no extra=forbid."""
+    resposta = client.put(
+        "/api/v1/profiles/me", headers=headers_scout, json={"club_history": "Cruzeiro"}
+    )
+    assert resposta.status_code == 422

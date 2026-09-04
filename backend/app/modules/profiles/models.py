@@ -66,6 +66,10 @@ class AthleteProfile(SQLModel, table=True):
     state: Optional[str] = Field(default=None, max_length=2, index=True)
     city: Optional[str] = None
     current_club: Optional[str] = None
+    # Texto livre multilinha (decisao E1): o atleta escreve os clubes por onde passou
+    # do jeito que quiser. Quando virar tabela propria, migrar este texto e trabalho
+    # proprio -- ver secao 7 da spec.
+    club_history: Optional[str] = None
     bio: Optional[str] = None
     avatar_path: Optional[str] = None
     status: AthleteStatus = Field(default=AthleteStatus.DISPONIVEL)

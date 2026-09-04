@@ -5,11 +5,13 @@ Nao conhece HTTP nem sessao de banco.
 import uuid
 from dataclasses import dataclass
 from datetime import date
+from pathlib import PurePosixPath
 from typing import Any, Callable, List, Optional
 
 from sqlmodel import Session
 
-from app.core.exceptions import NotFoundError
+from app.core.exceptions import NotFoundError, ValidationError
+from app.core.storage import StorageBackend
 from app.modules.identity.models import UserRole
 from app.modules.profiles.models import AthleteStatus, DominantFoot, Position
 from app.modules.profiles.repository import (
@@ -61,11 +63,16 @@ class AthleteProfileView:
     last_name: str
     position: Optional[Position]
     age: Optional[int]
+    # Bruto, ao lado de `age`: o dono do perfil precisa reler o que digitou (revisao
+    # que fechou esta fatia), mas ele nao sai por padrao -- so o schema do dono
+    # (`AthleteProfileOwnerResponse`) o expoe; o publico continua limitado a `age`.
+    birth_date: Optional[date]
     height_cm: Optional[int]
     dominant_foot: Optional[DominantFoot]
     state: Optional[str]
     city: Optional[str]
     current_club: Optional[str]
+    club_history: Optional[str]
     bio: Optional[str]
     avatar_path: Optional[str]
     status: AthleteStatus
@@ -113,11 +120,13 @@ class ProfilesService:
             last_name=record.last_name,
             position=record.position,
             age=idade,
+            birth_date=record.birth_date,
             height_cm=record.height_cm,
             dominant_foot=record.dominant_foot,
             state=record.state,
             city=record.city,
             current_club=record.current_club,
+            club_history=record.club_history,
             bio=record.bio,
             avatar_path=record.avatar_path,
             status=record.status,
@@ -231,3 +240,94 @@ class ClubProfilesService:
             bio=record.bio,
             avatar_path=record.avatar_path,
         )
+
+
+# ---------------------------------------------------------------------------
+# Avatar (decisões E3 e E4)
+# ---------------------------------------------------------------------------
+
+# Content-type aceito -> extensão do arquivo gravado. A extensão vem daqui e não do nome
+# enviado pelo cliente: o nome é texto arbitrário e não deve virar caminho em disco.
+EXTENSAO_POR_TIPO_DE_AVATAR = {
+    "image/jpeg": ".jpg",
+    "image/png": ".png",
+    "image/webp": ".webp",
+}
+
+TAMANHO_MAXIMO_DE_AVATAR = 2 * 1024 * 1024
+
+# Prefixo público das URLs de upload. O `main.py` monta `StaticFiles` em
+# `/api/v1/uploads`, e o front concatena com `VITE_API_PATH` -- mesma convenção dos
+# clipes (seção 4.2 da spec).
+PREFIXO_PUBLICO_DE_UPLOADS = "/uploads/"
+
+
+class AvatarService:
+    """
+    Grava e remove o arquivo de avatar, seja qual for o papel do dono (decisão E4).
+
+    Conhece apenas o `StorageBackend`. Quem escreve `avatar_path` é o router, pelo
+    service do papel e na transação do request: assim um único endpoint atende atleta,
+    scout e clube sem que esta classe precise saber que existem três tabelas.
+    """
+
+    def __init__(self, storage: StorageBackend):
+        self.storage = storage
+
+    def salvar(
+        self, user_id: uuid.UUID, conteudo: bytes, content_type: Optional[str]
+    ) -> str:
+        """
+        Valida e grava o avatar em `avatars/{user_id}{ext}`, devolvendo a URL pública.
+
+        O retorno é o que vai para a coluna `avatar_path` e sai da API como `avatar_url`.
+        """
+        extensao = EXTENSAO_POR_TIPO_DE_AVATAR.get(_tipo_normalizado(content_type))
+        if extensao is None:
+            aceitos = ", ".join(sorted(EXTENSAO_POR_TIPO_DE_AVATAR))
+            raise ValidationError(
+                f"Formato de imagem não suportado. Envie um destes tipos: {aceitos}."
+            )
+
+        if len(conteudo) > TAMANHO_MAXIMO_DE_AVATAR:
+            raise ValidationError("A imagem excede o limite de 2 MB.")
+
+        chave = f"avatars/{user_id}{extensao}"
+        self.storage.save(conteudo, chave)
+        return PREFIXO_PUBLICO_DE_UPLOADS + chave
+
+    def remover(self, avatar_path: Optional[str]) -> None:
+        """
+        Apaga o arquivo de um `avatar_path` já gravado. No-op quando não há avatar.
+
+        A coluna existe desde antes deste endpoint e pode conter texto legado, então um
+        valor que não seja uma URL desta raiz é ignorado em vez de virar um `unlink` em
+        caminho arbitrário.
+        """
+        chave = _chave_de_avatar(avatar_path)
+        if chave is None:
+            return
+
+        # `delete()` recebe o caminho que `save()` devolveu; para o backend local isso é
+        # exatamente `path_for(chave)`. O caminho do arquivo antigo não está guardado em
+        # lugar nenhum -- só a URL --, então é reconstruído a partir da chave.
+        self.storage.delete(str(self.storage.path_for(chave)))
+
+
+def _tipo_normalizado(content_type: Optional[str]) -> str:
+    """`image/JPEG; charset=binary` -> `image/jpeg`."""
+    return (content_type or "").split(";")[0].strip().lower()
+
+
+def _chave_de_avatar(avatar_path: Optional[str]) -> Optional[str]:
+    """Chave de storage de uma URL pública, ou None quando o valor não é uma delas."""
+    if not avatar_path or not avatar_path.startswith(PREFIXO_PUBLICO_DE_UPLOADS):
+        return None
+
+    chave = avatar_path[len(PREFIXO_PUBLICO_DE_UPLOADS):]
+    partes = PurePosixPath(chave).parts
+    # `path_for` faz `root / chave`: uma chave absoluta descartaria a raiz e um `..`
+    # escaparia dela. Nenhum dos dois pode chegar ao disco.
+    if not chave or chave.startswith("/") or ".." in partes:
+        return None
+    return chave

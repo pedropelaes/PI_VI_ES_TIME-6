@@ -39,6 +39,7 @@ class AthleteProfileRecord:
     state: Optional[str]
     city: Optional[str]
     current_club: Optional[str]
+    club_history: Optional[str]
     bio: Optional[str]
     avatar_path: Optional[str]
     status: AthleteStatus
@@ -205,6 +206,7 @@ class SqlAthleteProfileRepository(_SqlProfileRepository[AthleteProfileRecord]):
             state=perfil.state,
             city=perfil.city,
             current_club=perfil.current_club,
+            club_history=perfil.club_history,
             bio=perfil.bio,
             avatar_path=perfil.avatar_path,
             status=perfil.status,

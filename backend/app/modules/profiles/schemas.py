@@ -36,7 +36,12 @@ class _PartialUpdate(BaseModel):
 # ---------------------------------------------------------------------------
 
 class AthleteProfileResponse(BaseModel):
-    """Perfil do atleta como sai na API. `age` ja vem derivada de birth_date."""
+    """
+    Perfil do atleta como sai para qualquer autenticado. `age` ja vem derivada de
+    `birth_date` -- a data exata e reservada ao dono (`AthleteProfileOwnerResponse`
+    abaixo), decisao P2 da spec de perfil publico: `athlete_profiles` guarda data de
+    nascimento de atletas de base, potencialmente menores.
+    """
 
     user_id: uuid.UUID
     first_name: str
@@ -49,13 +54,15 @@ class AthleteProfileResponse(BaseModel):
     city: Optional[str]
     state: Optional[str]
     current_club: Optional[str]
+    club_history: Optional[str]
     bio: Optional[str]
     avatar_url: Optional[str]
     clips_count: int
 
     @classmethod
-    def from_view(cls, view: AthleteProfileView) -> "AthleteProfileResponse":
-        return cls(
+    def _campos_da_view(cls, view: AthleteProfileView) -> dict:
+        """Campos comuns as duas variantes, para nao duplicar a lista inteira."""
+        return dict(
             user_id=view.user_id,
             first_name=view.first_name,
             last_name=view.last_name,
@@ -67,11 +74,30 @@ class AthleteProfileResponse(BaseModel):
             city=view.city,
             state=view.state,
             current_club=view.current_club,
+            club_history=view.club_history,
             bio=view.bio,
             # `avatar_path` e como a coluna se chama; para o cliente e uma URL.
             avatar_url=view.avatar_path,
             clips_count=view.clips_count,
         )
+
+    @classmethod
+    def from_view(cls, view: AthleteProfileView) -> "AthleteProfileResponse":
+        return cls(**cls._campos_da_view(view))
+
+
+class AthleteProfileOwnerResponse(AthleteProfileResponse):
+    """
+    Perfil do atleta como sai para o proprio dono (`GET/PUT /profiles/me` e os
+    endpoints de avatar). Unica diferenca do formato publico: traz `birth_date`, para
+    que o formulario de edicao consiga rele-lo em vez de vir sempre vazio.
+    """
+
+    birth_date: Optional[date]
+
+    @classmethod
+    def from_view(cls, view: AthleteProfileView) -> "AthleteProfileOwnerResponse":
+        return cls(**cls._campos_da_view(view), birth_date=view.birth_date)
 
 
 class AthleteProfileUpdate(_PartialUpdate):
@@ -84,6 +110,7 @@ class AthleteProfileUpdate(_PartialUpdate):
     state: Optional[str] = Field(default=None, min_length=2, max_length=2)
     city: Optional[str] = None
     current_club: Optional[str] = None
+    club_history: Optional[str] = None
     bio: Optional[str] = None
     status: Optional[AthleteStatus] = None
 
@@ -187,6 +214,13 @@ class ClubProfileUpdate(_PartialUpdate):
 
 ProfileResponse = Union[AthleteProfileResponse, ScoutProfileResponse, ClubProfileResponse]
 
+# Variante usada por `/me` (GET, PUT e os dois endpoints de avatar): o atleta entra com
+# `AthleteProfileOwnerResponse` em vez de `AthleteProfileResponse` porque ali quem le e
+# o proprio dono do perfil, nao um scout olhando o perfil alheio.
+OwnerProfileResponse = Union[
+    AthleteProfileOwnerResponse, ScoutProfileResponse, ClubProfileResponse
+]
+
 
 class MyProfileResponse(BaseModel):
     """
@@ -197,4 +231,4 @@ class MyProfileResponse(BaseModel):
     """
 
     role: UserRole
-    profile: ProfileResponse
+    profile: OwnerProfileResponse
