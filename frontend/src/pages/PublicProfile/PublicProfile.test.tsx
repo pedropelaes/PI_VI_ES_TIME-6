@@ -16,6 +16,7 @@ const DTO = {
   city: 'Campinas',
   state: 'SP',
   current_club: null,
+  club_history: null,
   bio: null,
   avatar_url: null,
   clips_count: 42,
@@ -187,5 +188,44 @@ describe('PublicProfile — atalho de edicao', () => {
 
     await screen.findByText('Jeh Rodrigues');
     expect(screen.queryByText(/Editar perfil/)).not.toBeInTheDocument();
+  });
+});
+
+describe('PublicProfile — histórico de clubes', () => {
+  it('mostra o historico quando o atleta escreveu', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          ...DTO,
+          club_history: 'Base - Clube Local (2022-2024)\nSub-20 - Regional FC (2024-2025)',
+        }),
+        { status: 200 }
+      )
+    );
+
+    renderProfile();
+
+    expect(await screen.findByText('Histórico de Clubes')).toBeInTheDocument();
+    // O normalizer padrao da testing-library colapsa \n em espaco antes de
+    // comparar, o que esconderia uma regressao que juntasse as linhas. Por
+    // isso a comparacao aqui desliga o normalizer e casa o texto literal,
+    // \n incluso, contra o que o navegador realmente vai exibir.
+    expect(
+      screen.getByText(
+        'Base - Clube Local (2022-2024)\nSub-20 - Regional FC (2024-2025)',
+        { normalizer: (text) => text }
+      )
+    ).toBeInTheDocument();
+  });
+
+  it('nao mostra nada relacionado a historico quando o campo e nulo', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify(DTO), { status: 200 })
+    );
+
+    renderProfile();
+
+    await screen.findByText('Jeh Rodrigues');
+    expect(screen.queryByText('Histórico de Clubes')).not.toBeInTheDocument();
   });
 });

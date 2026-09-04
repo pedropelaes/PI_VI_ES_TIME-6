@@ -95,6 +95,16 @@ describe('toAthleteProfileView', () => {
     expect(toAthleteProfileView({ ...DTO, status: 'CONTRATADO' }).statusLabel).toBe('Contratado');
     expect(toAthleteProfileView({ ...DTO, status: 'NAO_DISPONIVEL' }).statusLabel).toBe('Não disponível');
   });
+
+  it('repassa o historico de clubes sem alterar o texto (quebras de linha inclusas)', () => {
+    const texto = 'Base - Clube Local (2022-2024)\nSub-20 - Regional FC (2024-2025)';
+
+    expect(toAthleteProfileView({ ...DTO, club_history: texto }).clubHistory).toBe(texto);
+  });
+
+  it('mantem null quando o atleta nao escreveu historico', () => {
+    expect(toAthleteProfileView({ ...DTO, club_history: null }).clubHistory).toBeNull();
+  });
 });
 
 const SCOUT_DTO: ScoutProfileDTO = {

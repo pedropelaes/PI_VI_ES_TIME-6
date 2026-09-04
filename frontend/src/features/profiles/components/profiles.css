@@ -412,6 +412,30 @@
   white-space: pre-line;
 }
 
+/* Historico de clubes: exclusivo do atleta, mesmo estilo de cartao da bio */
+.profile-club-history {
+  margin-top: 2rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 1.5rem;
+}
+
+.profile-club-history h2 {
+  font-family: 'Outfit', sans-serif;
+  font-size: 1.1rem;
+  color: #ffffff;
+  margin: 0 0 0.75rem 0;
+}
+
+.profile-club-history p {
+  font-family: 'DM Sans', sans-serif;
+  color: rgba(255, 255, 255, 0.7);
+  line-height: 1.8;
+  margin: 0;
+  white-space: pre-line;
+}
+
 /* Blocos de detalhe especificos de scout e clube */
 .profile-details {
   display: grid;

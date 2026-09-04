@@ -111,6 +111,7 @@ export function toAthleteProfileView(dto: AthleteProfileDTO): AthleteProfileView
     heightLabel: formatHeight(dto.height_cm),
     footLabel: formatFoot(dto.dominant_foot),
     currentClub: dto.current_club,
+    clubHistory: dto.club_history,
     bio: dto.bio,
     avatarUrl: resolveAvatarUrl(dto.avatar_url),
     clipsCount: dto.clips_count,

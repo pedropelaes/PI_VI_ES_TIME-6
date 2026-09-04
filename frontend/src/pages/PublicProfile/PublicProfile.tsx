@@ -10,6 +10,7 @@ import {
   Shield,
 } from 'lucide-react';
 import { AthleteStats } from '../../features/profiles/components/AthleteStats';
+import { ClubHistory } from '../../features/profiles/components/ClubHistory';
 import { EditProfileButton } from '../../features/profiles/components/EditProfileButton';
 import {
   ProfileShell,
@@ -80,6 +81,8 @@ export default function PublicProfile() {
       }
     >
       <AthleteStats profile={profile} />
+
+      <ClubHistory history={profile.clubHistory} />
 
       <div className="tabs-nav">
         <button

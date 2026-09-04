@@ -48,6 +48,8 @@ export interface AthleteProfileView {
   heightLabel: string;
   footLabel: string;
   currentClub: string | null;
+  /** Texto livre multilinha; a tela preserva as quebras de linha ao exibir. */
+  clubHistory: string | null;
   bio: string | null;
   avatarUrl: string | null;
   clipsCount: number;
