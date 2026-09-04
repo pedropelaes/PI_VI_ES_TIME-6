@@ -125,6 +125,26 @@
   border-color: rgba(40, 114, 161, 0.8);
 }
 
+/*
+ * O <select> fechado herda .form-input e fica correto, mas a lista suspensa e
+ * desenhada pelo sistema operacional: no Windows ela nasce com fundo branco e
+ * herda o `color: #ffffff` acima, deixando texto branco sobre branco.
+ *
+ * `color-scheme: dark` avisa o navegador para desenhar os controles nativos
+ * (lista, seta, barra de rolagem) na paleta escura. As cores explicitas em
+ * `option` sao a rede de seguranca para navegadores que ignoram a propriedade,
+ * e seguem o mesmo #111827 ja usado no filtro do historico de clipes.
+ */
+select.form-input {
+  color-scheme: dark;
+  cursor: pointer;
+}
+
+select.form-input option {
+  background: #111827;
+  color: #ffffff;
+}
+
 .form-textarea {
   resize: vertical;
   line-height: 1.6;
