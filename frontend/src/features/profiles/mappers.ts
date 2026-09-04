@@ -29,9 +29,9 @@ const FOOT_LABELS: Record<DominantFoot, string> = {
 };
 
 const STATUS_LABELS: Record<AthleteStatus, string> = {
-  DISPONIVEL: 'Disponivel para Clube',
+  DISPONIVEL: 'Disponível para Clube',
   CONTRATADO: 'Contratado',
-  NAO_DISPONIVEL: 'Nao disponivel',
+  NAO_DISPONIVEL: 'Não disponível',
 };
 
 /**
@@ -56,7 +56,7 @@ export function formatLocation(city: string | null, state: string | null): strin
   const parts = [city, state].filter((part): part is string => Boolean(part));
 
   if (parts.length === 0) {
-    return 'Local nao informado';
+    return 'Local não informado';
   }
 
   return parts.join(', ');
@@ -64,7 +64,7 @@ export function formatLocation(city: string | null, state: string | null): strin
 
 export function formatPosition(position: Position | null): string {
   if (position == null) {
-    return 'Posicao nao informada';
+    return 'Posição não informada';
   }
 
   return POSITION_LABELS[position];

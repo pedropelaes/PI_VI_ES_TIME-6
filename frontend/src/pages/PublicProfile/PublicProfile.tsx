@@ -30,12 +30,12 @@ export default function PublicProfile() {
   // notFound antes de isError: um 404 tambem marca isError, e a mensagem
   // especifica ajuda mais do que a generica.
   if (notFound) {
-    return <ProfileStateScreen message="Atleta nao encontrado." />;
+    return <ProfileStateScreen message="Atleta não encontrado." />;
   }
 
   if (isError || !profile) {
     return (
-      <ProfileStateScreen message="Nao foi possivel carregar o perfil. Tente novamente em instantes." />
+      <ProfileStateScreen message="Não foi possível carregar o perfil. Tente novamente em instantes." />
     );
   }
 
@@ -45,7 +45,7 @@ export default function PublicProfile() {
       fullName={profile.fullName}
       location={profile.location}
       bio={profile.bio}
-      bioFallback="Este atleta ainda nao escreveu uma bio."
+      bioFallback="Este atleta ainda não escreveu uma bio."
       badges={
         <>
           <span className="badge badge-primary">
@@ -64,13 +64,13 @@ export default function PublicProfile() {
       actions={
         // Seguir/Salvar chegam na fatia 3 e Enviar Mensagem pertence ao M5.
         <>
-          <button className="btn-secondary" disabled title="Disponivel em breve">
+          <button className="btn-secondary" disabled title="Disponível em breve">
             <Check size={18} /> Seguir
           </button>
-          <button className="btn-secondary" disabled title="Disponivel em breve">
+          <button className="btn-secondary" disabled title="Disponível em breve">
             <Bookmark size={18} /> Salvar Atleta
           </button>
-          <button className="btn-primary" disabled title="Disponivel em breve">
+          <button className="btn-primary" disabled title="Disponível em breve">
             <MessageCircle size={18} /> Enviar Mensagem
           </button>
         </>
@@ -91,7 +91,7 @@ export default function PublicProfile() {
           onClick={() => setActiveTab('analysis')}
         >
           <Activity size={18} className="tab-icon" />
-          Analise Cinematica
+          Análise Cinemática
         </button>
       </div>
 

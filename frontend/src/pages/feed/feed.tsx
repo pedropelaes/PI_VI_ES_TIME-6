@@ -47,7 +47,12 @@ function relativeDate(value: string): string {
 }
 
 function flattenGroups(groups: ClipHistoryGroup[]): FeedClip[] {
-	return groups.flatMap((group) => group.clips.map((clip, index) => ({
+	// A retencao faz soft delete: o clipe expirado fica sem file_url. Nao ha o que
+	// tocar nem baixar, e mante-lo renderizaria um <video> apontando para "null".
+	// O historico continua exibindo esses clipes, marcados como expirados.
+	return groups.flatMap((group) => group.clips
+		.filter((clip): clip is typeof clip & { file_url: string } => Boolean(clip.file_url))
+		.map((clip, index) => ({
 		id: clip.id,
 		fileUrl: clip.file_url,
 		duration: formatTime(clip.duration),

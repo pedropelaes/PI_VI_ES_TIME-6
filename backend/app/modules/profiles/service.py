@@ -90,7 +90,7 @@ class ProfilesService:
     def get_athlete_profile(self, user_id: uuid.UUID) -> AthleteProfileView:
         record = self.repository.get_by_user_id(user_id)
         if record is None:
-            raise NotFoundError("Atleta nao encontrado.")
+            raise NotFoundError("Atleta não encontrado.")
         return self._to_view(record, self.repository.count_clips(user_id))
 
     def update_athlete_profile(
@@ -98,7 +98,7 @@ class ProfilesService:
     ) -> AthleteProfileView:
         record = self.repository.update(user_id, changes)
         if record is None:
-            raise NotFoundError("Atleta nao encontrado.")
+            raise NotFoundError("Atleta não encontrado.")
         return self._to_view(record, self.repository.count_clips(user_id))
 
     def _to_view(self, record: AthleteProfileRecord, clips_count: int) -> AthleteProfileView:
@@ -155,7 +155,7 @@ class ScoutProfilesService:
     def get_scout_profile(self, user_id: uuid.UUID) -> ScoutProfileView:
         record = self.repository.get_by_user_id(user_id)
         if record is None:
-            raise NotFoundError("Scout nao encontrado.")
+            raise NotFoundError("Scout não encontrado.")
         return self._to_view(record)
 
     def update_scout_profile(
@@ -163,7 +163,7 @@ class ScoutProfilesService:
     ) -> ScoutProfileView:
         record = self.repository.update(user_id, changes)
         if record is None:
-            raise NotFoundError("Scout nao encontrado.")
+            raise NotFoundError("Scout não encontrado.")
         return self._to_view(record)
 
     @staticmethod
@@ -206,7 +206,7 @@ class ClubProfilesService:
     def get_club_profile(self, user_id: uuid.UUID) -> ClubProfileView:
         record = self.repository.get_by_user_id(user_id)
         if record is None:
-            raise NotFoundError("Clube nao encontrado.")
+            raise NotFoundError("Clube não encontrado.")
         return self._to_view(record)
 
     def update_club_profile(
@@ -214,7 +214,7 @@ class ClubProfilesService:
     ) -> ClubProfileView:
         record = self.repository.update(user_id, changes)
         if record is None:
-            raise NotFoundError("Clube nao encontrado.")
+            raise NotFoundError("Clube não encontrado.")
         return self._to_view(record)
 
     @staticmethod

@@ -57,12 +57,12 @@ describe('PublicProfile', () => {
 
   it('mostra atleta nao encontrado no 404', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-      new Response(JSON.stringify({ detail: 'Atleta nao encontrado.' }), { status: 404 })
+      new Response(JSON.stringify({ detail: 'Atleta não encontrado.' }), { status: 404 })
     );
 
     renderProfile();
 
-    expect(await screen.findByText('Atleta nao encontrado.')).toBeInTheDocument();
+    expect(await screen.findByText('Atleta não encontrado.')).toBeInTheDocument();
   });
 
   it('mostra nome e altura formatada quando o perfil carrega', async () => {
@@ -97,7 +97,7 @@ describe('PublicProfile', () => {
     renderProfile();
 
     expect(
-      await screen.findByText('Este atleta ainda nao escreveu uma bio.')
+      await screen.findByText('Este atleta ainda não escreveu uma bio.')
     ).toBeInTheDocument();
   });
 
@@ -109,8 +109,8 @@ describe('PublicProfile', () => {
     renderProfile();
 
     await waitFor(() =>
-      expect(screen.getByText(/Nao foi possivel carregar o perfil/)).toBeInTheDocument()
+      expect(screen.getByText(/Não foi possível carregar o perfil/)).toBeInTheDocument()
     );
-    expect(screen.queryByText('Atleta nao encontrado.')).not.toBeInTheDocument();
+    expect(screen.queryByText('Atleta não encontrado.')).not.toBeInTheDocument();
   });
 });

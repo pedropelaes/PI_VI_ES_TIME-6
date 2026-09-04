@@ -54,7 +54,7 @@ describe('formatLocation', () => {
   });
 
   it('devolve texto neutro quando nao ha nada', () => {
-    expect(formatLocation(null, null)).toBe('Local nao informado');
+    expect(formatLocation(null, null)).toBe('Local não informado');
   });
 });
 
@@ -62,7 +62,7 @@ describe('formatPosition e formatFoot', () => {
   it('traduz a posicao para rotulo legivel', () => {
     expect(formatPosition('ATACANTE')).toBe('Atacante');
     expect(formatPosition('GOLEIRO')).toBe('Goleiro');
-    expect(formatPosition(null)).toBe('Posicao nao informada');
+    expect(formatPosition(null)).toBe('Posição não informada');
   });
 
   it('traduz o pe dominante', () => {
@@ -80,7 +80,7 @@ describe('toAthleteProfileView', () => {
     expect(view.location).toBe('Campinas, SP');
     expect(view.heightLabel).toBe('1,78 m');
     expect(view.positionLabel).toBe('Atacante');
-    expect(view.statusLabel).toBe('Disponivel para Clube');
+    expect(view.statusLabel).toBe('Disponível para Clube');
     expect(view.ageLabel).toBe('19');
     expect(view.clipsCount).toBe(42);
   });
@@ -91,7 +91,7 @@ describe('toAthleteProfileView', () => {
 
   it('traduz os demais status', () => {
     expect(toAthleteProfileView({ ...DTO, status: 'CONTRATADO' }).statusLabel).toBe('Contratado');
-    expect(toAthleteProfileView({ ...DTO, status: 'NAO_DISPONIVEL' }).statusLabel).toBe('Nao disponivel');
+    expect(toAthleteProfileView({ ...DTO, status: 'NAO_DISPONIVEL' }).statusLabel).toBe('Não disponível');
   });
 });
 
@@ -182,7 +182,7 @@ describe('toScoutProfileView', () => {
   it('cai no texto neutro quando nao ha cidade nem estado', () => {
     const view = toScoutProfileView({ ...SCOUT_DTO, city: null, state: null });
 
-    expect(view.location).toBe('Local nao informado');
+    expect(view.location).toBe('Local não informado');
   });
 });
 

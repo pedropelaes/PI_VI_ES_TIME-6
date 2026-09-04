@@ -67,7 +67,7 @@ describe('useClubProfile', () => {
 
   it('sinaliza notFound no 404', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-      new Response(JSON.stringify({ detail: 'Clube nao encontrado.' }), { status: 404 })
+      new Response(JSON.stringify({ detail: 'Clube não encontrado.' }), { status: 404 })
     );
 
     const { result } = renderHook(() => useClubProfile('club-1'), { wrapper });

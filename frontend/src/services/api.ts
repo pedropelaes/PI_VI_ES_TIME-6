@@ -48,7 +48,10 @@ export type JobStatusType = "PENDING" | "FAST_SCAN" | "WAITING_USER" | "DEEP_SCA
 
 export interface ClipResult {
   id: string;
-  file_url: string;
+  // A retencao faz soft delete: zera o storage_path e marca status=DELETED, entao
+  // o backend devolve file_url nulo para clipe expirado.
+  file_url: string | null;
+  status: string;
   start_timestamp: number;
   end_timestamp: number;
   duration: number;
@@ -72,7 +75,8 @@ export interface JobStatus {
 
 export interface ClipHistoryItem {
   id: string;
-  file_url: string;
+  file_url: string | null;
+  status: string;
   duration: string;
 }
 

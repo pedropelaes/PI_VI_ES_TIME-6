@@ -18,12 +18,12 @@ export default function ClubProfile() {
   // notFound antes de isError: um 404 tambem marca isError, e a mensagem
   // especifica ajuda mais do que a generica.
   if (notFound) {
-    return <ProfileStateScreen message="Clube nao encontrado." />;
+    return <ProfileStateScreen message="Clube não encontrado." />;
   }
 
   if (isError || !profile) {
     return (
-      <ProfileStateScreen message="Nao foi possivel carregar o perfil. Tente novamente em instantes." />
+      <ProfileStateScreen message="Não foi possível carregar o perfil. Tente novamente em instantes." />
     );
   }
 
@@ -33,7 +33,7 @@ export default function ClubProfile() {
       fullName={profile.fullName}
       location={profile.location}
       bio={profile.bio}
-      bioFallback="Este clube ainda nao escreveu uma bio."
+      bioFallback="Este clube ainda não escreveu uma bio."
       badges={
         <span className="badge badge-primary">
           <Shield size={14} /> Clube

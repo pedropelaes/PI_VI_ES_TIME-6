@@ -13,7 +13,7 @@ export function AthleteStats({ profile }: Props) {
         <div className="stat-value">{profile.ageLabel}</div>
       </div>
       <div className="stat-box">
-        <div className="stat-label">Pe Dominante</div>
+        <div className="stat-label">Pé Dominante</div>
         <div className="stat-value">{profile.footLabel}</div>
       </div>
       <div className="stat-box">

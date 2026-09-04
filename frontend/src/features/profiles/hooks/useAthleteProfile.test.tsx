@@ -59,7 +59,7 @@ describe('useAthleteProfile', () => {
 
   it('sinaliza notFound no 404', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-      new Response(JSON.stringify({ detail: 'Atleta nao encontrado.' }), { status: 404 })
+      new Response(JSON.stringify({ detail: 'Atleta não encontrado.' }), { status: 404 })
     );
 
     const { result } = renderHook(() => useAthleteProfile('abc'), { wrapper });

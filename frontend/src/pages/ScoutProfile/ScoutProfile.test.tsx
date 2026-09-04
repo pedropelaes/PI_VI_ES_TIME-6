@@ -49,12 +49,12 @@ describe('ScoutProfile', () => {
 
   it('mostra scout nao encontrado no 404', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-      new Response(JSON.stringify({ detail: 'Scout nao encontrado.' }), { status: 404 })
+      new Response(JSON.stringify({ detail: 'Scout não encontrado.' }), { status: 404 })
     );
 
     renderProfile();
 
-    expect(await screen.findByText('Scout nao encontrado.')).toBeInTheDocument();
+    expect(await screen.findByText('Scout não encontrado.')).toBeInTheDocument();
   });
 
   it('mostra o erro generico no 500, e nao a mensagem de nao encontrado', async () => {
@@ -65,9 +65,9 @@ describe('ScoutProfile', () => {
     renderProfile();
 
     await waitFor(() =>
-      expect(screen.getByText(/Nao foi possivel carregar o perfil/)).toBeInTheDocument()
+      expect(screen.getByText(/Não foi possível carregar o perfil/)).toBeInTheDocument()
     );
-    expect(screen.queryByText('Scout nao encontrado.')).not.toBeInTheDocument();
+    expect(screen.queryByText('Scout não encontrado.')).not.toBeInTheDocument();
   });
 
   it('mostra nome, organizacao e credencial quando o perfil carrega', async () => {
@@ -103,7 +103,7 @@ describe('ScoutProfile', () => {
     renderProfile();
 
     expect(
-      await screen.findByText('Este scout ainda nao escreveu uma bio.')
+      await screen.findByText('Este scout ainda não escreveu uma bio.')
     ).toBeInTheDocument();
   });
 });

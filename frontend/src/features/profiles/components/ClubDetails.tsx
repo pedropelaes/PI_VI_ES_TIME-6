@@ -9,7 +9,7 @@ export function ClubDetails({ profile }: Props) {
   return (
     <div className="profile-details">
       <div className="detail-box">
-        <div className="detail-label">Razao Social</div>
+        <div className="detail-label">Razão Social</div>
         <div className="detail-value">{profile.legalNameLabel}</div>
       </div>
       <div className="detail-box">

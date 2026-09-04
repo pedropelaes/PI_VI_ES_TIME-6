@@ -66,7 +66,7 @@ describe('useScoutProfile', () => {
 
   it('sinaliza notFound no 404', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-      new Response(JSON.stringify({ detail: 'Scout nao encontrado.' }), { status: 404 })
+      new Response(JSON.stringify({ detail: 'Scout não encontrado.' }), { status: 404 })
     );
 
     const { result } = renderHook(() => useScoutProfile('scout-1'), { wrapper });

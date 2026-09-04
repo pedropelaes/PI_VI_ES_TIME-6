@@ -34,12 +34,12 @@ describe('httpClient', () => {
 
   it('lanca ApiError com o status em resposta de erro', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-      new Response(JSON.stringify({ detail: 'Atleta nao encontrado.' }), { status: 404 })
+      new Response(JSON.stringify({ detail: 'Atleta não encontrado.' }), { status: 404 })
     );
 
     await expect(httpGet('/profiles/athletes/x')).rejects.toMatchObject({
       status: 404,
-      message: 'Atleta nao encontrado.',
+      message: 'Atleta não encontrado.',
     });
   });
 

@@ -9,7 +9,7 @@ export function ScoutDetails({ profile }: Props) {
   return (
     <div className="profile-details">
       <div className="detail-box">
-        <div className="detail-label">Organizacao</div>
+        <div className="detail-label">Organização</div>
         <div className="detail-value">{profile.organizationLabel}</div>
       </div>
       <div className="detail-box">

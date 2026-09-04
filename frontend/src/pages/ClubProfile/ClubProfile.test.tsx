@@ -50,12 +50,12 @@ describe('ClubProfile', () => {
 
   it('mostra clube nao encontrado no 404', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-      new Response(JSON.stringify({ detail: 'Clube nao encontrado.' }), { status: 404 })
+      new Response(JSON.stringify({ detail: 'Clube não encontrado.' }), { status: 404 })
     );
 
     renderProfile();
 
-    expect(await screen.findByText('Clube nao encontrado.')).toBeInTheDocument();
+    expect(await screen.findByText('Clube não encontrado.')).toBeInTheDocument();
   });
 
   it('mostra o erro generico no 500, e nao a mensagem de nao encontrado', async () => {
@@ -66,9 +66,9 @@ describe('ClubProfile', () => {
     renderProfile();
 
     await waitFor(() =>
-      expect(screen.getByText(/Nao foi possivel carregar o perfil/)).toBeInTheDocument()
+      expect(screen.getByText(/Não foi possível carregar o perfil/)).toBeInTheDocument()
     );
-    expect(screen.queryByText('Clube nao encontrado.')).not.toBeInTheDocument();
+    expect(screen.queryByText('Clube não encontrado.')).not.toBeInTheDocument();
   });
 
   it('mostra razao social, CNPJ formatado e categorias quando o perfil carrega', async () => {
@@ -104,6 +104,6 @@ describe('ClubProfile', () => {
 
     await screen.findByText('Clube Atletico');
     expect(screen.queryByText('Clipes Gerados IA')).not.toBeInTheDocument();
-    expect(screen.queryByText('Pe Dominante')).not.toBeInTheDocument();
+    expect(screen.queryByText('Pé Dominante')).not.toBeInTheDocument();
   });
 });
