@@ -8,7 +8,7 @@ import time
 from pathlib import Path
 from datetime import datetime, timezone, timedelta
 
-from fastapi import APIRouter, Depends, UploadFile, File, Form
+from fastapi import APIRouter, Depends, Query, UploadFile, File, Form
 from fastapi.responses import StreamingResponse
 from sqlmodel import Session, select
 
@@ -16,7 +16,7 @@ from app.core.database import get_session, engine
 from app.core.deps import get_current_user
 from app.core.exceptions import NotFoundError, ForbiddenError, ConflictError, DomainError
 from app.core.storage import get_storage
-from app.modules.identity.models import User
+from app.modules.identity.models import User, UserRole
 from app.modules.clips.models import Video, ProcessingJob, Clip, Candidate
 from app.modules.clips.schemas import ConfirmPlayerRequest
 from app.modules.clips.tasks import run_fast_scan, run_full_tracking
@@ -249,6 +249,50 @@ def list_clips(
             ],
         })
     return result
+
+
+@clips_router.get("/athletes/{user_id}")
+def list_athlete_clips(
+    user_id: uuid.UUID,
+    limit: int = Query(20, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+    current_user: User = Depends(get_current_user),
+    session: Session = Depends(get_session),
+):
+    """
+    Clipes de um atleta especifico, para a videoteca do perfil publico.
+
+    Um `user_id` inexistente ou de usuario que nao e ATHLETE gera 404 (NotFoundError):
+    nao existe atleta com aquele id, e a distincao nao interessa ao cliente (secao 5.5
+    da spec). Ja um atleta que existe mas ainda nao tem clipes devolve lista vazia com
+    200 -- sao situacoes diferentes.
+    """
+    target = session.get(User, user_id)
+    if target is None or target.role != UserRole.ATHLETE:
+        raise NotFoundError("Atleta não encontrado.")
+
+    clips = session.exec(
+        select(Clip)
+        .join(ProcessingJob, Clip.job_id == ProcessingJob.id)
+        .join(Video, ProcessingJob.video_id == Video.id)
+        .where(Video.user_id == user_id)
+        .where(ProcessingJob.status == "COMPLETED")
+        .where(Clip.status != "DELETED")
+        .where(Clip.storage_path.is_not(None))
+        .order_by(Clip.created_at.desc())
+        .offset(offset)
+        .limit(limit)
+    ).all()
+
+    return [
+        {
+            "id": str(c.id),
+            "duration_seconds": round(c.end_timestamp - c.start_timestamp, 2),
+            "file_url": f"/uploads/clips/{c.job_id}/{Path(c.storage_path).name}",
+            "created_at": c.created_at,
+        }
+        for c in clips
+    ]
 
 
 @clips_router.delete("/{clip_id}", status_code=204)

@@ -1,6 +1,7 @@
 """
 Tests for clip endpoints:
   GET    /api/v1/clips/
+  GET    /api/v1/clips/athletes/{user_id}
   DELETE /api/v1/clips/{clip_id}
   DELETE /api/v1/jobs/{job_id}/clips
 """
@@ -11,7 +12,7 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlmodel import Session
 
-from app.modules.identity.models import User
+from app.modules.identity.models import User, UserRole
 from app.modules.clips.models import Video, ProcessingJob, Clip, Candidate
 from app.core.security import hash_password
 from app.core.storage import get_storage
@@ -292,6 +293,177 @@ def test_delete_job_clips_keeps_video_when_shared_by_another_job(client: TestCli
     assert session.get(ProcessingJob, job2_id) is not None
     assert session.get(Video, job1_video_id) is not None
     assert session.get(Clip, other_clip_id) is not None
+
+
+# ---------------------------------------------------------------------------
+# GET /api/v1/clips/athletes/{user_id} — list_athlete_clips
+# ---------------------------------------------------------------------------
+
+def _create_user(session: Session, email: str, role: UserRole = UserRole.ATHLETE) -> User:
+    user = User(
+        email=email,
+        password_hash=hash_password("password123"),
+        first_name="Test",
+        last_name="User",
+        role=role,
+    )
+    session.add(user)
+    session.commit()
+    session.refresh(user)
+    return user
+
+
+def _create_job_for_user(session: Session, user: User, status: str = "COMPLETED") -> ProcessingJob:
+    video = Video(
+        user_id=user.id,
+        original_filename="test.mp4",
+        storage_path=str(get_storage().path_for(f"videos/{uuid.uuid4()}_test.mp4")),
+        file_size_mb=1.0,
+    )
+    session.add(video)
+    session.commit()
+    session.refresh(video)
+
+    job = ProcessingJob(video_id=video.id, target_number=10, status=status)
+    session.add(job)
+    session.commit()
+    session.refresh(job)
+    return job
+
+
+def _add_clip(
+    session: Session,
+    job: ProcessingJob,
+    start: float = 0.0,
+    end: float = 5.0,
+    status: str = "TEMPORARY",
+    with_file: bool = True,
+) -> Clip:
+    clip = Clip(
+        job_id=job.id,
+        storage_path=(
+            str(get_storage().path_for(f"clips/{job.id}/{uuid.uuid4()}.mp4")) if with_file else None
+        ),
+        start_timestamp=start,
+        end_timestamp=end,
+        status=status,
+    )
+    session.add(clip)
+    session.commit()
+    session.refresh(clip)
+    return clip
+
+
+def test_list_athlete_clips_returns_only_that_athletes_clips(client: TestClient, session: Session):
+    athlete1 = _create_user(session, "athleteclips_1@example.com")
+    athlete2 = _create_user(session, "athleteclips_2@example.com")
+    job1 = _create_job_for_user(session, athlete1)
+    job2 = _create_job_for_user(session, athlete2)
+    clip1 = _add_clip(session, job1)
+    clip2 = _add_clip(session, job2)
+
+    token = register_and_get_token(client, email="athleteclips_viewer1@example.com")
+    resp = client.get(f"/api/v1/clips/athletes/{athlete1.id}", headers=auth_headers(token))
+
+    assert resp.status_code == 200
+    ids = [c["id"] for c in resp.json()]
+    assert str(clip1.id) in ids
+    assert str(clip2.id) not in ids
+
+
+def test_list_athlete_clips_excludes_soft_deleted(client: TestClient, session: Session):
+    athlete = _create_user(session, "athleteclips_softdel@example.com")
+    job = _create_job_for_user(session, athlete)
+    visible = _add_clip(session, job)
+    deleted = _add_clip(session, job, status="DELETED", with_file=False)
+
+    token = register_and_get_token(client, email="athleteclips_viewer2@example.com")
+    resp = client.get(f"/api/v1/clips/athletes/{athlete.id}", headers=auth_headers(token))
+
+    assert resp.status_code == 200
+    ids = [c["id"] for c in resp.json()]
+    assert str(visible.id) in ids
+    assert str(deleted.id) not in ids
+
+
+def test_list_athlete_clips_only_from_completed_jobs(client: TestClient, session: Session):
+    athlete = _create_user(session, "athleteclips_notcompleted@example.com")
+    completed_job = _create_job_for_user(session, athlete, status="COMPLETED")
+    pending_job = _create_job_for_user(session, athlete, status="TRACKING")
+    completed_clip = _add_clip(session, completed_job)
+    pending_clip = _add_clip(session, pending_job)
+
+    token = register_and_get_token(client, email="athleteclips_viewer3@example.com")
+    resp = client.get(f"/api/v1/clips/athletes/{athlete.id}", headers=auth_headers(token))
+
+    assert resp.status_code == 200
+    ids = [c["id"] for c in resp.json()]
+    assert str(completed_clip.id) in ids
+    assert str(pending_clip.id) not in ids
+
+
+def test_list_athlete_clips_empty_for_athlete_without_clips(client: TestClient, session: Session):
+    athlete = _create_user(session, "athleteclips_empty@example.com")
+
+    token = register_and_get_token(client, email="athleteclips_viewer4@example.com")
+    resp = client.get(f"/api/v1/clips/athletes/{athlete.id}", headers=auth_headers(token))
+
+    assert resp.status_code == 200
+    assert resp.json() == []
+
+
+def test_list_athlete_clips_unauthenticated(client: TestClient, session: Session):
+    athlete = _create_user(session, "athleteclips_noauth@example.com")
+    resp = client.get(f"/api/v1/clips/athletes/{athlete.id}")
+    assert resp.status_code in (401, 403)
+
+
+def test_list_athlete_clips_pagination(client: TestClient, session: Session):
+    athlete = _create_user(session, "athleteclips_paginate@example.com")
+    job = _create_job_for_user(session, athlete)
+    for _ in range(5):
+        _add_clip(session, job)
+
+    token = register_and_get_token(client, email="athleteclips_viewer5@example.com")
+
+    page1 = client.get(
+        f"/api/v1/clips/athletes/{athlete.id}?limit=2&offset=0", headers=auth_headers(token)
+    ).json()
+    page2 = client.get(
+        f"/api/v1/clips/athletes/{athlete.id}?limit=2&offset=2", headers=auth_headers(token)
+    ).json()
+
+    assert len(page1) == 2
+    assert len(page2) == 2
+    assert {c["id"] for c in page1}.isdisjoint({c["id"] for c in page2})
+
+
+def test_list_athlete_clips_duration_seconds(client: TestClient, session: Session):
+    athlete = _create_user(session, "athleteclips_duration@example.com")
+    job = _create_job_for_user(session, athlete)
+    _add_clip(session, job, start=10.0, end=17.5)
+
+    token = register_and_get_token(client, email="athleteclips_viewer6@example.com")
+    resp = client.get(f"/api/v1/clips/athletes/{athlete.id}", headers=auth_headers(token))
+
+    assert resp.status_code == 200
+    body = resp.json()[0]
+    assert body["duration_seconds"] == 7.5
+
+
+def test_list_athlete_clips_nonexistent_user_returns_404(client: TestClient, session: Session):
+    """Nenhum atleta com esse id -- 404, diferente do atleta que existe mas nao tem clipes."""
+    token = register_and_get_token(client, email="athleteclips_viewer7@example.com")
+    resp = client.get(f"/api/v1/clips/athletes/{uuid.uuid4()}", headers=auth_headers(token))
+    assert resp.status_code == 404
+
+
+def test_list_athlete_clips_non_athlete_returns_404(client: TestClient, session: Session):
+    """Usuario existe mas nao e ATHLETE -- 404, mesma resposta de um id inexistente."""
+    scout = _create_user(session, "athleteclips_scout@example.com", role=UserRole.SCOUT)
+    token = register_and_get_token(client, email="athleteclips_viewer8@example.com")
+    resp = client.get(f"/api/v1/clips/athletes/{scout.id}", headers=auth_headers(token))
+    assert resp.status_code == 404
 
 
 def test_delete_job_clips_cascades_candidates(client: TestClient, session: Session):
