@@ -278,3 +278,17 @@
   .brand-logo { max-height: 90px; margin-left: -44px; }
   .actionsGroup { gap: 8px; }
 }
+/*
+ * O avatar pode ser a inicial do nome ou a foto. `object-fit: cover` recorta a
+ * imagem no circulo sem distorcer, que e o mesmo tratamento do ProfileShell --
+ * o upload nao redimensiona (decisao E3 da spec), entao o enquadramento fica
+ * por conta do CSS.
+ */
+.headerAvatarImg,
+.profileAvatarImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  display: block;
+}

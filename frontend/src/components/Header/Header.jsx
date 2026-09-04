@@ -4,6 +4,8 @@ import logoSmartScout from '../../assets/logo-smartscout.png';
 import { clearSession, getToken, getUser } from '../../services/api';
 import { getProfilePath, PROFILE_EDIT_PATH } from '../../shared/lib/profileRoutes';
 import { isUserRole } from '../../shared/lib/userRole';
+import { useMyProfile } from '../../features/profiles/hooks/useMyProfile';
+import { resolveAvatarUrl } from '../../features/profiles/mappers';
 import {
   SquarePlay,
   Compass,
@@ -29,6 +31,14 @@ export function Header() {
       : 'Usuário',
     email: storedUser.email || 'sem e-mail',
   };
+
+  // O avatar vem de GET /profiles/me, e nao do localStorage: trocar a foto
+  // escreve na mesma chave de cache (MY_PROFILE_QUERY_KEY), entao o header
+  // reage sozinho, sem precisar sincronizar nada. O localStorage e gravado no
+  // login e ficaria desatualizado ate o proximo.
+  const { data: meuPerfil } = useMyProfile();
+  const avatarUrl = resolveAvatarUrl(meuPerfil?.profile.avatar_url ?? null);
+  const inicial = user.name.charAt(0).toUpperCase();
 
   function handleOpenProfileModal() {
     setShowProfileModal(true);
@@ -118,7 +128,9 @@ export function Header() {
                 onClick={handleOpenProfileModal}
               >
                 <div className="headerAvatar">
-                  {user.name.charAt(0).toUpperCase()}
+                  {avatarUrl
+                    ? <img src={avatarUrl} alt={`Foto de perfil de ${user.name}`} className="headerAvatarImg" />
+                    : inicial}
                 </div>
             </button>
         </div>
@@ -140,7 +152,9 @@ export function Header() {
 
             <div className="profileTop">
               <div className="profileAvatar">
-                {user.name.charAt(0).toUpperCase()}
+                {avatarUrl
+                  ? <img src={avatarUrl} alt={`Foto de perfil de ${user.name}`} className="profileAvatarImg" />
+                  : inicial}
               </div>
 
               <h2 className="profileName">{user.name}</h2>
