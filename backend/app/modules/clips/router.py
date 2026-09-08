@@ -251,6 +251,32 @@ def list_clips(
     return result
 
 
+@clips_router.delete("/{clip_id}", status_code=204)
+def delete_clip(
+    clip_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    session: Session = Depends(get_session),
+):
+    clip = session.get(Clip, clip_id)
+    if not clip:
+        raise NotFoundError("Clipe não encontrado.")
+
+    job = session.get(ProcessingJob, clip.job_id)
+    video = session.get(Video, job.video_id) if job else None
+    if not video or video.user_id != current_user.id:
+        raise ForbiddenError("Este clipe não pertence ao usuário autenticado.")
+
+    get_storage().delete(clip.storage_path)
+    session.delete(clip)
+    session.flush()
+
+    remaining_clip = session.exec(select(Clip).where(Clip.job_id == job.id)).first()
+    if not remaining_clip:
+        _delete_job_and_orphan_video(session, job)
+
+    session.commit()
+
+
 @clips_router.get("/athletes/{user_id}")
 def list_athlete_clips(
     user_id: uuid.UUID,

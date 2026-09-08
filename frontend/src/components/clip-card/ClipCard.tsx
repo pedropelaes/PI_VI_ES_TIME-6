@@ -109,14 +109,6 @@ export function ClipCard({ clip, onDeleted }: ClipCardProps) {
                         >
                             <Trash2 size={18} />
                         </button>
-                        <button
-                            className="delete-button"
-                            onClick={handleDelete}
-                            title="Apagar clipe"
-                            aria-label={`Apagar ${clip.title}`}
-                        >
-                            <Trash2 size={18} />
-                        </button>
                     </div>
                 </div>
             )}
