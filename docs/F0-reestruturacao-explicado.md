@@ -301,5 +301,5 @@ feat(f0): alembic baseline e remocao do create_all no startup
 feat(f0): docker-compose com redis/api/web e Dockerfiles sem torch na api
 ```
 
-Referências: o plano detalhado está em `docs/superpowers/plans/2026-08-25-f0-reestruturacao-base.md`
-e a spec de arquitetura em `docs/superpowers/specs/2026-08-11-smartscout-rede-social-design.md`.
+Referências: o plano detalhado e a spec de arquitetura desta fase são mantidos fora do
+versionamento; peça ao time se precisar consultá-los.
