@@ -221,9 +221,40 @@ python -m uvicorn app.main:app --reload
 docker compose up        # na raiz do projeto: redis + api + web
 ```
 
-> Detalhe de ambiente: os testes do backend rodam a partir da pasta `backend/`
-> (`cd backend && python -m pytest ../tests/unit/backend`). Rodar da raiz falha na coleta por um
-> detalhe de caminho relativo do mount de `uploads` — é esperado, não é bug.
+### Como rodar os testes
+
+Os testes de backend vivem em `backend/tests/` e rodam **dentro do container `api`**, contra o
+Postgres descartável `postgres-test` (não é o banco de produção — a suíte se recusa a rodar
+contra um database cujo nome não termina em `_test`):
+
+```bash
+docker compose up -d postgres-test api   # o postgres-test é obrigatório para os integration
+docker compose exec api pytest           # suíte completa
+docker compose exec api pytest tests/unit          # loop rápido, não precisa de banco
+docker compose exec api pytest tests/integration   # exige o postgres-test no ar
+```
+
+O schema do banco de teste nasce de `alembic upgrade head`, não de `SQLModel.metadata.create_all`:
+uma migração quebrada falha na suíte, e não no deploy.
+
+Os testes de ML e de pipeline continuam na raiz do repositório e rodam no host:
+
+```bash
+pytest        # na raiz: tests/unit/ml + tests/integration
+```
+
+> **As duas suítes não podem ser invocadas num único comando `pytest`.** Ambas declaram um
+> pacote de topo chamado `tests`, então pedir as duas de uma vez
+> (`pytest tests backend/tests`) falha na coleta com `ImportPathMismatchError`. Não é um bug
+> a corrigir na pressa: as duas têm ambientes de execução diferentes — a de ML roda no host,
+> a de backend roda dentro do container `api`, que nem enxerga a pasta `tests/` da raiz.
+>
+> Quem for montar CI: são **dois passos**, não um.
+>
+> ```bash
+> pytest                            # passo 1 — ML e pipeline, no host
+> docker compose exec -T api pytest # passo 2 — backend, no container
+> ```
 
 ---
 
@@ -270,5 +301,5 @@ feat(f0): alembic baseline e remocao do create_all no startup
 feat(f0): docker-compose com redis/api/web e Dockerfiles sem torch na api
 ```
 
-Referências: o plano detalhado está em `docs/superpowers/plans/2026-08-25-f0-reestruturacao-base.md`
-e a spec de arquitetura em `docs/superpowers/specs/2026-08-11-smartscout-rede-social-design.md`.
+Referências: o plano detalhado e a spec de arquitetura desta fase são mantidos fora do
+versionamento; peça ao time se precisar consultá-los.

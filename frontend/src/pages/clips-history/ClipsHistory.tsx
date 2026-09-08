@@ -14,13 +14,6 @@ function parseGeneratedAt(generatedAt: string): number {
     return new Date(year, month - 1, day, hour, minute).getTime();
 }
 
-function parseGeneratedAt(generatedAt: string): number {
-    const [datePart, timePart] = generatedAt.split(" - ");
-    const [day, month, year] = datePart.split("/").map(Number);
-    const [hour, minute] = timePart.split(":").map(Number);
-    return new Date(year, month - 1, day, hour, minute).getTime();
-}
-
 function groupToClips(group: ClipHistoryGroup): ClipWithDate[] {
     return group.clips.map((clip, i) => ({
         id:           clip.id,

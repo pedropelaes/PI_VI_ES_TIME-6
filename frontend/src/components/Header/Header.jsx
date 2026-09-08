@@ -1,8 +1,14 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import logoSmartScout from '../../assets/logo-smartscout.png';
+import { clearSession, getToken, getUser } from '../../services/api';
+import { getProfilePath, PROFILE_EDIT_PATH } from '../../shared/lib/profileRoutes';
+import { isUserRole } from '../../shared/lib/userRole';
+import { useMyProfile } from '../../features/profiles/hooks/useMyProfile';
+import { resolveAvatarUrl } from '../../features/profiles/mappers';
 import {
   SquarePlay,
+  Compass,
   CircleUserRound,
   X,
   Mail
@@ -13,7 +19,11 @@ export function Header() {
   const [showProfileModal, setShowProfileModal] = useState(false);
   const navigate = useNavigate();
 
-  const storedUser = JSON.parse(localStorage.getItem('user') || '{}');
+  const storedUser = getUser() ?? {};
+
+  // Sessao gravada antes do papel existir (ou dado corrompido) nao tem para
+  // onde navegar: melhor esconder o botao do que quebrar o modal inteiro.
+  const canOpenProfile = Boolean(storedUser.id) && isUserRole(storedUser.role);
 
   const user = {
     name: storedUser.first_name && storedUser.last_name
@@ -21,6 +31,14 @@ export function Header() {
       : 'Usuário',
     email: storedUser.email || 'sem e-mail',
   };
+
+  // O avatar vem de GET /profiles/me, e nao do localStorage: trocar a foto
+  // escreve na mesma chave de cache (MY_PROFILE_QUERY_KEY), entao o header
+  // reage sozinho, sem precisar sincronizar nada. O localStorage e gravado no
+  // login e ficaria desatualizado ate o proximo.
+  const { data: meuPerfil } = useMyProfile();
+  const avatarUrl = resolveAvatarUrl(meuPerfil?.profile.avatar_url ?? null);
+  const inicial = user.name.charAt(0).toUpperCase();
 
   function handleOpenProfileModal() {
     setShowProfileModal(true);
@@ -30,11 +48,22 @@ export function Header() {
     setShowProfileModal(false);
   }
 
+  function handleOpenMyProfile() {
+    setShowProfileModal(false);
+    // getProfilePath e o unico lugar que monta rota de perfil (decisao Q6).
+    navigate(getProfilePath(storedUser));
+  }
+
+  function handleEditProfile() {
+    setShowProfileModal(false);
+    navigate(PROFILE_EDIT_PATH);
+  }
+
   async function handleLogout() {
     try {
-      const token = localStorage.getItem('token');
+      const token = getToken();
       if (token) {
-        await fetch('http://localhost:8000/auth/logout', {
+        await fetch(`${import.meta.env.VITE_API_PATH}/auth/logout`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -45,8 +74,9 @@ export function Header() {
       console.error('Erro ao chamar logout no backend:', error);
     }
 
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    // clearSession() apaga as chaves reais (access_token/user). A versao anterior
+    // removia 'token', chave que nao existe, deixando a sessao viva apos o logout.
+    clearSession();
     setShowProfileModal(false);
     navigate('/login');
   }
@@ -85,6 +115,12 @@ export function Header() {
             </button>
           </Link>
 
+          <Link to="/feed">
+            <button className="iconButton" aria-label="Feed de talentos" title="Feed de talentos">
+              <Compass size={34} />
+            </button>
+          </Link>
+
             <button
                 className="iconButton headerAvatarButton"
                 aria-label="Perfil do Usuário"
@@ -92,7 +128,9 @@ export function Header() {
                 onClick={handleOpenProfileModal}
               >
                 <div className="headerAvatar">
-                  {user.name.charAt(0).toUpperCase()}
+                  {avatarUrl
+                    ? <img src={avatarUrl} alt={`Foto de perfil de ${user.name}`} className="headerAvatarImg" />
+                    : inicial}
                 </div>
             </button>
         </div>
@@ -114,7 +152,9 @@ export function Header() {
 
             <div className="profileTop">
               <div className="profileAvatar">
-                {user.name.charAt(0).toUpperCase()}
+                {avatarUrl
+                  ? <img src={avatarUrl} alt={`Foto de perfil de ${user.name}`} className="profileAvatarImg" />
+                  : inicial}
               </div>
 
               <h2 className="profileName">{user.name}</h2>
@@ -132,6 +172,17 @@ export function Header() {
             </div>
 
             <div className="profileActions">
+              {canOpenProfile && (
+                <button className="primaryButton" onClick={handleOpenMyProfile}>
+                  Ver meu perfil
+                </button>
+              )}
+
+              {/* Edicao nao depende do papel: o /profiles/me descobre sozinho. */}
+              <button className="secondaryButton" onClick={handleEditProfile}>
+                Editar perfil
+              </button>
+
               <button className="logoutButton" onClick={handleLogout}>
                 Sair da conta
               </button>

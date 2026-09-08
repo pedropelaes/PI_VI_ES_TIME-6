@@ -1,9 +1,17 @@
 import "./SignUp.css"
 import logo from "../../assets/logo.png"
 import { SyntheticEvent, useState } from "react"
-import { Lock, LockKeyhole, Mail, User, Eye, EyeOff } from "lucide-react"
+import { Lock, LockKeyhole, Mail, User, Eye, EyeOff, Info } from "lucide-react"
 import { Link, useNavigate } from "react-router-dom"
 import { register } from "../../services/api"
+import { USER_ROLES, USER_ROLE_LABELS } from "../../shared/lib/userRole"
+import type { UserRole } from "../../shared/lib/userRole"
+
+const ROLE_HINTS: Record<UserRole, string> = {
+  ATHLETE: "Publique seus clipes e seja descoberto",
+  SCOUT: "Avalie atletas e monte sua lista de olhados",
+  CLUB: "Represente o clube e acompanhe a base",
+}
 
 export default function SignUp() {
   const navigate = useNavigate()
@@ -12,6 +20,7 @@ export default function SignUp() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
+  const [role, setRole] = useState<UserRole>("ATHLETE")
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
@@ -40,6 +49,7 @@ export default function SignUp() {
         password,
         first_name: firstName.trim(),
         last_name: lastName.trim(),
+        role,
       })
       navigate("/login", { replace: true, state: { registered: true } })
     } catch (err) {
@@ -156,6 +166,33 @@ export default function SignUp() {
               <li>Inclua ao menos uma letra</li>
             </ul>
           </div>
+
+          <fieldset className="role-fieldset">
+            <legend className="input-label">Como você vai usar o SmartScout?</legend>
+
+            <div className="role-options">
+              {USER_ROLES.map((option) => (
+                <label
+                  key={option}
+                  className={`role-option ${role === option ? "selected" : ""}`}
+                >
+                  <input
+                    type="radio"
+                    name="role"
+                    value={option}
+                    checked={role === option}
+                    onChange={() => setRole(option)}
+                  />
+                  <span className="role-option-name">{USER_ROLE_LABELS[option]}</span>
+                  <span className="role-option-hint">{ROLE_HINTS[option]}</span>
+                </label>
+              ))}
+            </div>
+
+            <p className="role-warning">
+              <Info size={14} /> O tipo de conta não pode ser alterado depois do cadastro.
+            </p>
+          </fieldset>
 
           {error && <p className="signup-error">{error}</p>}
 

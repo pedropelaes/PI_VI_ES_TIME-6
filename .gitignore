@@ -2,4 +2,6 @@ dataset/
 ml/dataset/
 ml/videos/
 __pycache__/
-.claude/ 
+.claude/
+backups/
+docs/superpowers/

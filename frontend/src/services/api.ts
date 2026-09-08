@@ -1,3 +1,5 @@
+import type { UserRole } from "../shared/lib/userRole";
+
 const API_BASE = import.meta.env.VITE_API_PATH ?? "http://127.0.0.1:8000/api/v1";
 const REQUEST_TIMEOUT_MS = 15000;
 
@@ -16,6 +18,7 @@ export interface UserResponse {
   email: string;
   first_name: string;
   last_name: string;
+  role: UserRole;
   max_clips_allowed: number;
 }
 
@@ -35,6 +38,8 @@ export interface RegisterBody {
   password: string;
   first_name: string;
   last_name: string;
+  /** Imutavel apos o cadastro: nao existe troca de papel (secao 8 da spec F2). */
+  role: UserRole;
 }
 
 
@@ -43,7 +48,10 @@ export type JobStatusType = "PENDING" | "FAST_SCAN" | "WAITING_USER" | "DEEP_SCA
 
 export interface ClipResult {
   id: string;
-  file_url: string;
+  // A retencao faz soft delete: zera o storage_path e marca status=DELETED, entao
+  // o backend devolve file_url nulo para clipe expirado.
+  file_url: string | null;
+  status: string;
   start_timestamp: number;
   end_timestamp: number;
   duration: number;
@@ -67,7 +75,8 @@ export interface JobStatus {
 
 export interface ClipHistoryItem {
   id: string;
-  file_url: string;
+  file_url: string | null;
+  status: string;
   duration: string;
 }
 
