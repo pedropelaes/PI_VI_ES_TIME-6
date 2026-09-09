@@ -66,7 +66,7 @@ export default function PublicProfile() {
           <span className="badge badge-primary">
             <Shield size={14} /> {profile.positionLabel}
           </span>
-          <span className="badge badge-success">
+          <span className={`badge badge-${profile.statusVariant}`}>
             <Activity size={14} /> {profile.statusLabel}
           </span>
           {profile.currentClub && (

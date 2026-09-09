@@ -37,6 +37,12 @@ export const STATUS_LABELS: Record<AthleteStatus, string> = {
   NAO_DISPONIVEL: 'Não disponível',
 };
 
+export const STATUS_BADGE_VARIANTS: Record<AthleteStatus, 'success' | 'danger'> = {
+  DISPONIVEL: 'success',
+  CONTRATADO: 'success',
+  NAO_DISPONIVEL: 'danger',
+};
+
 /**
  * Converte centimetros (inteiro, formato da API) para metros no padrao
  * brasileiro: virgula decimal e duas casas sempre presentes, ex. 178 -> "1,78 m".
@@ -142,6 +148,7 @@ export function toAthleteProfileView(dto: AthleteProfileDTO): AthleteProfileView
     initial: dto.first_name.charAt(0).toUpperCase(),
     positionLabel: formatPosition(dto.position),
     statusLabel: STATUS_LABELS[dto.status],
+    statusVariant: STATUS_BADGE_VARIANTS[dto.status],
     location: formatLocation(dto.city, dto.state),
     ageLabel: dto.age == null ? SEM_VALOR : String(dto.age),
     heightLabel: formatHeight(dto.height_cm),

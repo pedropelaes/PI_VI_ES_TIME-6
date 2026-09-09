@@ -179,13 +179,15 @@ export default function ClipsHistory() {
                                     {clips.slice(0, 5).map(clip => (
                                         <ClipCard key={clip.id} clip={clip} onDeleted={handleClipDeleted} />
                                     ))}
-                                    <div
-                                        className="see-all-card"
-                                        onClick={() => setModalSession({ date, clips })}
-                                    >
-                                        <span>Ver Todos</span>
-                                        <span className="see-all-count">{clips.length} clipes</span>
-                                    </div>
+                                    {clips.length > 5 && (
+                                        <div
+                                            className="see-all-card"
+                                            onClick={() => setModalSession({ date, clips })}
+                                        >
+                                            <span>Ver Todos</span>
+                                            <span className="see-all-count">{clips.length} clipes</span>
+                                        </div>
+                                    )}
                                 </Grid>
                             </section>
 

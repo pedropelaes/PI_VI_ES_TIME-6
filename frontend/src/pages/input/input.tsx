@@ -307,6 +307,12 @@ export default function InputPage() {
                     {!loading && <ArrowRight size={20} className="btn-analyze-icon" />}
                 </button>
 
+                {loading && (
+                    <div className="progress-bar-container">
+                        <div className="progress-bar-fill animating" />
+                    </div>
+                )}
+
             </div>
         </div>
     );
