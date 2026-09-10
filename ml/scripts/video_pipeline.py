@@ -45,6 +45,11 @@ from ml.scripts.config import (
 )
 from ml.scripts.kinematic_analyzer import KinematicAnalyzer
 from ml.scripts.jersey_reader import JerseyReader
+from ml.scripts.ocr_reader import (
+    TraditionalOcrReader,
+    merge_jersey_reading,
+    needs_ocr_fallback,
+)
 from ml.scripts.trackers.ball_tracker import BallTracker
 from ml.scripts.trackers.tracker import PlayerTracker
 from ml.scripts.color_extractor import ColorExtractor
@@ -89,6 +94,7 @@ class VideoPipeline:
         self.detector = YoloDetector()
         self.ball_detector = BallDetector()
         self.jersey_reader = JerseyReader()
+        self.ocr_reader = TraditionalOcrReader()
         self.ball_event_detector = BallEventDetector()
         self.kinematic_analyzer = KinematicAnalyzer()
         self.clip_writer = ClipWriter()
@@ -200,18 +206,23 @@ class VideoPipeline:
                 # =======================================================
                 target_num_pass = target_number if target_number is not None else -1
                 resultados_lote = self.jersey_reader.read_batch(crops_lote, target_num_pass)
-                
+
+                # Cross-check com EasyOCR apenas nos crops ambíguos/vazios
+                resultados_lote, sources_lote = self._apply_ocr_fallback(
+                    crops_lote, resultados_lote, target_num_pass
+                )
+
                 # =======================================================
                 # 4. PROCESSA OS RESULTADOS
                 # =======================================================
                 # zip une os bboxes, as imagens recortadas e os números lidos
-                for bbox_orig, crop, numbers in zip(bboxes_lote, crops_lote, resultados_lote):
+                for bbox_orig, crop, numbers, source in zip(bboxes_lote, crops_lote, resultados_lote, sources_lote):
                     if not numbers:
                         continue
-                        
+
                     # [CORREÇÃO] Desempacota a tupla retornada pelo novo JerseyReader
                     for num, conf in numbers:
-                        
+
                         # Ignora leituras de baixíssima confiança no Fast Scan para evitar spam na UI
                         if conf < 0.40:
                             continue
@@ -276,7 +287,7 @@ class VideoPipeline:
                                 "image": f"/uploads/clips/{os.path.basename(output_dir)}/{img_filename}"
                             }
                             candidates_found[signature] = cand_dict
-                            self.logger.info(f"[FAST SCAN] Novo candidato encontrado e enviado à UI: {num} (conf: {conf:.2f})")
+                            self.logger.info(f"[FAST SCAN] Novo candidato encontrado e enviado à UI: {num} (conf: {conf:.2f}, fonte: {source})")
                             
                             if on_candidate_found:
                                 on_candidate_found(cand_dict)
@@ -607,12 +618,19 @@ class VideoPipeline:
         target_num_pass = target_number if target_number is not None else -1
         resultados_lote = self.jersey_reader.read_batch(crops_lote, target_num_pass)
 
+        # 2.5. Cross-check com EasyOCR apenas nos crops ambíguos/vazios
+        resultados_lote, sources_lote = self._apply_ocr_fallback(
+            crops_lote, resultados_lote, target_num_pass
+        )
+
         # 3. Processa os resultados
-        for track_id, bbox, crop, numbers in zip(track_ids_lote, bboxes_orig_lote, crops_lote, resultados_lote):
+        for track_id, bbox, crop, numbers, source in zip(
+            track_ids_lote, bboxes_orig_lote, crops_lote, resultados_lote, sources_lote
+        ):
             if not numbers:
                 continue
 
-            for n, conf in numbers: 
+            for n, conf in numbers:
                 if target_color and n == target_number:
                     hex_color = self._extract_core_color(crop)
                     if hex_color and self._color_distance(target_color, hex_color) < TRACKING_COLOR_TOLERANCE:
@@ -628,8 +646,58 @@ class VideoPipeline:
 
             if debug and debug_dir:
                 # Nota: 'numbers' agora será impresso no log como uma lista de tuplas. Ex: [(10, 0.85)]
-                self._save_debug_crop(frame_orig, bbox, frame_idx, track_id, numbers, debug_dir)
-                self.logger.debug(f"  [MAP] frame={frame_idx} track={track_id} leu={numbers}")
+                self._save_debug_crop(frame_orig, bbox, frame_idx, track_id, numbers, debug_dir, source=source)
+                self.logger.debug(f"  [MAP] frame={frame_idx} track={track_id} fonte={source} leu={numbers}")
+
+    def _apply_ocr_fallback(
+        self,
+        crops_lote: list[np.ndarray],
+        yolo_results: list[list[tuple[int, float]]],
+        target_num_pass: int,
+    ) -> tuple[list[list[tuple[int, float]]], list[str]]:
+        """
+        Roda o EasyOCR (TraditionalOcrReader) apenas nos crops cujo resultado
+        do YOLO dispara `needs_ocr_fallback` (leitura vazia, ou dígito
+        ambíguo — 2/6/8 — com baixa confiança), e funde as duas leituras
+        via `merge_jersey_reading`.
+
+        Retorna:
+          - resultados no MESMO formato de JerseyReader.read_batch (já com
+            o merge aplicado — um único voto por crop, evitando diluir o
+            soft-voting entre o número certo e o errado);
+          - lista paralela de fontes ("yolo" | "ocr" | "yolo+ocr" | "none").
+
+        Custo: proporcional ao número de crops ambíguos/vazios, não ao
+        tamanho total do lote — se nenhum crop disparar a condição, o
+        EasyOCR nunca chega a ser chamado.
+        """
+        sources = ["yolo" if r else "none" for r in yolo_results]
+
+        fallback_indices = [
+            i for i, r in enumerate(yolo_results)
+            if needs_ocr_fallback(r[0] if r else None)
+        ]
+        if not fallback_indices:
+            return yolo_results, sources
+
+        fallback_crops = [crops_lote[i] for i in fallback_indices]
+        ocr_results = self.ocr_reader.read_batch(fallback_crops, target_num_pass)
+
+        merged_results = list(yolo_results)
+        for idx, ocr_result in zip(fallback_indices, ocr_results):
+            yolo_reading = yolo_results[idx][0] if yolo_results[idx] else None
+            ocr_reading = ocr_result[0] if ocr_result else None
+            merged = merge_jersey_reading(yolo_reading, ocr_reading)
+
+            if merged is None:
+                merged_results[idx] = []
+                sources[idx] = "none"
+            else:
+                num, conf, source = merged
+                merged_results[idx] = [(num, conf)]
+                sources[idx] = source
+
+        return merged_results, sources
 
     def _color_distance(self, hex1: str, hex2: str) -> float:
         """Calcula a distância perceptual entre duas cores usando o espaço LAB (Visão Humana)"""
@@ -1065,6 +1133,7 @@ class VideoPipeline:
         track_id,
         numbers: list[tuple[int, float]],
         debug_dir: str,
+        source: str = "yolo",
     ) -> None:
         """Salva crop do torso com nome indicativo do que foi lido."""
         x1, y1, x2, y2 = bbox
@@ -1078,8 +1147,8 @@ class VideoPipeline:
             max(0, x1):min(fw, x2),
         ]
         nums_str = "_".join(f"{n}-c{int(conf*100)}" for n, conf in numbers)
-        
-        filename = f"ocr_f{frame_idx:05d}_t{track_id}_leu_{nums_str}.png"
+
+        filename = f"ocr_f{frame_idx:05d}_t{track_id}_src-{source}_leu_{nums_str}.png"
         cv2.imwrite(os.path.join(debug_dir, filename), crop)
 
 

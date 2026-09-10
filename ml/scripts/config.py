@@ -76,6 +76,39 @@ MIN_CROP_W = 8
 
 
 # ==========================================================
+# FALLBACK EASYOCR (CROSS-CHECK DE DÍGITOS AMBÍGUOS DO YOLO)
+# ==========================================================
+# Dígitos que o modelo YOLO especialista (best.pt) confunde entre si
+# por semelhança visual (curvas/loops parecidos: 2, 6 e 8). Uma leitura
+# contendo algum desses dígitos com confiança baixa dispara o EasyOCR
+# como segunda opinião (cross-check), sem substituir o YOLO como
+# leitor primário.
+AMBIGUOUS_DIGITS = frozenset({2, 6, 8})
+
+# Confiança média do YOLO abaixo da qual, SE a leitura contiver um
+# dígito do conjunto acima, disparamos o fallback via EasyOCR.
+AMBIGUOUS_YOLO_CONFIDENCE_THRESHOLD = 0.75
+
+# Confiança mínima (já ponderada pela "completeness") para aceitar uma
+# leitura de fallback do EasyOCR — seja para preencher um crop que o
+# YOLO não leu, seja para vencer um desempate contra uma leitura
+# ambígua do YOLO.
+EASYOCR_MIN_CONFIDENCE = 0.40
+
+# Peso aplicado à confiança do EasyOCR quando ele é a ÚNICA fonte da
+# leitura final (YOLO não leu nada, ou perdeu o desempate). O EasyOCR
+# não foi treinado nas fontes estilizadas de camisas de futebol, então
+# seu voto isolado vale menos que um voto do YOLO no soft-voting.
+EASYOCR_ALONE_VOTE_WEIGHT = 0.6
+
+# Multiplicador de reforço quando YOLO e EasyOCR concordam no mesmo
+# número: a concordância resolve a ambiguidade original com confiança
+# maior que a leitura isolada do YOLO. Resultado é limitado (clamp) a
+# 1.0 no código de merge.
+EASYOCR_AGREEMENT_BONUS = 1.3
+
+
+# ==========================================================
 # RESOLUÇÃO DE IDs DOS JOGADORES
 # ==========================================================
 # Número mínimo de votos (leituras consistentes) para "confirmar" um número

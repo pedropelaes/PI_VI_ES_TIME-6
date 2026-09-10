@@ -33,6 +33,7 @@ def pipeline():
     with patch("ml.detector.YoloDetector"), \
          patch("ml.detector.BallDetector"), \
          patch("ml.scripts.jersey_reader.JerseyReader"), \
+         patch("ml.scripts.ocr_reader.TraditionalOcrReader"), \
          patch("ml.scripts.ball_event_detector.BallEventDetector"), \
          patch("ml.scripts.kinematic_analyzer.KinematicAnalyzer"), \
          patch("ml.scripts.clip_writer.ClipWriter"), \
@@ -47,6 +48,7 @@ def pipeline():
             p.detector = MagicMock()
             p.ball_detector = MagicMock()
             p.jersey_reader = MagicMock()
+            p.ocr_reader = MagicMock()
             p.ball_event_detector = MagicMock()
             p.kinematic_analyzer = MagicMock()
             p.clip_writer = MagicMock()
@@ -304,6 +306,63 @@ class TestGetSafeFps:
         mock_cap.get.return_value = 10.0
         from ml.scripts.video_pipeline import VideoPipeline
         assert VideoPipeline._get_safe_fps(mock_cap) == 10.0
+
+
+# ===========================================================================
+# _apply_ocr_fallback
+# ===========================================================================
+
+class TestApplyOcrFallback:
+    """
+    _apply_ocr_fallback só deve chamar self.ocr_reader.read_batch sobre o
+    subconjunto de crops cujo resultado do YOLO dispara needs_ocr_fallback
+    (vazio, ou dígito ambíguo 2/6/8 com baixa confiança).
+    """
+
+    def _crops(self, n):
+        return [MagicMock(name=f"crop{i}") for i in range(n)]
+
+    def test_no_ambiguous_crop_skips_easyocr_entirely(self, pipeline):
+        pipeline.ocr_reader.reset_mock()
+        crops = self._crops(2)
+        yolo_results = [[(10, 0.9)], [(17, 0.95)]]
+
+        merged, sources = pipeline._apply_ocr_fallback(crops, yolo_results, -1)
+
+        assert merged == yolo_results
+        assert sources == ["yolo", "yolo"]
+        pipeline.ocr_reader.read_batch.assert_not_called()
+
+    def test_only_ambiguous_or_empty_crops_are_sent_to_easyocr(self, pipeline):
+        pipeline.ocr_reader.reset_mock()
+        crops = self._crops(3)
+        # crop 0: sem dígito ambíguo, alta confiança -> não dispara
+        # crop 1: sem leitura do YOLO -> dispara
+        # crop 2: dígito ambíguo (8), baixa confiança -> dispara
+        yolo_results = [[(17, 0.95)], [], [(8, 0.5)]]
+        pipeline.ocr_reader.read_batch.return_value = [[], [(8, 0.9, 1.0)]]
+
+        merged, sources = pipeline._apply_ocr_fallback(crops, yolo_results, -1)
+
+        called_crops = pipeline.ocr_reader.read_batch.call_args[0][0]
+        assert called_crops == [crops[1], crops[2]]
+        assert merged[0] == [(17, 0.95)]
+        assert sources[0] == "yolo"
+        assert merged[1] == []
+        assert sources[1] == "none"
+        assert merged[2] == [(8, pytest.approx(0.5 * 1.3))]
+        assert sources[2] == "yolo+ocr"
+
+    def test_easyocr_fills_in_empty_yolo_crop(self, pipeline):
+        pipeline.ocr_reader.reset_mock()
+        crops = self._crops(1)
+        yolo_results = [[]]
+        pipeline.ocr_reader.read_batch.return_value = [[(7, 0.9, 1.0)]]
+
+        merged, sources = pipeline._apply_ocr_fallback(crops, yolo_results, -1)
+
+        assert merged == [[(7, pytest.approx(0.9 * 0.6))]]
+        assert sources == ["ocr"]
 
     def test_fps_at_boundary_120_valid(self):
         mock_cap = MagicMock()
