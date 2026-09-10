@@ -7,6 +7,32 @@ import { listClips, deleteJobClips, ClipHistoryGroup } from "../../services/api"
 
 type ClipWithDate = ClipData & { generatedAt: string; videoUrl?: string; jobId: string };
 
+const GRID_MIN_ITEM_WIDTH = 220;
+const GRID_GAP = 24;
+
+function useGridColumnCount(minItemWidth: number, gap: number) {
+    const [el, setEl] = useState<HTMLDivElement | null>(null);
+    const [columnCount, setColumnCount] = useState(1);
+
+    useEffect(() => {
+        if (!el) return;
+
+        const measure = () => {
+            const style = getComputedStyle(el);
+            const paddingX = parseFloat(style.paddingLeft) + parseFloat(style.paddingRight);
+            const trackWidth = el.clientWidth - paddingX;
+            setColumnCount(Math.max(1, Math.floor((trackWidth + gap) / (minItemWidth + gap))));
+        };
+
+        measure();
+        const observer = new ResizeObserver(measure);
+        observer.observe(el);
+        return () => observer.disconnect();
+    }, [el, minItemWidth, gap]);
+
+    return [setEl, columnCount] as const;
+}
+
 function parseGeneratedAt(generatedAt: string): number {
     const [datePart, timePart] = generatedAt.split(" - ");
     const [day, month, year] = datePart.split("/").map(Number);
@@ -34,6 +60,7 @@ export default function ClipsHistory() {
     const [search, setSearch]   = useState("");
     const [sortBy, setSortBy]   = useState<"recent" | "oldest">("recent");
     const [modalSession, setModalSession] = useState<{ date: string, clips: ClipWithDate[] } | null>(null);
+    const [measureGridRef, visibleCount] = useGridColumnCount(GRID_MIN_ITEM_WIDTH, GRID_GAP);
 
     useEffect(() => {
         listClips()
@@ -175,11 +202,13 @@ export default function ClipsHistory() {
                                     </button>
                                 </div>
 
-                                <Grid>
-                                    {clips.slice(0, 5).map(clip => (
-                                        <ClipCard key={clip.id} clip={clip} onDeleted={handleClipDeleted} />
-                                    ))}
-                                    {clips.length > 5 && (
+                                <Grid ref={index === 0 ? measureGridRef : undefined}>
+                                    {clips
+                                        .slice(0, clips.length > visibleCount ? Math.max(0, visibleCount - 1) : visibleCount)
+                                        .map(clip => (
+                                            <ClipCard key={clip.id} clip={clip} onDeleted={handleClipDeleted} />
+                                        ))}
+                                    {clips.length > visibleCount && (
                                         <div
                                             className="see-all-card"
                                             onClick={() => setModalSession({ date, clips })}
