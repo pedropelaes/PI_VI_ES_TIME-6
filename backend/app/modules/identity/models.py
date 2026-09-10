@@ -1,11 +1,20 @@
 import uuid
 from datetime import datetime, timezone
+from enum import Enum
 from typing import List, TYPE_CHECKING
 
 from sqlmodel import Field, SQLModel, Relationship
 
 if TYPE_CHECKING:
     from app.modules.clips.models import Video
+
+
+class UserRole(str, Enum):
+    """Papel do usuario. Definido no cadastro e imutavel (secao 13 da spec de origem)."""
+
+    ATHLETE = "ATHLETE"
+    SCOUT = "SCOUT"
+    CLUB = "CLUB"
 
 
 class User(SQLModel, table=True):
@@ -16,6 +25,7 @@ class User(SQLModel, table=True):
     password_hash: str
     first_name: str
     last_name: str
+    role: UserRole = Field(default=UserRole.ATHLETE)
     max_clips_allowed: int = Field(default=20)
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 

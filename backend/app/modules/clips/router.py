@@ -8,15 +8,15 @@ import time
 from pathlib import Path
 from datetime import datetime, timezone, timedelta
 
-from fastapi import APIRouter, Depends, UploadFile, File, Form
+from fastapi import APIRouter, Depends, Query, UploadFile, File, Form
 from fastapi.responses import StreamingResponse
 from sqlmodel import Session, select
 
 from app.core.database import get_session, engine
 from app.core.deps import get_current_user
-from app.core.exceptions import NotFoundError, ConflictError, DomainError
+from app.core.exceptions import NotFoundError, ForbiddenError, ConflictError, DomainError
 from app.core.storage import get_storage
-from app.modules.identity.models import User
+from app.modules.identity.models import User, UserRole
 from app.modules.clips.models import Video, ProcessingJob, Clip, Candidate
 from app.modules.clips.schemas import ConfirmPlayerRequest
 from app.modules.clips.tasks import run_fast_scan, run_full_tracking
@@ -30,6 +30,28 @@ CLIPS_DIR  = BASE_DIR / "uploads" / "clips"
 
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 CLIPS_DIR.mkdir(parents=True, exist_ok=True)
+
+
+def _delete_job_and_orphan_video(session: Session, job: ProcessingJob) -> None:
+    """
+    Apaga o job (candidatos somem via cascade). Se nenhum outro job ainda
+    apontar para o mesmo vídeo, apaga também o vídeo original (linha + arquivo).
+    Assume que todos os clipes do job já foram apagados por quem chamou.
+    """
+    video_id = job.video_id
+    session.delete(job)
+    session.flush()
+
+    other_job_using_video = session.exec(
+        select(ProcessingJob).where(ProcessingJob.video_id == video_id)
+    ).first()
+    if other_job_using_video:
+        return
+
+    video = session.get(Video, video_id)
+    if video:
+        get_storage().delete(video.storage_path)
+        session.delete(video)
 
 
 @router.get("/{job_id}/stream")
@@ -62,10 +84,11 @@ def stream_job_status(job_id: uuid.UUID):
                     "clips": [
                         {
                             "id": str(c.id),
-                            "file_url": f"/uploads/clips/{job_id}/{Path(c.storage_path).name}",
+                            "file_url": f"/uploads/clips/{job_id}/{Path(c.storage_path).name}" if c.storage_path else None,
                             "start_timestamp": c.start_timestamp,
                             "end_timestamp": c.end_timestamp,
                             "duration": round(c.end_timestamp - c.start_timestamp, 2),
+                            "status": c.status,
                         }
                         for c in clips
                     ]
@@ -128,6 +151,32 @@ async def create_job(
     run_fast_scan.delay(job.id, str(video_path), target_number, start_ts, end_ts)
 
     return {"job_id": str(job.id), "status": job.status}
+
+@router.delete("/{job_id}/clips", status_code=204)
+def delete_job_clips(
+    job_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    session: Session = Depends(get_session),
+):
+    """Apaga todos os clipes de um job (remove o job do histórico)."""
+    job = session.get(ProcessingJob, job_id)
+    if not job:
+        raise NotFoundError("Job não encontrado.")
+
+    video = session.get(Video, job.video_id)
+    if not video or video.user_id != current_user.id:
+        raise ForbiddenError("Este job não pertence ao usuário autenticado.")
+
+    storage = get_storage()
+    clips = session.exec(select(Clip).where(Clip.job_id == job_id)).all()
+    for clip in clips:
+        storage.delete(clip.storage_path)
+        session.delete(clip)
+    session.flush()
+
+    _delete_job_and_orphan_video(session, job)
+    session.commit()
+
 
 @router.post("/{job_id}/confirm")
 def confirm_player(
@@ -192,13 +241,110 @@ def list_clips(
             "clips": [
                 {
                     "id": str(c.id),
-                    "file_url": f"/uploads/clips/{job.id}/{Path(c.storage_path).name}",
+                    "file_url": f"/uploads/clips/{job.id}/{Path(c.storage_path).name}" if c.storage_path else None,
                     "duration": _format_duration(c.end_timestamp - c.start_timestamp),
+                    "status": c.status,
                 }
                 for c in clips
             ],
         })
     return result
+
+
+@clips_router.delete("/{clip_id}", status_code=204)
+def delete_clip(
+    clip_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    session: Session = Depends(get_session),
+):
+    clip = session.get(Clip, clip_id)
+    if not clip:
+        raise NotFoundError("Clipe não encontrado.")
+
+    job = session.get(ProcessingJob, clip.job_id)
+    video = session.get(Video, job.video_id) if job else None
+    if not video or video.user_id != current_user.id:
+        raise ForbiddenError("Este clipe não pertence ao usuário autenticado.")
+
+    get_storage().delete(clip.storage_path)
+    session.delete(clip)
+    session.flush()
+
+    remaining_clip = session.exec(select(Clip).where(Clip.job_id == job.id)).first()
+    if not remaining_clip:
+        _delete_job_and_orphan_video(session, job)
+
+    session.commit()
+
+
+@clips_router.get("/athletes/{user_id}")
+def list_athlete_clips(
+    user_id: uuid.UUID,
+    limit: int = Query(20, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+    current_user: User = Depends(get_current_user),
+    session: Session = Depends(get_session),
+):
+    """
+    Clipes de um atleta especifico, para a videoteca do perfil publico.
+
+    Um `user_id` inexistente ou de usuario que nao e ATHLETE gera 404 (NotFoundError):
+    nao existe atleta com aquele id, e a distincao nao interessa ao cliente (secao 5.5
+    da spec). Ja um atleta que existe mas ainda nao tem clipes devolve lista vazia com
+    200 -- sao situacoes diferentes.
+    """
+    target = session.get(User, user_id)
+    if target is None or target.role != UserRole.ATHLETE:
+        raise NotFoundError("Atleta não encontrado.")
+
+    clips = session.exec(
+        select(Clip)
+        .join(ProcessingJob, Clip.job_id == ProcessingJob.id)
+        .join(Video, ProcessingJob.video_id == Video.id)
+        .where(Video.user_id == user_id)
+        .where(ProcessingJob.status == "COMPLETED")
+        .where(Clip.status != "DELETED")
+        .where(Clip.storage_path.is_not(None))
+        .order_by(Clip.created_at.desc())
+        .offset(offset)
+        .limit(limit)
+    ).all()
+
+    return [
+        {
+            "id": str(c.id),
+            "duration_seconds": round(c.end_timestamp - c.start_timestamp, 2),
+            "file_url": f"/uploads/clips/{c.job_id}/{Path(c.storage_path).name}",
+            "created_at": c.created_at,
+        }
+        for c in clips
+    ]
+
+
+@clips_router.delete("/{clip_id}", status_code=204)
+def delete_clip(
+    clip_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    session: Session = Depends(get_session),
+):
+    clip = session.get(Clip, clip_id)
+    if not clip:
+        raise NotFoundError("Clipe não encontrado.")
+
+    job = session.get(ProcessingJob, clip.job_id)
+    video = session.get(Video, job.video_id) if job else None
+    if not video or video.user_id != current_user.id:
+        raise ForbiddenError("Este clipe não pertence ao usuário autenticado.")
+
+    get_storage().delete(clip.storage_path)
+    session.delete(clip)
+    session.flush()
+
+    remaining_clip = session.exec(select(Clip).where(Clip.job_id == job.id)).first()
+    if not remaining_clip:
+        _delete_job_and_orphan_video(session, job)
+
+    session.commit()
 
 
 def _format_duration(seconds: float) -> str:

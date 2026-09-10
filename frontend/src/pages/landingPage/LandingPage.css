@@ -934,3 +934,12 @@
   background: rgba(255, 255, 255, 0.1);
   color: #fff;
 }
+/* Foto no lugar da inicial: recorta no circulo sem distorcer, como no Header. */
+.nav-avatar-img,
+.landing-profile-avatar-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  display: block;
+}

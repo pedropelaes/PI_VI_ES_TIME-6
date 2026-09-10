@@ -7,6 +7,7 @@ from sqlmodel import Session, select
 from app.core.database import get_session
 from app.modules.identity.models import User, PasswordResetToken
 from app.modules.identity.schemas import UserCreate, UserLogin, UserResponse, Token, TokenPayload
+from app.modules.profiles.service import provision_profile
 from app.core.security import hash_password, verify_password, create_access_token
 from pydantic import BaseModel, Field
 import secrets
@@ -41,8 +42,15 @@ def register(data: UserCreate, session: Session = Depends(get_session)):
         password_hash=hash_password(data.password),
         first_name=data.first_name.strip(),
         last_name=data.last_name.strip(),
+        role=data.role,
     )
     session.add(user)
+    session.flush()  # atribui user.id sem encerrar a transacao
+
+    # Perfil do papel na MESMA transacao: um usuario sem perfil do seu papel e estado
+    # invalido (secao 1 da spec). O `flush()` acima e o que garante a atomicidade --
+    # trocar por `commit()` deixaria o usuario persistido se o perfil falhasse.
+    provision_profile(session, user.id, user.role)
     session.commit()
     session.refresh(user)
 
@@ -55,6 +63,7 @@ def register(data: UserCreate, session: Session = Depends(get_session)):
             email=user.email,
             first_name=user.first_name,
             last_name=user.last_name,
+            role=user.role,
             max_clips_allowed=user.max_clips_allowed,
         ),
     )
@@ -82,6 +91,7 @@ def login(data: UserLogin, session: Session = Depends(get_session)):
             email=user.email,
             first_name=user.first_name,
             last_name=user.last_name,
+            role=user.role,
             max_clips_allowed=user.max_clips_allowed,
         ),
     )

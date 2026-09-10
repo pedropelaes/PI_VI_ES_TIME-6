@@ -9,6 +9,7 @@ from pathlib import Path
 from app.core.exceptions import DomainError
 from app.modules.clips.router import router as clips_jobs_router, clips_router
 from app.modules.identity.router import router as identity_router
+from app.modules.profiles.router import router as profiles_router
 
 app = FastAPI(title="SmartScout API")
 
@@ -34,6 +35,7 @@ app.add_middleware(
 app.include_router(identity_router, prefix="/api/v1")
 app.include_router(clips_jobs_router, prefix="/api/v1")
 app.include_router(clips_router, prefix="/api/v1")
+app.include_router(profiles_router, prefix="/api/v1")
 
 @app.on_event("startup")
 def on_startup():
