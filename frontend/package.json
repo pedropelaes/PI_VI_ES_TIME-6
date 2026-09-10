@@ -19,6 +19,7 @@
     "rc-slider": "^11.1.9",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
+    "react-easy-crop": "^6.2.3",
     "react-router-dom": "^7.13.1"
   },
   "devDependencies": {
