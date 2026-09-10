@@ -67,8 +67,8 @@ export default function SelectPlayerView({ job, jobId }: SelectPlayerProps) {
               ? "Analisando jogadores em campo..."
               : `Buscando o jogador nº ${job.candidates?.[0]?.number || "..."}`}
           </h2>
-          <div className="progress-bar-container">
-            <div className={`progress-bar-fill ${job.status === "WAITING_USER" ? "finished" : "animating"}`} />
+          <div className="select-progress-container">
+            <div className={`select-progress-fill ${job.status === "WAITING_USER" ? "finished" : "animating"}`} />
           </div>
         </div>
 

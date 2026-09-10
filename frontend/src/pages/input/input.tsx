@@ -308,8 +308,8 @@ export default function InputPage() {
                 </button>
 
                 {loading && (
-                    <div className="progress-bar-container">
-                        <div className="progress-bar-fill animating" />
+                    <div className="upload-progress-container">
+                        <div className="upload-progress-fill" />
                     </div>
                 )}
 

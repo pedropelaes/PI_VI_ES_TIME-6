@@ -135,8 +135,8 @@ export default function ClipsHistory() {
                 </header>
 
                 {/* ── Divider ── */}
-                <div className="progress-bar-container">
-                    <div className="progress-bar-fill finished" />
+                <div className="history-divider-container">
+                    <div className="history-divider-fill" />
                 </div>
 
                 {/* ── Conteúdo scrollável ── */}

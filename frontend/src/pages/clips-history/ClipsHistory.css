@@ -172,7 +172,7 @@
   pointer-events: none;
 }
  
-.progress-bar-container {
+.history-divider-container {
   position: relative;
   width: 100%;
   height: 6px;
@@ -181,8 +181,8 @@
   margin: 1.5rem 0 0;
   display: none;
 }
- 
-.progress-bar-fill.finished {
+
+.history-divider-fill {
   position: absolute;
   top: 0; bottom: 0; left: 0;
   width: 100%;

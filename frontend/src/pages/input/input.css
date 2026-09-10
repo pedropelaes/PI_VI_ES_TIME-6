@@ -329,7 +329,7 @@
   top: 1px;
 }
  
-.progress-bar-container {
+.upload-progress-container {
   position: relative;
   width: 100%;
   height: 6px;
@@ -338,20 +338,17 @@
   overflow: hidden;
 }
 
-.progress-bar-fill {
+.upload-progress-fill {
   position: absolute;
   top: 0; bottom: 0; left: 0;
   height: 100%;
+  width: 30%;
   background: linear-gradient(90deg, #2872A1, #5BADDA);
   border-radius: 4px;
+  animation: upload-indeterminate-loading 1.5s infinite ease-in-out;
 }
 
-.progress-bar-fill.animating {
-  width: 30%;
-  animation: indeterminate-loading 1.5s infinite ease-in-out;
-}
-
-@keyframes indeterminate-loading {
+@keyframes upload-indeterminate-loading {
   0%   { left: -30%; }
   100% { left: 100%; }
 }

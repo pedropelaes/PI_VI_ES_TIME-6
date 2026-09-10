@@ -82,7 +82,7 @@
   text-align: center;
 }
  
-.progress-bar-container {
+.select-progress-container {
   position: relative;
   width: 100%;
   height: 6px;
@@ -90,26 +90,26 @@
   border-radius: 4px;
   overflow: hidden;
 }
- 
-.progress-bar-fill {
+
+.select-progress-fill {
   position: absolute;
   top: 0; bottom: 0; left: 0;
   height: 100%;
   background: linear-gradient(90deg, #2872A1, #5BADDA);
   border-radius: 4px;
 }
- 
-.progress-bar-fill.animating {
+
+.select-progress-fill.animating {
   width: 30%;
-  animation: indeterminate-loading 1.5s infinite ease-in-out;
+  animation: select-indeterminate-loading 1.5s infinite ease-in-out;
 }
- 
-.progress-bar-fill.finished {
+
+.select-progress-fill.finished {
   width: 100%;
   animation: none;
 }
- 
-@keyframes indeterminate-loading {
+
+@keyframes select-indeterminate-loading {
   0%   { left: -30%; }
   100% { left: 100%; }
 }
