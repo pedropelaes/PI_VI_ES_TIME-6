@@ -74,6 +74,11 @@ export default function EditProfile() {
           </Link>
         </div>
 
+        {/*
+          A imagem escolhida no AvatarUploader passa por um modal de corte
+          antes de chegar aqui: `avatar.select` so recebe o arquivo ja
+          recortado pelo usuario.
+        */}
         <AvatarUploader
           avatarUrl={resolveAvatarUrl(me.profile.avatar_url)}
           initial={me.profile.first_name.charAt(0).toUpperCase()}

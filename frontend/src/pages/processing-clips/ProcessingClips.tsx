@@ -59,8 +59,8 @@ export default function ProcessingClipsView({ job }: ProcessingClipsProps) {
 
         <div className="processing-header">
           <h2 className="processing-title">{getTitle()}</h2>
-          <div className="progress-bar-container">
-            <div className={`progress-bar-fill ${isDone ? "finished" : isError ? "error" : "animating"}`} />
+          <div className="processing-progress-container">
+            <div className={`processing-progress-fill ${isDone ? "finished" : isError ? "error" : "animating"}`} />
           </div>
         </div>
 

@@ -91,6 +91,7 @@ describe('toAthleteProfileView', () => {
     expect(view.heightLabel).toBe('1,78 m');
     expect(view.positionLabel).toBe('Atacante');
     expect(view.statusLabel).toBe('Disponível para Clube');
+    expect(view.statusVariant).toBe('success');
     expect(view.ageLabel).toBe('19');
     expect(view.clipsCount).toBe(42);
   });
@@ -102,6 +103,12 @@ describe('toAthleteProfileView', () => {
   it('traduz os demais status', () => {
     expect(toAthleteProfileView({ ...DTO, status: 'CONTRATADO' }).statusLabel).toBe('Contratado');
     expect(toAthleteProfileView({ ...DTO, status: 'NAO_DISPONIVEL' }).statusLabel).toBe('Não disponível');
+  });
+
+  it('marca "nao disponivel" com a variante de badge vermelha, os demais com a verde', () => {
+    expect(toAthleteProfileView({ ...DTO, status: 'DISPONIVEL' }).statusVariant).toBe('success');
+    expect(toAthleteProfileView({ ...DTO, status: 'CONTRATADO' }).statusVariant).toBe('success');
+    expect(toAthleteProfileView({ ...DTO, status: 'NAO_DISPONIVEL' }).statusVariant).toBe('danger');
   });
 
   it('repassa o historico de clubes sem alterar o texto (quebras de linha inclusas)', () => {

@@ -329,6 +329,30 @@
   top: 1px;
 }
  
+.upload-progress-container {
+  position: relative;
+  width: 100%;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.upload-progress-fill {
+  position: absolute;
+  top: 0; bottom: 0; left: 0;
+  height: 100%;
+  width: 30%;
+  background: linear-gradient(90deg, #2872A1, #5BADDA);
+  border-radius: 4px;
+  animation: upload-indeterminate-loading 1.5s infinite ease-in-out;
+}
+
+@keyframes upload-indeterminate-loading {
+  0%   { left: -30%; }
+  100% { left: 100%; }
+}
+
 .input-error {
   display: flex;
   align-items: center;

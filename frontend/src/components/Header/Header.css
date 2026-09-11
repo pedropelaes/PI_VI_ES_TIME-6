@@ -3,7 +3,10 @@
   align-items: center;
   justify-content: space-between;
   padding: 0 24px;
-  background: #dfe8f2;
+  background: rgba(10, 15, 30, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   height: 72px;
   min-height: 72px;
   max-height: 72px;
@@ -14,7 +17,7 @@
   text-decoration: none;
   font-size: 2rem;
   font-weight: 700;
-  color: #183153;
+  color: #ffffff;
   display: flex;
   align-items: center;
   flex-shrink: 0;
@@ -42,13 +45,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #183153;
-  transition: transform 0.2s ease, opacity 0.2s ease;
+  color: rgba(255, 255, 255, 0.75);
+  transition: transform 0.2s ease, opacity 0.2s ease, color 0.2s ease;
 }
 
 .iconButton:hover {
   transform: scale(1.05);
   opacity: 0.9;
+  color: #ffffff;
 }
 
 /* Overlay escurecido */

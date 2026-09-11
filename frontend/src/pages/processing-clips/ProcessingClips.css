@@ -84,7 +84,7 @@
   text-align: center;
 }
  
-.progress-bar-container {
+.processing-progress-container {
   position: relative;
   width: 100%;
   height: 6px;
@@ -92,8 +92,8 @@
   border-radius: 4px;
   overflow: hidden;
 }
- 
-.progress-bar-fill {
+
+.processing-progress-fill {
   position: absolute;
   top: 0; bottom: 0;
   height: 100%;
@@ -102,26 +102,26 @@
   border-radius: 4px;
   transition: width 0.5s ease-in-out;
 }
- 
-.progress-bar-fill.animating {
+
+.processing-progress-fill.animating {
   width: 30%;
-  animation: indeterminate-loading 1.5s infinite ease-in-out;
+  animation: processing-indeterminate-loading 1.5s infinite ease-in-out;
 }
- 
-.progress-bar-fill.finished {
+
+.processing-progress-fill.finished {
   width: 100%;
   animation: none;
   left: 0;
 }
- 
-.progress-bar-fill.error {
+
+.processing-progress-fill.error {
   width: 100%;
   animation: none;
   left: 0;
   background: #ef4444;
 }
- 
-@keyframes indeterminate-loading {
+
+@keyframes processing-indeterminate-loading {
   0%   { left: -30%; }
   100% { left: 100%; }
 }

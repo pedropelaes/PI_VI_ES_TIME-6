@@ -1,8 +1,34 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { useEffect } from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import EditProfile from './EditProfile';
+
+// jsdom nao carrega imagens de verdade, entao o Cropper real nunca chamaria
+// onCropComplete: o stub simula a area ja escolhida assim que monta.
+vi.mock('react-easy-crop', () => ({
+  default: ({
+    onCropComplete,
+  }: {
+    onCropComplete?: (area: unknown, areaPixels: unknown) => void;
+  }) => {
+    useEffect(() => {
+      const area = { x: 0, y: 0, width: 100, height: 100 };
+      onCropComplete?.(area, area);
+    }, [onCropComplete]);
+
+    return <div data-testid="mock-cropper" />;
+  },
+}));
+
+// O corte real usa canvas/Image, que o jsdom nao suporta de verdade.
+vi.mock('../../features/profiles/cropImage', () => ({
+  cropImageToFile: vi.fn(
+    async (_imageSrc: string, _crop: unknown, fileName: string, mimeType: string) =>
+      new File(['cropped'], fileName, { type: mimeType })
+  ),
+}));
 
 const ATHLETE_ME = {
   role: 'ATHLETE',
@@ -293,7 +319,7 @@ describe('EditProfile — avatar', () => {
     expect(writeCalls()).toHaveLength(0);
   });
 
-  it('envia o arquivo valido como multipart no campo file', async () => {
+  it('abre o modal de corte e envia o recorte como multipart no campo file', async () => {
     mockApi(ATHLETE_ME);
 
     renderEdit();
@@ -301,11 +327,27 @@ describe('EditProfile — avatar', () => {
 
     escolherArquivo(new File(['x'], 'foto.png', { type: 'image/png' }));
 
+    fireEvent.click(await screen.findByRole('button', { name: 'Aplicar recorte' }));
+
     await waitFor(() => expect(writeCalls()).toHaveLength(1));
     const [post] = writeCalls();
     expect(post.method).toBe('POST');
     expect(post.url).toContain('/profiles/me/avatar');
     expect((post.body as FormData).get('file')).toBeInstanceOf(File);
+  });
+
+  it('cancelar o corte fecha o modal sem chamar a API', async () => {
+    mockApi(ATHLETE_ME);
+
+    renderEdit();
+    await screen.findByLabelText('Cidade');
+
+    escolherArquivo(new File(['x'], 'foto.png', { type: 'image/png' }));
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Cancelar' }));
+
+    expect(screen.queryByRole('button', { name: 'Aplicar recorte' })).not.toBeInTheDocument();
+    expect(writeCalls()).toHaveLength(0);
   });
 
   it('mostra a imagem e o botao de remover quando ja existe avatar', async () => {

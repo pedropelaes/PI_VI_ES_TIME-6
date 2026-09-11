@@ -1,6 +1,7 @@
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { Trash2, Upload } from 'lucide-react';
-import { AVATAR_ACCEPT_ATTR } from '../avatarFile';
+import { AVATAR_ACCEPT_ATTR, validateAvatarFile } from '../avatarFile';
+import { AvatarCropModal } from './AvatarCropModal';
 
 interface Props {
   /** Ja absoluta; null exibe a inicial do nome. */
@@ -13,9 +14,16 @@ interface Props {
   errorMessage: string | null;
 }
 
+interface PendingCrop {
+  file: File;
+  objectUrl: string;
+}
+
 /**
  * Avatar da tela de edicao: imagem atual (ou inicial), seletor de arquivo e
- * remocao quando ha o que remover. Sem corte nem redimensionamento (decisao E3).
+ * remocao quando ha o que remover. Antes de subir, o arquivo escolhido passa
+ * pelo modal de corte (`AvatarCropModal`) para o usuario posicionar e dar
+ * zoom na foto; so o recorte confirmado chega a `onSelect`.
  */
 export function AvatarUploader({
   avatarUrl,
@@ -27,17 +35,39 @@ export function AvatarUploader({
   errorMessage,
 }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const [pendingCrop, setPendingCrop] = useState<PendingCrop | null>(null);
+  const [localError, setLocalError] = useState<string | null>(null);
 
   function handleChange(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
+    event.target.value = '';
 
-    if (file) {
-      onSelect(file);
+    if (!file) {
+      return;
     }
 
-    // Zerar permite reescolher o mesmo arquivo depois de um erro: sem isso o
-    // input nao dispara change de novo para o mesmo nome.
-    event.target.value = '';
+    // Validar aqui, antes do modal de corte, evita abrir a tela de recorte
+    // para um arquivo que o servidor recusaria de qualquer forma.
+    const erro = validateAvatarFile(file);
+    setLocalError(erro);
+
+    if (erro) {
+      return;
+    }
+
+    setPendingCrop({ file, objectUrl: URL.createObjectURL(file) });
+  }
+
+  function closeCropModal() {
+    if (pendingCrop) {
+      URL.revokeObjectURL(pendingCrop.objectUrl);
+    }
+    setPendingCrop(null);
+  }
+
+  function handleCropConfirm(croppedFile: File) {
+    closeCropModal();
+    onSelect(croppedFile);
   }
 
   return (
@@ -92,12 +122,22 @@ export function AvatarUploader({
         </div>
 
         {isBusy && <p className="form-status">Enviando imagem...</p>}
-        {errorMessage && (
+        {(localError ?? errorMessage) && (
           <p className="form-status form-status-error" role="alert">
-            {errorMessage}
+            {localError ?? errorMessage}
           </p>
         )}
       </div>
+
+      {pendingCrop && (
+        <AvatarCropModal
+          imageSrc={pendingCrop.objectUrl}
+          fileName={pendingCrop.file.name}
+          mimeType={pendingCrop.file.type}
+          onCancel={closeCropModal}
+          onConfirm={handleCropConfirm}
+        />
+      )}
     </section>
   );
 }

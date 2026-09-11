@@ -43,6 +43,7 @@ export interface AthleteProfileView {
   initial: string;
   positionLabel: string;
   statusLabel: string;
+  statusVariant: 'success' | 'danger';
   location: string;
   ageLabel: string;
   heightLabel: string;

@@ -23,6 +23,12 @@ export function useUpdateMyProfile(): UseUpdateMyProfileResult {
     mutationFn: (changes: Record<string, unknown>) => updateMyProfile(changes),
     onSuccess: (updated: MyProfileDTO) => {
       queryClient.setQueryData(MY_PROFILE_QUERY_KEY, updated);
+
+      const publicProfileKey =
+        updated.role === 'ATHLETE' ? 'athlete-profile' :
+        updated.role === 'SCOUT'   ? 'scout-profile'   :
+                                     'club-profile';
+      queryClient.invalidateQueries({ queryKey: [publicProfileKey, updated.profile.user_id] });
     },
   });
 
