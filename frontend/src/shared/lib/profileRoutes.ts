@@ -12,6 +12,14 @@ import type { UserRole } from './userRole';
  */
 export const PROFILE_EDIT_PATH = '/profiles/me/edit';
 
+/** Inbox do chat interno. */
+export const MESSAGES_PATH = '/messages';
+
+/** Inbox ja abrindo (ou criando) a conversa com `userId` — usado pelo botao "Enviar Mensagem". */
+export function getStartConversationPath(userId: string): string {
+  return `${MESSAGES_PATH}?to=${encodeURIComponent(userId)}`;
+}
+
 const SEGMENT_BY_ROLE: Record<UserRole, string> = {
   ATHLETE: 'athletes',
   SCOUT: 'scouts',
