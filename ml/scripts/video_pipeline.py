@@ -36,6 +36,7 @@ from ml.scripts.config import (
     USE_GPU,
     TRACKING_COLOR_TOLERANCE,
     FAST_SCAN_COLOR_TOLERANCE,
+    MAX_EASYOCR_CROPS_PER_FRAME,
 )
 from ml.scripts.kinematic_analyzer import KinematicAnalyzer
 from ml.scripts.jersey_reader import JerseyReader
@@ -674,6 +675,27 @@ class VideoPipeline:
         ]
         if not fallback_indices:
             return yolo_results, sources
+
+        if len(fallback_indices) > MAX_EASYOCR_CROPS_PER_FRAME:
+            # Prioriza:
+            # 1. Crops com alguma leitura (dígito ambíguo detectado) ao invés de crops vazios
+            # 2. Em caso de empate, prioriza crops maiores (maior área = resolução melhor)
+            fallback_indices.sort(
+                key=lambda i: (
+                    bool(yolo_results[i]),
+                    crops_lote[i].shape[0] * crops_lote[i].shape[1]
+                ),
+                reverse=True
+            )
+            
+            excedentes = len(fallback_indices) - MAX_EASYOCR_CROPS_PER_FRAME
+            self.logger.warning(
+                f"[OCR FALLBACK] Limite de processamento excedido no lote. "
+                f"Processando os {MAX_EASYOCR_CROPS_PER_FRAME} melhores de {len(fallback_indices)}. "
+                f"Ignorando {excedentes} crops."
+            )
+            # Mantém apenas os top-K e re-ordena pelo índice original do lote
+            fallback_indices = sorted(fallback_indices[:MAX_EASYOCR_CROPS_PER_FRAME])
 
         fallback_crops = [crops_lote[i] for i in fallback_indices]
         ocr_results = self.ocr_reader.read_batch(fallback_crops, target_num_pass)
