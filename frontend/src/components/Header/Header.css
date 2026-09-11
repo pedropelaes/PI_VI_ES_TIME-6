@@ -51,6 +51,29 @@
   opacity: 0.9;
 }
 
+.iconButtonWrapper {
+  position: relative;
+  display: flex;
+}
+
+.headerUnreadBadge {
+  position: absolute;
+  top: -4px;
+  right: -6px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: #db2f3d;
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
 /* Overlay escurecido */
 .profileOverlay {
   position: fixed;
