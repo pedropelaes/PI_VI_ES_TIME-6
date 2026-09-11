@@ -71,13 +71,6 @@ export function httpGet<T>(path: string): Promise<T> {
   return request<T>(path, { method: 'GET' });
 }
 
-export function httpPost<T>(path: string, body?: unknown): Promise<T> {
-  return request<T>(path, {
-    method: 'POST',
-    body: body === undefined ? undefined : JSON.stringify(body),
-  });
-}
-
 export function httpPut<T>(path: string, body: unknown): Promise<T> {
   return request<T>(path, { method: 'PUT', body: JSON.stringify(body) });
 }
@@ -89,13 +82,4 @@ export function httpDelete<T>(path: string): Promise<T> {
 /** POST multipart: upload de arquivo, hoje so o avatar. */
 export function httpPostForm<T>(path: string, form: FormData): Promise<T> {
   return request<T>(path, { method: 'POST', body: form }, authHeaders(false));
-}
-
-/**
- * Monta a URL de um WebSocket a partir de `API_BASE` (http→ws, https→wss). Usado
- * hoje so pelo chat (`/messages/ws`), mas fica aqui por ser a mesma conversao que
- * qualquer outro socket do app precisaria.
- */
-export function wsUrl(path: string): string {
-  return `${API_BASE.replace(/^http/, 'ws')}${path}`;
 }

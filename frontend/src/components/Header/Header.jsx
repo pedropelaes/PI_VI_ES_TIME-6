@@ -2,19 +2,16 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import logoSmartScout from '../../assets/logo-smartscout.png';
 import { clearSession, getToken, getUser } from '../../services/api';
-import { MESSAGES_PATH, getProfilePath, PROFILE_EDIT_PATH } from '../../shared/lib/profileRoutes';
+import { getProfilePath, PROFILE_EDIT_PATH } from '../../shared/lib/profileRoutes';
 import { isUserRole } from '../../shared/lib/userRole';
 import { useMyProfile } from '../../features/profiles/hooks/useMyProfile';
 import { resolveAvatarUrl } from '../../features/profiles/mappers';
-import { useMessagingSocket } from '../../features/messaging/hooks/useMessagingSocket';
-import { useUnreadCount } from '../../features/messaging/hooks/useUnreadCount';
 import {
   SquarePlay,
   Compass,
   CircleUserRound,
   X,
-  Mail,
-  MessageCircle
+  Mail
 } from 'lucide-react';
 import './Header.css';
 
@@ -42,11 +39,6 @@ export function Header() {
   const { data: meuPerfil } = useMyProfile();
   const avatarUrl = resolveAvatarUrl(meuPerfil?.profile.avatar_url ?? null);
   const inicial = user.name.charAt(0).toUpperCase();
-  const unreadCount = useUnreadCount();
-  // O Header esta em toda pagina privada (MainLayout): e o lugar natural para a unica
-  // conexao WS da sessao, entao o badge de nao lidas e a Inbox reagem em tempo real
-  // sem que cada tela precise abrir seu proprio socket.
-  useMessagingSocket(canOpenProfile ? storedUser.id : undefined);
 
   function handleOpenProfileModal() {
     setShowProfileModal(true);
@@ -126,17 +118,6 @@ export function Header() {
           <Link to="/feed">
             <button className="iconButton" aria-label="Feed de talentos" title="Feed de talentos">
               <Compass size={34} />
-            </button>
-          </Link>
-
-          <Link to={MESSAGES_PATH} className="iconButtonWrapper">
-            <button className="iconButton" aria-label="Mensagens" title="Mensagens">
-              <MessageCircle size={32} />
-              {unreadCount > 0 && (
-                <span className="headerUnreadBadge">
-                  {unreadCount > 9 ? '9+' : unreadCount}
-                </span>
-              )}
             </button>
           </Link>
 

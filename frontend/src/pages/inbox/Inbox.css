@@ -116,13 +116,6 @@
   font-weight: 600;
   font-size: 1.2rem;
   flex-shrink: 0;
-  overflow: hidden;
-}
-
-.chat-avatar-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
 }
 
 .chat-item-info {
@@ -172,65 +165,11 @@
   margin-left: 0.5rem;
 }
 
-/* Estados: carregando, erro, vazio */
-.inbox-state-text {
-  padding: 1.5rem;
-  text-align: center;
-  color: rgba(255, 255, 255, 0.5);
-  font-family: 'DM Sans', sans-serif;
-  font-size: 0.9rem;
-}
-
-.inbox-state-error {
-  color: #f87171;
-}
-
-.inbox-empty-state {
-  padding: 2.5rem 1.5rem;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  gap: 0.5rem;
-  color: rgba(255, 255, 255, 0.5);
-}
-
-.inbox-empty-state p {
-  color: #fff;
-  font-family: 'Outfit', sans-serif;
-  font-weight: 600;
-  margin: 0;
-}
-
-.inbox-empty-state span {
-  font-family: 'DM Sans', sans-serif;
-  font-size: 0.85rem;
-  max-width: 240px;
-}
-
-.inbox-send-error {
-  margin: 0.75rem 0 0 0;
-  color: #f87171;
-  font-family: 'DM Sans', sans-serif;
-  font-size: 0.85rem;
-}
-
 /* ÁREA DE MENSAGENS (Direita) */
 .inbox-chat-area {
   flex: 1;
   display: flex;
   flex-direction: column;
-}
-
-.inbox-chat-placeholder {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem;
-  color: rgba(255, 255, 255, 0.35);
-  font-family: 'DM Sans', sans-serif;
 }
 
 .chat-area-header {

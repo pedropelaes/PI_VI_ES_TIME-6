@@ -23,7 +23,6 @@ load_dotenv(BACKEND_DIR / ".env")
 import app.modules.identity.models  # noqa: F401,E402
 import app.modules.clips.models  # noqa: F401,E402
 import app.modules.profiles.models  # noqa: F401,E402
-import app.modules.messaging.models  # noqa: F401,E402
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

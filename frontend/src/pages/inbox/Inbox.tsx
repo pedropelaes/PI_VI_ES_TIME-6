@@ -1,138 +1,88 @@
-import { useEffect, useMemo, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import { Check, CheckCheck, MessageCircle, Search, Send } from 'lucide-react';
-import { useConversationMessages } from '../../features/messaging/hooks/useConversationMessages';
-import { useConversations } from '../../features/messaging/hooks/useConversations';
-import { useStartConversation } from '../../features/messaging/hooks/useStartConversation';
-import { getUser } from '../../services/api';
+import { useState } from 'react';
+import { Search, Send, Paperclip, MoreVertical, CheckCheck } from 'lucide-react';
 import './Inbox.css';
 
-export default function Inbox() {
-  const [searchParams, setSearchParams] = useSearchParams();
-  const myUserId = getUser()?.id;
+// Mocks simulando o retorno da sua API (F2)
+const MOCK_CONVERSATIONS = [
+  {
+    id: '1',
+    name: 'Carlos Eduardo',
+    role: 'Olheiro Chefe - Clube A',
+    lastMessage: 'Gostei muito dos seus clipes de recuperação de posse. Tem disponibilidade para...',
+    time: '10:42',
+    unread: 2,
+    initial: 'C'
+  },
+  {
+    id: '2',
+    name: 'Ponte Negra (Base)',
+    role: 'Clube Oficial',
+    lastMessage: 'Podemos agendar uma avaliação na próxima semana?',
+    time: 'Ontem',
+    unread: 0,
+    initial: 'V'
+  },
+  {
+    id: '3',
+    name: 'Marcos Silva',
+    role: 'Agente Esportivo',
+    lastMessage: 'Te enviei os detalhes do contrato por e-mail.',
+    time: 'Segunda',
+    unread: 0,
+    initial: 'M'
+  }
+];
 
-  // O socket em si e aberto uma unica vez pelo Header (montado em toda pagina
-  // privada via MainLayout) -- escreve no mesmo cache do React Query que esta tela
-  // le, entao a Inbox recebe os eventos sem precisar da sua propria conexao.
-  const { conversations, isLoading, isError } = useConversations();
-  const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
+const MOCK_MESSAGES = [
+  { id: 1, sender: 'them', text: 'Olá Daniel, tudo bem? Vi seu perfil no Feed da plataforma e os vídeos de análise técnica gerados pela IA chamaram muita atenção da nossa comissão.', time: '10:30' },
+  { id: 2, sender: 'them', text: 'Gostaria de saber como está sua situação contratual no momento.', time: '10:31' },
+  { id: 3, sender: 'me', text: 'Olá Carlos! Tudo ótimo. Fico feliz que tenham gostado do material.', time: '10:35' },
+  { id: 4, sender: 'me', text: 'Atualmente estou livre no mercado, buscando novas oportunidades para a próxima temporada.', time: '10:36' },
+  { id: 5, sender: 'them', text: 'Excelente. Gostei muito dos seus clipes de recuperação de posse. Tem disponibilidade para fazermos uma chamada de vídeo hoje à tarde?', time: '10:42' },
+];
+
+export default function Inbox() {
+  const [activeChat, setActiveChat] = useState(MOCK_CONVERSATIONS[0]);
   const [messageText, setMessageText] = useState('');
 
-  // Entrada vinda do botao "Enviar Mensagem" de um perfil (`/messages?to=<userId>`):
-  // abre (ou reaproveita) a conversa com essa pessoa e limpa o parametro, para que um
-  // F5 na Inbox nao tente abrir a mesma conversa de novo.
-  const { start: startConversation, isStarting } = useStartConversation((conversation) => {
-    setActiveConversationId(conversation.id);
-    setSearchParams({}, { replace: true });
-  });
-
-  const paraUserId = searchParams.get('to');
-  useEffect(() => {
-    if (paraUserId) {
-      startConversation(paraUserId);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [paraUserId]);
-
-  // A primeira conversa da lista abre sozinha assim que carrega, contanto que nada
-  // mais (nem o usuario, nem o `?to=`) ja tenha escolhido uma.
-  useEffect(() => {
-    if (!activeConversationId && !paraUserId && conversations.length > 0) {
-      setActiveConversationId(conversations[0].id);
-    }
-  }, [activeConversationId, paraUserId, conversations]);
-
-  const termoBusca = searchTerm.trim().toLowerCase();
-  const conversasFiltradas = useMemo(
-    () =>
-      termoBusca
-        ? conversations.filter((c) => c.fullName.toLowerCase().includes(termoBusca))
-        : conversations,
-    [conversations, termoBusca]
-  );
-
-  const activeConversation = conversations.find((c) => c.id === activeConversationId) ?? null;
-
-  const {
-    messages,
-    isLoading: messagesLoading,
-    isError: messagesError,
-    send,
-    isSending,
-    sendErrorMessage,
-  } = useConversationMessages(activeConversationId, myUserId);
-
-  function handleSendMessage(e: React.FormEvent) {
+  const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
-    const texto = messageText.trim();
-    if (!texto || !activeConversationId) return;
-    send(texto);
+    if (!messageText.trim()) return;
+    // Aqui você conectaria com o Axios/WebSocket para enviar ao Backend
+    console.log("Enviando:", messageText);
     setMessageText('');
-  }
+  };
 
   return (
     <div className="inbox-root">
       <div className="inbox-container">
+        
         {/* BARRA LATERAL ESQUERDA */}
         <div className="inbox-sidebar">
           <div className="sidebar-header">
             <h2>Mensagens</h2>
             <div className="search-bar">
               <Search size={18} color="rgba(255,255,255,0.4)" />
-              <input
-                type="text"
-                placeholder="Buscar conversas..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
+              <input type="text" placeholder="Buscar conversas..." />
             </div>
           </div>
 
           <div className="chat-list">
-            {isLoading && <p className="inbox-state-text">Carregando conversas...</p>}
-
-            {!isLoading && isError && (
-              <p className="inbox-state-text inbox-state-error">
-                Não foi possível carregar suas conversas.
-              </p>
-            )}
-
-            {!isLoading && !isError && conversations.length === 0 && (
-              <div className="inbox-empty-state">
-                <MessageCircle size={32} />
-                <p>Você ainda não tem conversas.</p>
-                <span>Visite o perfil de um atleta, scout ou clube para começar.</span>
-              </div>
-            )}
-
-            {!isLoading && !isError && conversations.length > 0 && conversasFiltradas.length === 0 && (
-              <p className="inbox-state-text">Nenhuma conversa encontrada.</p>
-            )}
-
-            {conversasFiltradas.map((chat) => (
-              <div
-                key={chat.id}
-                className={`chat-item ${activeConversationId === chat.id ? 'active' : ''}`}
-                onClick={() => setActiveConversationId(chat.id)}
+            {MOCK_CONVERSATIONS.map((chat) => (
+              <div 
+                key={chat.id} 
+                className={`chat-item ${activeChat.id === chat.id ? 'active' : ''}`}
+                onClick={() => setActiveChat(chat)}
               >
-                <div className="chat-avatar">
-                  {chat.avatarUrl ? (
-                    <img src={chat.avatarUrl} alt="" className="chat-avatar-image" />
-                  ) : (
-                    chat.initial
-                  )}
-                </div>
+                <div className="chat-avatar">{chat.initial}</div>
                 <div className="chat-item-info">
                   <div className="chat-item-header">
-                    <span className="chat-item-name">{chat.fullName}</span>
-                    <span className="chat-item-time">{chat.timeLabel}</span>
+                    <span className="chat-item-name">{chat.name}</span>
+                    <span className="chat-item-time">{chat.time}</span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center' }}>
-                    <span className="chat-item-message">{chat.lastMessagePreview}</span>
-                    {chat.unreadCount > 0 && (
-                      <span className="unread-badge">{chat.unreadCount}</span>
-                    )}
+                    <span className="chat-item-message">{chat.lastMessage}</span>
+                    {chat.unread > 0 && <span className="unread-badge">{chat.unread}</span>}
                   </div>
                 </div>
               </div>
@@ -142,109 +92,57 @@ export default function Inbox() {
 
         {/* ÁREA CENTRAL DO CHAT */}
         <div className="inbox-chat-area">
-          {isStarting && (
-            <div className="inbox-chat-placeholder">
-              <p>Abrindo conversa...</p>
+          {/* Cabeçalho do Chat Ativo */}
+          <div className="chat-area-header">
+            <div className="active-chat-info">
+              <div className="chat-avatar" style={{ width: '42px', height: '42px', fontSize: '1rem' }}>
+                {activeChat.initial}
+              </div>
+              <div>
+                <h3 className="chat-item-name" style={{ marginBottom: '2px' }}>{activeChat.name}</h3>
+                <span className="active-chat-role">{activeChat.role}</span>
+              </div>
             </div>
-          )}
+            <button className="btn-icon">
+              <MoreVertical size={20} />
+            </button>
+          </div>
 
-          {!isStarting && !activeConversation && (
-            <div className="inbox-chat-placeholder">
-              <MessageCircle size={40} />
-              <p>Selecione uma conversa para começar.</p>
-            </div>
-          )}
-
-          {!isStarting && activeConversation && (
-            <>
-              {/* Cabeçalho do Chat Ativo */}
-              <div className="chat-area-header">
-                <div className="active-chat-info">
-                  <div
-                    className="chat-avatar"
-                    style={{ width: '42px', height: '42px', fontSize: '1rem' }}
-                  >
-                    {activeConversation.avatarUrl ? (
-                      <img
-                        src={activeConversation.avatarUrl}
-                        alt=""
-                        className="chat-avatar-image"
-                      />
-                    ) : (
-                      activeConversation.initial
-                    )}
-                  </div>
-                  <div>
-                    <h3 className="chat-item-name" style={{ marginBottom: '2px' }}>
-                      {activeConversation.fullName}
-                    </h3>
-                    <span className="active-chat-role">{activeConversation.roleLabel}</span>
-                  </div>
+          {/* Lista de Mensagens */}
+          <div className="chat-messages-container">
+            {MOCK_MESSAGES.map((msg) => (
+              <div key={msg.id} className={`message-wrapper ${msg.sender === 'me' ? 'mine' : 'theirs'}`}>
+                <div className="message-bubble">
+                  {msg.text}
                 </div>
+                <span className="message-time">
+                  {msg.time}
+                  {msg.sender === 'me' && <CheckCheck size={14} color="#5BADDA" />}
+                </span>
               </div>
+            ))}
+          </div>
 
-              {/* Lista de Mensagens */}
-              <div className="chat-messages-container">
-                {messagesLoading && <p className="inbox-state-text">Carregando mensagens...</p>}
+          {/* Campo de Digitação */}
+          <div className="chat-input-area">
+            <form className="input-container" onSubmit={handleSendMessage}>
+              <button type="button" className="btn-icon">
+                <Paperclip size={20} />
+              </button>
+              
+              <input 
+                type="text" 
+                placeholder="Escreva sua mensagem..." 
+                value={messageText}
+                onChange={(e) => setMessageText(e.target.value)}
+              />
+              
+              <button type="submit" className="btn-send">
+                <Send size={18} style={{ marginLeft: '2px' }} />
+              </button>
+            </form>
+          </div>
 
-                {!messagesLoading && messagesError && (
-                  <p className="inbox-state-text inbox-state-error">
-                    Não foi possível carregar as mensagens.
-                  </p>
-                )}
-
-                {!messagesLoading && !messagesError && messages.length === 0 && (
-                  <p className="inbox-state-text">
-                    Nenhuma mensagem ainda. Diga oi para {activeConversation.fullName.split(' ')[0]}!
-                  </p>
-                )}
-
-                {messages.map((msg) => (
-                  <div
-                    key={msg.id}
-                    className={`message-wrapper ${msg.mine ? 'mine' : 'theirs'}`}
-                  >
-                    <div className="message-bubble">{msg.body}</div>
-                    <span className="message-time">
-                      {msg.timeLabel}
-                      {msg.mine &&
-                        (msg.read ? (
-                          <CheckCheck size={14} color="#5BADDA" />
-                        ) : (
-                          <Check size={14} color="rgba(255,255,255,0.4)" />
-                        ))}
-                    </span>
-                  </div>
-                ))}
-              </div>
-
-              {/* Campo de Digitação */}
-              <div className="chat-input-area">
-                <form className="input-container" onSubmit={handleSendMessage}>
-                  <input
-                    type="text"
-                    placeholder="Escreva sua mensagem..."
-                    value={messageText}
-                    onChange={(e) => setMessageText(e.target.value)}
-                    disabled={isSending}
-                  />
-
-                  <button
-                    type="submit"
-                    className="btn-send"
-                    disabled={isSending || !messageText.trim()}
-                  >
-                    <Send size={18} style={{ marginLeft: '2px' }} />
-                  </button>
-                </form>
-                {sendErrorMessage && (
-                  <p className="inbox-send-error" role="alert">
-                    Não foi possível enviar: {sendErrorMessage}
-                  </p>
-                )}
-              </div>
-            </>
-          )}
         </div>
       </div>
     </div>

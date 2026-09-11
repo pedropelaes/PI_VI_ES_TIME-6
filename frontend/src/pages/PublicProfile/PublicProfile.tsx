@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import {
   Activity,
   Bookmark,
@@ -20,13 +20,11 @@ import {
 } from '../../features/profiles/components/ProfileShell';
 import { useAthleteClips } from '../../features/profiles/hooks/useAthleteClips';
 import { useAthleteProfile } from '../../features/profiles/hooks/useAthleteProfile';
-import { getStartConversationPath } from '../../shared/lib/profileRoutes';
 
 type Tab = 'clips' | 'analysis';
 
 export default function PublicProfile() {
   const { userId } = useParams<{ userId: string }>();
-  const navigate = useNavigate();
   const { profile, isLoading, isError, notFound } = useAthleteProfile(userId);
   const { clips, isLoading: clipsLoading, isError: clipsError } = useAthleteClips(userId);
   const [activeTab, setActiveTab] = useState<Tab>('clips');
@@ -79,11 +77,12 @@ export default function PublicProfile() {
         </>
       }
       actions={
-        // Seguir/Salvar chegam na fatia 3. Os tres so aparecem para visitante:
-        // seguir, salvar ou mandar mensagem para si mesmo nao existe como acao.
+        // Seguir/Salvar chegam na fatia 3 e Enviar Mensagem pertence ao M5.
+        // Os tres so aparecem para visitante: seguir, salvar ou mandar mensagem
+        // para si mesmo nao existe como acao.
         <>
           <EditProfileButton userId={userId} />
-          {!isOwner && userId && (
+          {!isOwner && (
             <>
               <button className="btn-secondary" disabled title="Disponível em breve">
                 <Check size={18} /> Seguir
@@ -91,10 +90,7 @@ export default function PublicProfile() {
               <button className="btn-secondary" disabled title="Disponível em breve">
                 <Bookmark size={18} /> Salvar Atleta
               </button>
-              <button
-                className="btn-primary"
-                onClick={() => navigate(getStartConversationPath(userId))}
-              >
+              <button className="btn-primary" disabled title="Disponível em breve">
                 <MessageCircle size={18} /> Enviar Mensagem
               </button>
             </>
