@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getProfilePath } from './profileRoutes';
+import { getProfilePath, getStartConversationPath } from './profileRoutes';
 import type { UserRole } from './userRole';
 
 describe('getProfilePath', () => {
@@ -25,5 +25,15 @@ describe('getProfilePath', () => {
     const invalido = { id: 'abc', role: 'GHOST' as UserRole };
 
     expect(() => getProfilePath(invalido)).toThrow(/GHOST/);
+  });
+});
+
+describe('getStartConversationPath', () => {
+  it('aponta para a inbox com o destinatario em ?to=', () => {
+    expect(getStartConversationPath('abc')).toBe('/messages?to=abc');
+  });
+
+  it('codifica o id para a querystring', () => {
+    expect(getStartConversationPath('a b/c')).toBe('/messages?to=a%20b%2Fc');
   });
 });

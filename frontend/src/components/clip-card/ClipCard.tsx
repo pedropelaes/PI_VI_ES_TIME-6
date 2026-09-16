@@ -91,24 +91,26 @@ export function ClipCard({ clip, onDeleted }: ClipCardProps) {
                     <h3 className="clip-title">{clip.title}</h3>
                     <div className="clip-actions">
                         {clip.status === 'completed' && (
-                            <button
-                                className="download-button"
-                                onClick={handleDownload}
-                                disabled={!clip.videoUrl}
-                                title={clip.videoUrl ? "Baixar clipe" : "URL do clipe não disponível"}
-                                aria-label={`Baixar ${clip.title}`}
-                            >
-                                <Download size={18} />
-                            </button>
+                            <>
+                                <button
+                                    className="download-button"
+                                    onClick={handleDownload}
+                                    disabled={!clip.videoUrl}
+                                    title={clip.videoUrl ? "Baixar clipe" : "URL do clipe não disponível"}
+                                    aria-label={`Baixar ${clip.title}`}
+                                >
+                                    <Download size={18} />
+                                </button>
+                                <button
+                                    className="delete-button"
+                                    onClick={handleDelete}
+                                    title="Apagar clipe"
+                                    aria-label={`Apagar ${clip.title}`}
+                                >
+                                    <Trash2 size={18} />
+                                </button>
+                            </>
                         )}
-                        <button
-                            className="delete-button"
-                            onClick={handleDelete}
-                            title="Apagar clipe"
-                            aria-label={`Apagar ${clip.title}`}
-                        >
-                            <Trash2 size={18} />
-                        </button>
                     </div>
                 </div>
             )}
