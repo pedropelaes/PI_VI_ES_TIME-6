@@ -45,6 +45,34 @@
   width: 110px;
   height: 110px;
   font-size: 2.6rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.avatar-uploader-edit-overlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+  border-radius: inherit;
+  background: rgba(10, 15, 30, 0.55);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.avatar-uploader-preview:hover .avatar-uploader-edit-overlay,
+.avatar-uploader-edit-overlay:focus-visible {
+  opacity: 1;
+}
+
+.avatar-uploader-edit-overlay:disabled {
+  cursor: default;
 }
 
 .avatar-uploader-title {

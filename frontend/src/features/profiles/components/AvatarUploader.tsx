@@ -1,6 +1,6 @@
-import { useRef, useState } from 'react';
-import { Trash2, Upload } from 'lucide-react';
-import { AVATAR_ACCEPT_ATTR, validateAvatarFile } from '../avatarFile';
+import { useEffect, useRef, useState } from 'react';
+import { Pencil, Trash2, Upload } from 'lucide-react';
+import { AVATAR_ACCEPT_ATTR, guessAvatarMimeType, validateAvatarFile } from '../avatarFile';
 import { AvatarCropModal } from './AvatarCropModal';
 
 interface Props {
@@ -14,17 +14,12 @@ interface Props {
   errorMessage: string | null;
 }
 
-interface PendingCrop {
-  file: File;
-  objectUrl: string;
+interface ImagemParaCorte {
+  imageSrc: string;
+  fileName: string;
+  mimeType: string;
 }
 
-/**
- * Avatar da tela de edicao: imagem atual (ou inicial), seletor de arquivo e
- * remocao quando ha o que remover. Antes de subir, o arquivo escolhido passa
- * pelo modal de corte (`AvatarCropModal`) para o usuario posicionar e dar
- * zoom na foto; so o recorte confirmado chega a `onSelect`.
- */
 export function AvatarUploader({
   avatarUrl,
   initial,
@@ -35,8 +30,23 @@ export function AvatarUploader({
   errorMessage,
 }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const [pendingCrop, setPendingCrop] = useState<PendingCrop | null>(null);
+  const [pendingCrop, setPendingCrop] = useState<ImagemParaCorte | null>(null);
   const [localError, setLocalError] = useState<string | null>(null);
+
+  // A foto original (antes de qualquer corte) escolhida nesta sessao. E ela
+  // que o lapis reabre depois -- a `avatarUrl` e so a versao ja recortada
+  // que foi salva. Sem a original guardada aqui (ex.: apos recarregar a
+  // pagina), o lapis cai de volta pra `avatarUrl` mesmo, na falta de outra.
+  const [original, setOriginal] = useState<ImagemParaCorte | null>(null);
+
+  // Libera a object URL da original guardada quando o componente desmonta.
+  useEffect(() => {
+    return () => {
+      if (original) {
+        URL.revokeObjectURL(original.imageSrc);
+      }
+    };
+  }, [original]);
 
   function handleChange(event: React.ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
@@ -46,8 +56,6 @@ export function AvatarUploader({
       return;
     }
 
-    // Validar aqui, antes do modal de corte, evita abrir a tela de recorte
-    // para um arquivo que o servidor recusaria de qualquer forma.
     const erro = validateAvatarFile(file);
     setLocalError(erro);
 
@@ -55,19 +63,55 @@ export function AvatarUploader({
       return;
     }
 
-    setPendingCrop({ file, objectUrl: URL.createObjectURL(file) });
+    // Troca a original guardada: libera a anterior (se houver) antes de
+    // criar a nova.
+    if (original) {
+      URL.revokeObjectURL(original.imageSrc);
+    }
+
+    const novaOriginal: ImagemParaCorte = {
+      imageSrc: URL.createObjectURL(file),
+      fileName: file.name,
+      mimeType: file.type,
+    };
+
+    setOriginal(novaOriginal);
+    setPendingCrop(novaOriginal);
+  }
+
+  function handleEditClick() {
+    if (original) {
+      setPendingCrop(original);
+      return;
+    }
+
+    if (avatarUrl) {
+      setPendingCrop({
+        imageSrc: avatarUrl,
+        fileName: 'avatar',
+        mimeType: guessAvatarMimeType(avatarUrl),
+      });
+      return;
+    }
+
+    inputRef.current?.click();
   }
 
   function closeCropModal() {
-    if (pendingCrop) {
-      URL.revokeObjectURL(pendingCrop.objectUrl);
-    }
     setPendingCrop(null);
   }
 
   function handleCropConfirm(croppedFile: File) {
     closeCropModal();
     onSelect(croppedFile);
+  }
+
+  function handleRemove() {
+    if (original) {
+      URL.revokeObjectURL(original.imageSrc);
+      setOriginal(null);
+    }
+    onRemove();
   }
 
   return (
@@ -82,6 +126,16 @@ export function AvatarUploader({
         ) : (
           initial
         )}
+
+        <button
+          type="button"
+          className="avatar-uploader-edit-overlay"
+          onClick={handleEditClick}
+          disabled={isBusy}
+          aria-label={avatarUrl ? 'Cortar foto de perfil' : 'Editar foto de perfil'}
+        >
+          <Pencil size={20} />
+        </button>
       </div>
 
       <div className="avatar-uploader-actions">
@@ -113,7 +167,7 @@ export function AvatarUploader({
             <button
               type="button"
               className="btn-secondary"
-              onClick={onRemove}
+              onClick={handleRemove}
               disabled={isBusy}
             >
               <Trash2 size={18} /> Remover foto
@@ -131,9 +185,9 @@ export function AvatarUploader({
 
       {pendingCrop && (
         <AvatarCropModal
-          imageSrc={pendingCrop.objectUrl}
-          fileName={pendingCrop.file.name}
-          mimeType={pendingCrop.file.type}
+          imageSrc={pendingCrop.imageSrc}
+          fileName={pendingCrop.fileName}
+          mimeType={pendingCrop.mimeType}
           onCancel={closeCropModal}
           onConfirm={handleCropConfirm}
         />

@@ -278,7 +278,16 @@ class AvatarService:
         self, user_id: uuid.UUID, conteudo: bytes, content_type: Optional[str]
     ) -> str:
         """
-        Valida e grava o avatar em `avatars/{user_id}{ext}`, devolvendo a URL pública.
+        Valida e grava o avatar em `avatars/{user_id}_{token}{ext}`, devolvendo a URL
+        pública.
+
+        `token` garante uma chave nova a cada upload. Antes a chave era fixa
+        (`avatars/{user_id}{ext}`) e trocar um JPEG por outro JPEG reaproveitava a
+        mesma URL -- sem URL nova, nem o React nem o cache HTTP do navegador tinham
+        motivo para buscar o arquivo de novo, e um F5 podia continuar mostrando a
+        foto antiga do cache de disco mesmo com o arquivo novo já gravado. Com a
+        chave sempre diferente isso não acontece mais, e o arquivo anterior já é
+        removido pela limpeza que existe no router (`anterior != novo`).
 
         O retorno é o que vai para a coluna `avatar_path` e sai da API como `avatar_url`.
         """
@@ -292,7 +301,8 @@ class AvatarService:
         if len(conteudo) > TAMANHO_MAXIMO_DE_AVATAR:
             raise ValidationError("A imagem excede o limite de 2 MB.")
 
-        chave = f"avatars/{user_id}{extensao}"
+        token = uuid.uuid4().hex[:8]
+        chave = f"avatars/{user_id}_{token}{extensao}"
         self.storage.save(conteudo, chave)
         return PREFIXO_PUBLICO_DE_UPLOADS + chave
 
