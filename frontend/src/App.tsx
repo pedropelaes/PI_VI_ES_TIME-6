@@ -15,6 +15,7 @@ import ScoutProfile from './pages/ScoutProfile/ScoutProfile';
 import ClubProfile from './pages/ClubProfile/ClubProfile';
 import EditProfile from './pages/EditProfile/EditProfile';
 import Feed from './pages/feed/feed';
+import Inbox from './pages/inbox/Inbox';
 
 export default function App() {
   return (
@@ -37,6 +38,7 @@ export default function App() {
             <Route path="/scouts/:userId"   element={<ScoutProfile />} />
             <Route path="/clubs/:userId"    element={<ClubProfile />} />
             <Route path="/profiles/me/edit" element={<EditProfile />} />
+            <Route path="/messages" element={<Inbox />} />
           </Route>
 
           <Route path="/processing-clips/:jobId" element={<MainLayout />}>
