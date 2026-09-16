@@ -27,3 +27,16 @@ export function validateAvatarFile(file: File): string | null {
 
   return null;
 }
+export function guessAvatarMimeType(avatarUrl: string): string {
+  const semQuery = avatarUrl.split('?')[0].toLowerCase();
+
+  if (semQuery.endsWith('.png')) {
+    return 'image/png';
+  }
+
+  if (semQuery.endsWith('.webp')) {
+    return 'image/webp';
+  }
+
+  return 'image/jpeg';
+}
