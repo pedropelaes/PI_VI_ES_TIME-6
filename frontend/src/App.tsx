@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { MainLayout } from "./layouts/MainLayout";
 import { PrivateRoute } from "./components/PrivateRoute/PrivateRoute";
 
@@ -15,6 +15,7 @@ import ScoutProfile from './pages/ScoutProfile/ScoutProfile';
 import ClubProfile from './pages/ClubProfile/ClubProfile';
 import EditProfile from './pages/EditProfile/EditProfile';
 import Feed from './pages/feed/feed';
+import NotFound from './pages/NotFound/NotFound';
 import Inbox from './pages/inbox/Inbox';
 
 export default function App() {
@@ -47,7 +48,7 @@ export default function App() {
 
         </Route>
 
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route path="*" element={<NotFound />} />
 
       </Routes>
     </BrowserRouter>
