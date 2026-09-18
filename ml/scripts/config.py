@@ -190,6 +190,11 @@ SCOREBOARD_ZONE_BOTTOM = 0.10
 MAX_PLAYER_ASPECT_RATIO = 2.5
 
 
+# Máximo de crops enviados ao EasyOCR por lote no fallback.
+# Acima disso, processa só os melhores (com leitura prévia / maior área) e ignora o resto.
+MAX_EASYOCR_CROPS_PER_FRAME = 8
+
+
 # ==========================================================
 # GPU
 # ==========================================================
