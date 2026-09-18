@@ -128,7 +128,9 @@ class VideoPipeline:
         on_candidate_found: Callable[[dict], None] | None = None,
         should_stop: Callable[[], bool] | None = None,
         start_ts: int = 0,
-        end_ts: int = 0
+        end_ts: int = 0,
+        save_debug_torso: bool = False,
+        accumulate_appearances: bool = False,
     ) -> list[dict]:
         """
         Faz uma varredura super rápida no vídeo procurando candidatos.
@@ -153,6 +155,16 @@ class VideoPipeline:
         self.logger.debug(f"[FAST SCAN] Pulando para o frame {start_frame} (limite: {end_frame}).")
 
         candidates_found = {}
+        # [DIAGNOSTICO] Acumula, por assinatura, a MELHOR aparicao vista no
+        # scan inteiro (maior confianca; empate: maior area). Nao muda o
+        # que e emitido para on_candidate_found (comportamento ANTES fica
+        # intocado) -- serve so para medir o teto de ganho offline.
+        ceiling_found: dict = {}
+        antes_conf: dict = {}
+        ceiling_dir = None
+        if accumulate_appearances:
+            ceiling_dir = os.path.join(output_dir, "debug_ceiling")
+            os.makedirs(ceiling_dir, exist_ok=True)
 
         try:
             while True:
@@ -231,17 +243,54 @@ class VideoPipeline:
 
                         # DEDUPLICAÇÃO INTELIGENTE (Distância de Cor)
                         is_duplicate = False
+                        matched_sig = None
                         for existing_sig, existing_data in candidates_found.items():
                             if existing_data["number"] == num:
                                 if self._color_distance(hex_color, existing_data["color"]) < FAST_SCAN_COLOR_TOLERANCE:
                                     is_duplicate = True
+                                    matched_sig = existing_sig
                                     break
-                        
+
+                        if accumulate_appearances and is_duplicate:
+                            # [DIAGNOSTICO] Reusa a MESMA fronteira de identidade do
+                            # dedup de producao (numero + distancia de cor ao ancor
+                            # original) -- so atualiza confianca/area/imagem, nunca
+                            # a cor de ancoragem, para a identidade nao derivar.
+                            self._update_ceiling(
+                                ceiling_found, ceiling_dir, matched_sig,
+                                num, conf, hex_color, bbox_orig, frame_orig, frame_idx,
+                            )
+
                         if not is_duplicate:
                             signature = f"{num}_{hex_color}"
                             img_filename = f"cand_numero_{num}_{uuid.uuid4().hex[:8]}.jpg"
                             img_path = os.path.join(output_dir, img_filename)
-                            
+
+                            if save_debug_torso:
+                                # [DIAGNOSTICO] Salva o MESMO tensor de crop que foi
+                                # passado ao JerseyReader (nao uma re-derivacao), mais
+                                # uma variante de torso mais generosa pra comparacao.
+                                torso_dir = os.path.join(output_dir, "debug_torso_real")
+                                os.makedirs(torso_dir, exist_ok=True)
+                                cv2.imwrite(
+                                    os.path.join(torso_dir, f"torso_exato_{num}_{uuid.uuid4().hex[:8]}.png"),
+                                    crop,
+                                )
+                                px1_g, py1_g, px2_g, py2_g = bbox_orig
+                                h_g = py2_g - py1_g
+                                w_g = px2_g - px1_g
+                                fh_g, fw_g = frame_orig.shape[:2]
+                                pad_x = int(w_g * 0.10)
+                                y1_g = max(0, py1_g)
+                                y2_g = min(fh_g, py1_g + int(h_g * 0.80))
+                                x1_g = max(0, px1_g - pad_x)
+                                x2_g = min(fw_g, px2_g + pad_x)
+                                torso_generoso = frame_orig[y1_g:y2_g, x1_g:x2_g]
+                                cv2.imwrite(
+                                    os.path.join(torso_dir, f"torso_generoso_{num}_{uuid.uuid4().hex[:8]}.png"),
+                                    torso_generoso,
+                                )
+
                             px1, py1, px2, py2 = bbox_orig
                             h_box = py2 - py1
                             w_box = px2 - px1
@@ -284,14 +333,40 @@ class VideoPipeline:
                             }
                             candidates_found[signature] = cand_dict
                             self.logger.info(f"[FAST SCAN] Novo candidato encontrado e enviado à UI: {num} (conf: {conf:.2f}, fonte: {source})")
-                            
+
+                            if accumulate_appearances:
+                                # semeia o teto com a propria aparicao ANTES (primeiro hit)
+                                antes_conf[signature] = conf
+                                self._update_ceiling(
+                                    ceiling_found, ceiling_dir, signature,
+                                    num, conf, hex_color, bbox_orig, frame_orig, frame_idx,
+                                )
+
                             if on_candidate_found:
                                 on_candidate_found(cand_dict)
-                            
+
         finally:
             cap.release()
-            
+
         self.logger.info(f"[FAST SCAN] Concluído. {len(candidates_found)} perfis distintos encontrados.")
+
+        if accumulate_appearances:
+            import json
+            report = {}
+            for sig, data in ceiling_found.items():
+                antes = candidates_found.get(sig)
+                report[sig] = {
+                    "number": data["number"],
+                    "antes_conf": antes_conf.get(sig),
+                    "teto_conf": data["conf"],
+                    "teto_area": data["area"],
+                    "teto_frame": data["frame_idx"],
+                    "teto_image": data["image_path"],
+                    "antes_image": antes["image"] if antes else None,
+                }
+            with open(os.path.join(output_dir, "ceiling_report.json"), "w", encoding="utf-8") as f:
+                json.dump(report, f, indent=2, ensure_ascii=False)
+            self.logger.info(f"[DIAGNOSTICO] Relatorio de teto salvo em ceiling_report.json ({len(report)} assinaturas).")
         return list(candidates_found.values())
 
     def process(
@@ -1013,6 +1088,68 @@ class VideoPipeline:
 
     def _extract_core_color(self, torso_crop: np.ndarray) -> str | None:
         return geometry_utils.extract_core_color(torso_crop)
+
+    def _update_ceiling(
+        self,
+        ceiling_found: dict,
+        ceiling_dir: str,
+        signature: str,
+        num: int,
+        conf: float,
+        hex_color: str,
+        bbox_orig: tuple,
+        frame_orig: np.ndarray,
+        frame_idx: int,
+    ) -> None:
+        """
+        [DIAGNOSTICO] Atualiza o "teto" de uma assinatura se esta aparicao
+        for melhor que a guardada (maior confianca; empate -> maior area).
+        NUNCA atualiza a cor de ancoragem (fica fixa na 1a aceitacao) para
+        a identidade nao derivar ao longo do scan.
+        """
+        x1, y1, x2, y2 = bbox_orig
+        area = max(0, x2 - x1) * max(0, y2 - y1)
+
+        atual = ceiling_found.get(signature)
+        is_better = (
+            atual is None
+            or conf > atual["conf"]
+            or (conf == atual["conf"] and area > atual["area"])
+        )
+        if not is_better:
+            return
+
+        torso_exato = self.jersey_reader._torso_crop(frame_orig, x1, y1, x2, y2)
+
+        fh, fw = frame_orig.shape[:2]
+        w_box, h_box = x2 - x1, y2 - y1
+        cx, cy = x1 + w_box // 2, y1 + h_box // 2
+        sq = int(max(w_box, h_box) * 1.2)
+        half = sq // 2
+        corpo_inteiro = frame_orig[
+            max(0, cy - half):min(fh, cy + half),
+            max(0, cx - half):min(fw, cx + half),
+        ]
+        if corpo_inteiro.size > 0:
+            corpo_inteiro = cv2.resize(corpo_inteiro, (256, 256), interpolation=cv2.INTER_AREA)
+
+        img_filename = f"teto_{num}_{signature}_f{frame_idx}.jpg"
+        img_path = os.path.join(ceiling_dir, img_filename)
+        if corpo_inteiro.size > 0:
+            cv2.imwrite(img_path, corpo_inteiro)
+        torso_path = os.path.join(ceiling_dir, f"teto_torso_{num}_{signature}_f{frame_idx}.png")
+        if torso_exato.size > 0:
+            cv2.imwrite(torso_path, torso_exato)
+
+        ceiling_found[signature] = {
+            "conf": conf,
+            "area": area,
+            "frame_idx": frame_idx,
+            "number": num,
+            "color_anchor_unchanged": hex_color if atual is None else atual.get("color_anchor_unchanged"),
+            "image_path": img_path,
+            "torso_path": torso_path,
+        }
 
     def _is_valid_player_detection(self, bbox_xywh: tuple, frame_h: float) -> bool:
         return geometry_utils.is_valid_player_detection(bbox_xywh, frame_h)
