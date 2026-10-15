@@ -21,63 +21,189 @@ const GIS_SCRIPT_URL = "https://accounts.google.com/gsi/client";
 const DRIVE_FILE_SCOPE = "https://www.googleapis.com/auth/drive.file";
 const VIDEO_MIME_TYPES = "video/mp4,video/quicktime,video/x-msvideo,video/webm,video/x-matroska";
 
-function loadScript(src: string): Promise<void> {
+let gapiScriptPromise: Promise<void> | null = null;
+let gisScriptPromise: Promise<void> | null = null;
+let pickerLibPromise: Promise<void> | null = null;
+
+export function resetGooglePickerCache() {
+  gapiScriptPromise = null;
+  gisScriptPromise = null;
+  pickerLibPromise = null;
+}
+
+function loadScript(src: string, isAvailable?: () => boolean): Promise<void> {
   return new Promise((resolve, reject) => {
-    const existing = document.querySelector(`script[src="${src}"]`);
-    if (existing) {
+    if (isAvailable && isAvailable()) {
       resolve();
       return;
     }
+
+    const existing = document.querySelector<HTMLScriptElement>(`script[src="${src}"]`);
+    if (existing) {
+      if (existing.dataset.loaded === "true" || (isAvailable && isAvailable())) {
+        resolve();
+        return;
+      }
+      existing.addEventListener("load", () => {
+        existing.dataset.loaded = "true";
+        resolve();
+      });
+      existing.addEventListener("error", () => {
+        reject(new Error(`Falha ao carregar script do Google: ${src}`));
+      });
+      return;
+    }
+
     const script = document.createElement("script");
     script.src = src;
     script.async = true;
     script.defer = true;
-    script.onload = () => resolve();
+    script.onload = () => {
+      script.dataset.loaded = "true";
+      resolve();
+    };
     script.onerror = () => reject(new Error(`Falha ao carregar script do Google: ${src}`));
     document.body.appendChild(script);
   });
 }
 
+function loadGapiScript(): Promise<void> {
+  if (typeof window !== "undefined" && window.gapi) {
+    return Promise.resolve();
+  }
+  if (!gapiScriptPromise) {
+    gapiScriptPromise = loadScript(GAPI_SCRIPT_URL, () => !!window.gapi).catch((err) => {
+      gapiScriptPromise = null;
+      throw err;
+    });
+  }
+  return gapiScriptPromise;
+}
+
+function loadGisScript(): Promise<void> {
+  if (typeof window !== "undefined" && window.google?.accounts?.oauth2) {
+    return Promise.resolve();
+  }
+  if (!gisScriptPromise) {
+    gisScriptPromise = loadScript(GIS_SCRIPT_URL, () => !!window.google?.accounts?.oauth2).catch((err) => {
+      gisScriptPromise = null;
+      throw err;
+    });
+  }
+  return gisScriptPromise;
+}
+
+function loadGooglePickerLib(): Promise<void> {
+  if (typeof window !== "undefined" && window.google?.picker) {
+    return Promise.resolve();
+  }
+  if (pickerLibPromise) {
+    return pickerLibPromise;
+  }
+  pickerLibPromise = new Promise<void>((resolve, reject) => {
+    loadGapiScript()
+      .then(() => {
+        if (!window.gapi) {
+          throw new Error("GAPI não inicializado.");
+        }
+        if (window.google?.picker) {
+          resolve();
+          return;
+        }
+        window.gapi.load("picker", {
+          callback: () => {
+            resolve();
+          },
+          onerror: () => {
+            pickerLibPromise = null;
+            reject(new Error("Falha ao carregar biblioteca do Google Picker."));
+          },
+        });
+      })
+      .catch((err) => {
+        pickerLibPromise = null;
+        reject(err);
+      });
+  });
+  return pickerLibPromise;
+}
+
+function loadGisClient(): Promise<void> {
+  if (typeof window !== "undefined" && window.google?.accounts?.oauth2) {
+    return Promise.resolve();
+  }
+  return loadGisScript().then(() => {
+    if (window.google?.accounts?.oauth2) {
+      return;
+    }
+    return new Promise<void>((resolve, reject) => {
+      let attempts = 0;
+      const interval = setInterval(() => {
+        attempts++;
+        if (window.google?.accounts?.oauth2) {
+          clearInterval(interval);
+          resolve();
+        } else if (attempts > 30) {
+          clearInterval(interval);
+          reject(new Error("Google Identity Services não inicializado a tempo."));
+        }
+      }, 50);
+    });
+  });
+}
+
 export function useGoogleDrivePicker() {
-  const [isGapiLoaded, setIsGapiLoaded] = useState(false);
-  const [isGisLoaded, setIsGisLoaded] = useState(false);
   const [pickerReady, setPickerReady] = useState(false);
   const [pickerError, setPickerError] = useState<string | null>(null);
 
   const tokenClientRef = useRef<any>(null);
   const accessTokenRef = useRef<string | null>(null);
+  const activeCallbacksRef = useRef<{
+    onSuccess: ((tokenResponse: any) => void) | null;
+    onError: ((error: any) => void) | null;
+  }>({
+    onSuccess: null,
+    onError: null,
+  });
 
   const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || "";
   const apiKey = import.meta.env.VITE_GOOGLE_API_KEY || "";
   const appId = import.meta.env.VITE_GOOGLE_APP_ID || "";
 
-  // 1. Carrega scripts oficiais do Google (GAPI e GIS)
+  // 1. Carrega scripts oficiais do Google (GAPI e GIS) com singleton promises resistentes a F5 e React StrictMode
   useEffect(() => {
     let isMounted = true;
 
     async function initScripts() {
       try {
-        await Promise.all([loadScript(GAPI_SCRIPT_URL), loadScript(GIS_SCRIPT_URL)]);
+        await Promise.all([loadGooglePickerLib(), loadGisClient()]);
         if (!isMounted) return;
 
-        // Inicializa GAPI Picker
-        if (window.gapi) {
-          window.gapi.load("picker", () => {
-            if (isMounted) setIsGapiLoaded(true);
-          });
-        }
-
-        // Inicializa GIS Token Client
-        if (window.google?.accounts?.oauth2 && clientId) {
+        // Inicializa GIS Token Client se ainda não criado
+        if (window.google?.accounts?.oauth2 && clientId && !tokenClientRef.current) {
           tokenClientRef.current = window.google.accounts.oauth2.initTokenClient({
             client_id: clientId,
             scope: DRIVE_FILE_SCOPE,
-            callback: () => {}, // Callback sobrescrito em openPicker
+            callback: (resp: any) => {
+              if (activeCallbacksRef.current.onSuccess) {
+                activeCallbacksRef.current.onSuccess(resp);
+              }
+            },
+            error_callback: (err: any) => {
+              if (activeCallbacksRef.current.onError) {
+                activeCallbacksRef.current.onError(err);
+              }
+            },
           });
-          if (isMounted) setIsGisLoaded(true);
+        }
+
+        if (isMounted) {
+          setPickerReady(true);
         }
       } catch (err: any) {
-        if (isMounted) setPickerError(err.message || "Erro ao carregar SDKs do Google.");
+        if (isMounted) {
+          setPickerError(err.message || "Erro ao carregar SDKs do Google.");
+        }
       }
     }
 
@@ -88,22 +214,31 @@ export function useGoogleDrivePicker() {
     };
   }, [clientId]);
 
-  useEffect(() => {
-    if (isGapiLoaded && isGisLoaded) {
-      setPickerReady(true);
-    }
-  }, [isGapiLoaded, isGisLoaded]);
-
   // 2. Função para abrir o Picker oficial do Google
   const openPicker = useCallback((): Promise<GoogleDriveFile | null> => {
     setPickerError(null);
 
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
       if (!clientId || !apiKey) {
         const msg = "Credenciais do Google não configuradas. Verifique as variáveis de ambiente.";
         setPickerError(msg);
         reject(new Error(msg));
         return;
+      }
+
+      // Em ambiente de execução real, se ainda estiver inicializando, aguarda
+      if (import.meta.env.MODE !== "test") {
+        if (!window.google?.picker || !window.google?.accounts?.oauth2) {
+          try {
+            await Promise.all([loadGooglePickerLib(), loadGisClient()]);
+            setPickerReady(true);
+          } catch (err: any) {
+            const msg = err.message || "Google Picker ainda não está pronto. Tente novamente em alguns instantes.";
+            setPickerError(msg);
+            reject(new Error(msg));
+            return;
+          }
+        }
       }
 
       if (!window.google?.picker) {
@@ -132,7 +267,11 @@ export function useGoogleDrivePicker() {
                   resolve(null);
                   return;
                 }
-                const docDuration = doc.durationMillis ? Number(doc.durationMillis) : (doc.lengthSeconds ? Number(doc.lengthSeconds) * 1000 : undefined);
+                const docDuration = doc.durationMillis
+                  ? Number(doc.durationMillis)
+                  : doc.lengthSeconds
+                  ? Number(doc.lengthSeconds) * 1000
+                  : undefined;
                 resolve({
                   id: doc.id,
                   name: doc.name,
@@ -161,13 +300,22 @@ export function useGoogleDrivePicker() {
         return;
       }
 
-      // Caso contrário, solicita token via Google Identity Services
+      // Garante inicialização do Token Client
       if (!tokenClientRef.current) {
         if (window.google?.accounts?.oauth2) {
           tokenClientRef.current = window.google.accounts.oauth2.initTokenClient({
             client_id: clientId,
             scope: DRIVE_FILE_SCOPE,
-            callback: () => {},
+            callback: (resp: any) => {
+              if (activeCallbacksRef.current.onSuccess) {
+                activeCallbacksRef.current.onSuccess(resp);
+              }
+            },
+            error_callback: (err: any) => {
+              if (activeCallbacksRef.current.onError) {
+                activeCallbacksRef.current.onError(err);
+              }
+            },
           });
         } else {
           const msg = "Google Identity Services não inicializado.";
@@ -177,7 +325,18 @@ export function useGoogleDrivePicker() {
         }
       }
 
-      tokenClientRef.current.callback = (tokenResponse: any) => {
+      let isFinished = false;
+
+      const cleanup = () => {
+        isFinished = true;
+        activeCallbacksRef.current.onSuccess = null;
+        activeCallbacksRef.current.onError = null;
+      };
+
+      const handleSuccess = (tokenResponse: any) => {
+        if (isFinished) return;
+        cleanup();
+
         if (tokenResponse.error) {
           const msg = tokenResponse.error_description || "Autenticação com o Google cancelada ou negada.";
           setPickerError(msg);
@@ -190,8 +349,44 @@ export function useGoogleDrivePicker() {
         createAndShowPicker(token);
       };
 
+      const handleError = (err: any) => {
+        if (isFinished) return;
+        cleanup();
+
+        if (err?.type === "popup_closed") {
+          // Usuário fechou o pop-up de login do Google voluntariamente: cancela suavemente retornando null
+          resolve(null);
+          return;
+        }
+
+        if (err?.type === "popup_blocked") {
+          const msg = "A janela de login do Google foi bloqueada pelo navegador. Permita pop-ups para este site.";
+          setPickerError(msg);
+          reject(new Error(msg));
+          return;
+        }
+
+        const msg = err?.message || err?.error || "Autenticação com o Google cancelada ou indisponível.";
+        setPickerError(msg);
+        reject(new Error(msg));
+      };
+
+      // Registra callbacks dinâmicos tanto no ref quanto nas propriedades do objeto client
+      activeCallbacksRef.current.onSuccess = handleSuccess;
+      activeCallbacksRef.current.onError = handleError;
+
+      tokenClientRef.current.callback = handleSuccess;
+      tokenClientRef.current.error_callback = handleError;
+
       // Abre pop-up de consentimento OAuth do Google
-      tokenClientRef.current.requestAccessToken({ prompt: "" });
+      try {
+        tokenClientRef.current.requestAccessToken({ prompt: "" });
+      } catch (err: any) {
+        cleanup();
+        const msg = err.message || "Erro ao solicitar autenticação com o Google.";
+        setPickerError(msg);
+        reject(new Error(msg));
+      }
     });
   }, [apiKey, appId, clientId]);
 
@@ -201,4 +396,3 @@ export function useGoogleDrivePicker() {
     error: pickerError,
   };
 }
-

@@ -1,6 +1,6 @@
 import { renderHook, act } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { useGoogleDrivePicker } from "./useGoogleDrivePicker";
+import { useGoogleDrivePicker, resetGooglePickerCache } from "./useGoogleDrivePicker";
 
 describe("useGoogleDrivePicker", () => {
   beforeEach(() => {
@@ -12,6 +12,7 @@ describe("useGoogleDrivePicker", () => {
   afterEach(() => {
     vi.unstubAllEnvs();
     vi.restoreAllMocks();
+    resetGooglePickerCache();
     delete window.gapi;
     delete window.google;
   });
@@ -63,6 +64,7 @@ describe("useGoogleDrivePicker", () => {
       set callback(cb: any) {
         tokenCallback = cb;
       },
+      set error_callback(_cb: any) {},
     };
 
     let pickerCallback: any;
@@ -147,6 +149,7 @@ describe("useGoogleDrivePicker", () => {
       set callback(cb: any) {
         tokenCallback = cb;
       },
+      set error_callback(_cb: any) {},
     };
 
     let pickerCallback: any;
@@ -196,5 +199,97 @@ describe("useGoogleDrivePicker", () => {
 
     expect(file).toBeNull();
   });
-});
 
+  it("retorna null de forma limpa quando o usuário fecha o pop-up de login (popup_closed)", async () => {
+    let errorCallback: any;
+
+    const fakeTokenClient = {
+      requestAccessToken: vi.fn(() => {
+        if (errorCallback) errorCallback({ type: "popup_closed" });
+      }),
+      set callback(_cb: any) {},
+      set error_callback(cb: any) {
+        errorCallback = cb;
+      },
+    };
+
+    window.google = {
+      accounts: {
+        oauth2: {
+          initTokenClient: vi.fn((config: any) => {
+            if (config?.error_callback) {
+              errorCallback = config.error_callback;
+            }
+            return fakeTokenClient;
+          }),
+        },
+      },
+      picker: {
+        PickerBuilder: vi.fn(),
+        DocsView: vi.fn(),
+        ViewId: { DOCS: "DOCS" },
+        DocsViewMode: { LIST: "LIST" },
+        Action: { PICKED: "picked", CANCEL: "cancel" },
+      },
+    };
+
+    const { result } = renderHook(() => useGoogleDrivePicker());
+
+    let file: any;
+    await act(async () => {
+      file = await result.current.openPicker();
+    });
+
+    expect(file).toBeNull();
+    expect(fakeTokenClient.requestAccessToken).toHaveBeenCalled();
+    expect(result.current.error).toBeNull();
+  });
+
+  it("rejeita com mensagem amigável quando o navegador bloqueia o pop-up (popup_blocked)", async () => {
+    let errorCallback: any;
+
+    const fakeTokenClient = {
+      requestAccessToken: vi.fn(() => {
+        if (errorCallback) errorCallback({ type: "popup_blocked" });
+      }),
+      set callback(_cb: any) {},
+      set error_callback(cb: any) {
+        errorCallback = cb;
+      },
+    };
+
+    window.google = {
+      accounts: {
+        oauth2: {
+          initTokenClient: vi.fn((config: any) => {
+            if (config?.error_callback) {
+              errorCallback = config.error_callback;
+            }
+            return fakeTokenClient;
+          }),
+        },
+      },
+      picker: {
+        PickerBuilder: vi.fn(),
+        DocsView: vi.fn(),
+        ViewId: { DOCS: "DOCS" },
+        DocsViewMode: { LIST: "LIST" },
+        Action: { PICKED: "picked", CANCEL: "cancel" },
+      },
+    };
+
+    const { result } = renderHook(() => useGoogleDrivePicker());
+
+    let error: any;
+    await act(async () => {
+      try {
+        await result.current.openPicker();
+      } catch (err) {
+        error = err;
+      }
+    });
+
+    expect(error?.message).toContain("bloqueada pelo navegador");
+    expect(result.current.error).toContain("bloqueada pelo navegador");
+  });
+});

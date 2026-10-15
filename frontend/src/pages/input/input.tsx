@@ -165,7 +165,14 @@ export default function InputPage() {
                 }
             }
         } catch (err: any) {
-            setError(err.message || "Erro ao conectar ao Google Drive.");
+            const isPopupClosed =
+                err?.type === "popup_closed" ||
+                err?.message?.includes("popup_closed") ||
+                err?.message?.toLowerCase().includes("fechada") ||
+                err?.message?.toLowerCase().includes("cancelada");
+            if (!isPopupClosed) {
+                setError(err.message || "Erro ao conectar ao Google Drive.");
+            }
         } finally {
             setDrivePickerLoading(false);
         }
