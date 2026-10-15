@@ -369,6 +369,141 @@
   width: 100%;
 }
 
+.upload-divider {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  max-width: 420px;
+  margin: -0.25rem 0;
+  gap: 1rem;
+}
+
+.upload-divider::before,
+.upload-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.upload-divider span {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.4);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.btn-google-drive {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  width: 100%;
+  max-width: 420px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 14px;
+  padding: 0.85rem 1.5rem;
+  color: #ffffff;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-google-drive:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.09);
+  border-color: rgba(40, 114, 161, 0.6);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.btn-google-drive:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.drive-selected-card {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  background: rgba(40, 114, 161, 0.06);
+  border: 1px solid rgba(40, 114, 161, 0.4);
+  border-radius: 16px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  box-sizing: border-box;
+}
+
+.drive-file-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding-right: 2rem;
+}
+
+.drive-icon-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  flex-shrink: 0;
+}
+
+.drive-file-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  overflow: hidden;
+}
+
+.drive-file-name {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.drive-file-meta {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.8rem;
+  color: #5BADDA;
+}
+
+.drive-preview-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: rgba(40, 114, 161, 0.2);
+  border-bottom: 1px solid rgba(40, 114, 161, 0.35);
+  color: #5BADDA;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 500;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.drive-preview-title {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #ffffff;
+  font-weight: 600;
+}
+
 @media (max-width: 768px) {
   .input-page { padding: 1rem 0.75rem; }
   .input-card { padding: 1.5rem 1rem; gap: 1rem; border-radius: 20px; max-width: 100%; }

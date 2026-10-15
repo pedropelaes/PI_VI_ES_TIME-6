@@ -17,3 +17,14 @@ YOLO_MODEL_PATH = BACKEND_DIR / "weights" / "best.pt"
 JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "change-me-in-production-use-env")
 JWT_ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 24 horas
+
+# Limites de upload / importação de vídeo
+MAX_VIDEO_SIZE_MB = int(os.getenv("MAX_VIDEO_SIZE_MB", "2048"))  # 2 GB padrão
+ALLOWED_VIDEO_MIME_TYPES = (
+    "video/mp4",
+    "video/quicktime",
+    "video/x-msvideo",
+    "video/webm",
+    "video/x-matroska",
+    "video/mpeg",
+)

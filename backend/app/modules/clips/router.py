@@ -8,20 +8,28 @@ import time
 from pathlib import Path
 from datetime import datetime, timezone, timedelta
 
-from fastapi import APIRouter, Depends, Query, UploadFile, File, Form
+import httpx
+
+from fastapi import APIRouter, Depends, Query, UploadFile, File, Form, Request
 from fastapi.responses import StreamingResponse
 from sqlmodel import Session, select
 
 from app.core.database import get_session, engine
 from app.core.deps import get_current_user
-from app.core.exceptions import NotFoundError, ForbiddenError, ConflictError, DomainError
+from app.core.exceptions import NotFoundError, ForbiddenError, ConflictError, DomainError, UnauthorizedError, BadRequestError
 from app.core.storage import get_storage
 from app.modules.identity.models import User, UserRole
 from app.modules.clips.models import Video, ProcessingJob, Clip, Candidate
-from app.modules.clips.schemas import ConfirmPlayerRequest
-from app.modules.clips.tasks import run_fast_scan, run_full_tracking
+from app.modules.clips.schemas import ConfirmPlayerRequest, GoogleDriveImportRequest
+from app.modules.clips.google_drive import get_google_drive_file_metadata
+from app.modules.clips.tasks import (
+    run_fast_scan,
+    run_full_tracking,
+    download_and_process_drive_video,
+)
 
 router = APIRouter(prefix="/jobs", tags=["jobs"])
+videos_router = APIRouter(prefix="/videos", tags=["videos"])
 
 BASE_DIR = Path(__file__).resolve().parents[2]
 
@@ -65,12 +73,22 @@ def stream_job_status(job_id: uuid.UUID):
                     yield f"data: {json.dumps({'error': 'Job não encontrado'})}\n\n"
                     return
 
+                status_val = job.status
+                download_progress = None
+                if status_val.startswith("DOWNLOADING:"):
+                    try:
+                        download_progress = int(status_val.split(":")[1])
+                        status_val = "DOWNLOADING"
+                    except Exception:
+                        pass
+
                 clips = session.exec(select(Clip).where(Clip.job_id == job_id)).all()
                 candidatos = session.exec(select(Candidate).where(Candidate.job_id == job_id)).all()
 
                 payload = {
                     "job_id": str(job.id),
-                    "status": job.status,
+                    "status": status_val,
+                    "download_progress": download_progress,
                     "candidates": [
                         {
                             "id": c.signature,
@@ -95,7 +113,7 @@ def stream_job_status(job_id: uuid.UUID):
                     ]
                 }
 
-                done = job.status in ["COMPLETED", "ERROR"]
+                done = status_val in ["COMPLETED", "ERROR"]
 
             yield f"data: {json.dumps(payload)}\n\n"
 
@@ -152,6 +170,121 @@ async def create_job(
     run_fast_scan.delay(job.id, str(video_path), target_number, start_ts, end_ts)
 
     return {"job_id": str(job.id), "status": job.status}
+
+
+@router.post("/import/google-drive", status_code=202)
+@videos_router.post("/import/google-drive", status_code=202)
+async def import_video_from_google_drive(
+    payload: GoogleDriveImportRequest,
+    current_user: User = Depends(get_current_user),
+    session: Session = Depends(get_session),
+):
+    """
+    Importa vídeo do Google Drive:
+    1. Valida formato e tamanho na Drive API v3 (rejeita 401, 403, 400 imediatamente).
+    2. Cria registro Video e ProcessingJob (status DOWNLOADING).
+    3. Despacha download assíncrono em chunks para o worker Celery.
+    """
+    metadata = await get_google_drive_file_metadata(
+        file_id=payload.file_id,
+        access_token=payload.google_access_token,
+    )
+
+    safe_name = Path(str(metadata["name"])).name
+    video_id = uuid.uuid4()
+    size_mb = metadata.get("size", 0) / (1024 * 1024)
+
+    db_video = Video(
+        id=video_id,
+        user_id=current_user.id,
+        original_filename=safe_name,
+        storage_path=None,
+        file_size_mb=round(size_mb, 2) if size_mb > 0 else None,
+    )
+    session.add(db_video)
+    session.commit()
+    session.refresh(db_video)
+
+    job = ProcessingJob(
+        video_id=video_id,
+        target_number=payload.target_number,
+        status="DOWNLOADING",
+    )
+    session.add(job)
+    session.commit()
+    session.refresh(job)
+
+    download_and_process_drive_video.delay(
+        job.id,
+        payload.file_id,
+        payload.google_access_token,
+        payload.target_number,
+        payload.start_ts,
+        payload.end_ts,
+    )
+
+    return {"job_id": str(job.id), "status": job.status}
+
+
+@router.get("/drive-preview/{file_id}")
+@videos_router.get("/drive-preview/{file_id}")
+async def preview_drive_video(
+    file_id: str,
+    access_token: str = Query(...),
+    request: Request = None,
+):
+    """
+    Proxy de streaming com suporte a HTTP Range (206 Partial Content) para permitir
+    que o player HTML5 <video> reproduza vídeos do Google Drive e descubra a duração
+    para o Slider de recorte sem precisar baixar o arquivo inteiro com antecedência.
+    """
+    range_header = request.headers.get("range") if request else None
+    google_url = f"https://www.googleapis.com/drive/v3/files/{file_id}?alt=media"
+    headers = {"Authorization": f"Bearer {access_token}"}
+    if range_header:
+        headers["Range"] = range_header
+
+    client = httpx.AsyncClient(timeout=60.0, follow_redirects=True)
+    try:
+        req = client.build_request("GET", google_url, headers=headers)
+        res = await client.send(req, stream=True)
+    except Exception as exc:
+        await client.aclose()
+        raise BadRequestError(f"Falha ao conectar ao Google Drive para preview: {exc}")
+
+    if res.status_code not in (200, 206):
+        await res.aclose()
+        await client.aclose()
+        if res.status_code == 401:
+            raise UnauthorizedError("Token do Google Drive expirado.")
+        if res.status_code == 403:
+            raise ForbiddenError("Sem permissão para visualizar este vídeo do Google Drive.")
+        if res.status_code == 404:
+            raise NotFoundError("Vídeo não encontrado no Google Drive.")
+        raise BadRequestError(f"Erro ao transmitir vídeo do Google Drive (status {res.status_code}).")
+
+    async def stream_generator():
+        try:
+            async for chunk in res.aiter_bytes(chunk_size=128 * 1024):
+                yield chunk
+        finally:
+            await res.aclose()
+            await client.aclose()
+
+    resp_headers = {
+        "Accept-Ranges": "bytes",
+    }
+    for key in ("Content-Range", "Content-Length", "Content-Type"):
+        val = res.headers.get(key)
+        if val:
+            resp_headers[key] = val
+
+    return StreamingResponse(
+        stream_generator(),
+        status_code=res.status_code,
+        headers=resp_headers,
+        media_type=res.headers.get("Content-Type", "video/mp4"),
+    )
 
 @router.delete("/{job_id}/clips", status_code=204)
 def delete_job_clips(
