@@ -2,6 +2,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import Optional, List, TYPE_CHECKING
 
+from sqlalchemy import Index
 from sqlmodel import Field, SQLModel, Relationship
 
 #if TYPE_CHECKING:
@@ -41,17 +42,32 @@ class ProcessingJob(SQLModel, table=True):
         sa_relationship_kwargs={"cascade": "all, delete-orphan"},
     )
 
+class ClipStatus:
+    """
+    TEMPORARY -> recem-gerado; a retencao apaga depois de 14 dias.
+    PUBLISHED -> o atleta publicou no feed; fica guardado para sempre (escopo 2.3).
+    DELETED   -> soft delete feito pela retencao.
+    """
+
+    TEMPORARY = "TEMPORARY"
+    PUBLISHED = "PUBLISHED"
+    DELETED = "DELETED"
 
 class Clip(SQLModel, table=True):
     __tablename__ = "clips"
+    # O feed filtra por status e ordena por published_at
+    __table_args__ = (
+        Index("ix_clips_status_published_at", "status", "published_at"),
+    )
 
     id: uuid.UUID = Field(default_factory=uuid.uuid4, primary_key=True)
     job_id: uuid.UUID = Field(foreign_key="processing_jobs.id")
     storage_path: Optional[str] = None
-    status: str = Field(default="TEMPORARY")
+    status: str = Field(default=ClipStatus.TEMPORARY)
     start_timestamp: float
     end_timestamp: float
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    published_at: Optional[datetime] = None
 
     job: Optional["ProcessingJob"] = Relationship(back_populates="clips")
 

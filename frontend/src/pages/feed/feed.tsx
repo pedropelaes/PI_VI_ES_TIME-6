@@ -1,125 +1,110 @@
-import { useEffect, useMemo, useState } from "react";
-import {
-	Bookmark,
-	Check,
-	Clock3,
-	Download,
-	Heart,
-	RefreshCw,
-	Search,
-	Share2,
-	Sparkles,
-	Users,
-	Video,
-} from "lucide-react";
-import { ClipHistoryGroup, downloadClip, listClips } from "../../services/api";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Link } from "react-router-dom";
+import { Clock3, Download, Heart, RefreshCw, Search, Share2, Sparkles, Video } from "lucide-react";
+import { downloadClip } from "../../services/api";
+import { useFeed } from "../../features/feed/hooks/useFeed";
+import { useToggleLike } from "../../features/feed/hooks/useToggleLike";
+import type { FeedFilters, FeedItemView } from "../../features/feed/types";
 import "./feed.css";
 
-type FeedClip = {
+interface FilterPreset {
 	id: string;
-	fileUrl: string;
-	duration: string;
-	playerNumber: number;
-	generatedAt: string;
-	index: number;
-};
-
-const filters = ["Todos os lances", "Goleiros", "Atacantes", "Sub-20", "Disponíveis para clube"];
-
-function formatTime(value: string): string {
-	const parts = value.split(":").map(Number);
-	if (parts.length === 2 && parts.every(Number.isFinite)) return value;
-	const seconds = Number(value);
-	if (!Number.isFinite(seconds)) return "--:--";
-	return `${String(Math.floor(seconds / 60)).padStart(2, "0")}:${String(Math.floor(seconds % 60)).padStart(2, "0")}`;
+	label: string;
+	filters: FeedFilters;
 }
 
-function relativeDate(value: string): string {
-	const [datePart, timePart] = value.split(" - ");
-	const [day, month, year] = datePart?.split("/").map(Number) ?? [];
-	const [hour, minute] = timePart?.split(":").map(Number) ?? [];
-	const timestamp = new Date(year, month - 1, day, hour, minute).getTime();
-	if (!Number.isFinite(timestamp)) return "recentemente";
-	const minutes = Math.max(1, Math.floor((Date.now() - timestamp) / 60000));
-	if (minutes < 60) return `há ${minutes} min`;
-	if (minutes < 1440) return `há ${Math.floor(minutes / 60)} h`;
-	return `há ${Math.floor(minutes / 1440)} d`;
+// "Sub-20" = até 19 anos completos.
+const FILTERS: FilterPreset[] = [
+	{ id: "todos", label: "Todos os lances", filters: {} },
+	{ id: "goleiros", label: "Goleiros", filters: { position: "GOLEIRO" } },
+	{ id: "zagueiros", label: "Zagueiros", filters: { position: "ZAGUEIRO" } },
+	{ id: "laterais", label: "Laterais", filters: { position: "LATERAL" } },
+	{ id: "volantes", label: "Volantes", filters: { position: "VOLANTE" } },
+	{ id: "meias", label: "Meias", filters: { position: "MEIA" } },
+	{ id: "atacantes", label: "Atacantes", filters: { position: "ATACANTE" } },
+	{ id: "sub20", label: "Sub-20", filters: { maxAge: 19 } },
+	{ id: "disponiveis", label: "Disponíveis para clube", filters: { status: "DISPONIVEL" } },
+];
+
+const SEARCH_DEBOUNCE_MS = 400;
+
+/** Espera o usuário parar de digitar antes de buscar, pra não chamar a API a cada letra. */
+function useDebounced<T>(value: T, delay: number): T {
+	const [debounced, setDebounced] = useState(value);
+	useEffect(() => {
+		const id = setTimeout(() => setDebounced(value), delay);
+		return () => clearTimeout(id);
+	}, [value, delay]);
+	return debounced;
 }
 
-function flattenGroups(groups: ClipHistoryGroup[]): FeedClip[] {
-	// A retencao faz soft delete: o clipe expirado fica sem file_url. Nao ha o que
-	// tocar nem baixar, e mante-lo renderizaria um <video> apontando para "null".
-	// O historico continua exibindo esses clipes, marcados como expirados.
-	return groups.flatMap((group) => group.clips
-		.filter((clip): clip is typeof clip & { file_url: string } => Boolean(clip.file_url))
-		.map((clip, index) => ({
-		id: clip.id,
-		fileUrl: clip.file_url,
-		duration: formatTime(clip.duration),
-		playerNumber: group.target_number,
-		generatedAt: group.generated_at,
-		index,
-	})));
-}
-
-function FeedCard({ clip }: { clip: FeedClip }) {
-	const [isLiked, setIsLiked] = useState(false);
-	const [isSaved, setIsSaved] = useState(false);
+function FeedCard({ clip }: { clip: FeedItemView }) {
 	const [isPlaying, setIsPlaying] = useState(false);
+	const toggleLike = useToggleLike();
+	const { athlete } = clip;
 
 	async function handleDownload() {
 		try {
-			await downloadClip(clip.fileUrl, `jogador-${clip.playerNumber}-clipe-${clip.index + 1}`);
+			const nome = athlete.fullName.toLowerCase().replace(/\s+/g, "-");
+			await downloadClip(clip.fileUrl, `${nome}-${clip.id.slice(0, 8)}`);
 		} catch {
 			window.alert("Não foi possível baixar o clipe. Tente novamente.");
 		}
 	}
 
 	async function handleShare() {
-		if (navigator.share) {
-			await navigator.share({ title: `Clipe do jogador #${clip.playerNumber}`, url: window.location.href });
-		} else {
-			await navigator.clipboard?.writeText(window.location.href);
+		const url = `${window.location.origin}${athlete.profilePath}`;
+		try {
+			if (navigator.share) {
+				await navigator.share({ title: `${athlete.fullName} no SmartScout`, url });
+			} else {
+				await navigator.clipboard?.writeText(url);
+			}
+		} catch {
+			// Usuário cancelou o compartilhamento: nada a fazer.
 		}
 	}
 
 	return (
 		<article className="feed-post">
 			<div className="feed-post-header">
-				<div className="player-avatar"><Users size={19} /></div>
+				<Link to={athlete.profilePath} className="player-avatar" aria-label={`Ver perfil de ${athlete.fullName}`}>
+					{athlete.avatarUrl ? <img src={athlete.avatarUrl} alt="" /> : athlete.initial}
+				</Link>
 				<div className="player-meta">
-					<strong>Jogador #{clip.playerNumber}</strong>
-					<span>Atleta em análise · {relativeDate(clip.generatedAt)}</span>
+					<Link to={athlete.profilePath} className="player-name">{athlete.fullName}</Link>
+					<span>{athlete.details} · {clip.publishedLabel}</span>
 				</div>
-				<button className="post-menu" aria-label="Mais opções" title="Mais opções">•••</button>
 			</div>
 
 			<div className="video-frame">
 				<video
-					src={`${import.meta.env.VITE_API_PATH}${clip.fileUrl}`}
+					src={clip.videoUrl}
 					controls
 					muted
 					loop
 					playsInline
 					preload="metadata"
-					onMouseEnter={(event) => { setIsPlaying(true); void event.currentTarget.play(); }}
+					onMouseEnter={(event) => { setIsPlaying(true); void event.currentTarget.play().catch(() => {}); }}
 					onMouseLeave={(event) => { setIsPlaying(false); event.currentTarget.pause(); }}
 				/>
-				{!isPlaying && <span className="video-duration"><Clock3 size={13} /> {clip.duration}</span>}
+				{!isPlaying && <span className="video-duration"><Clock3 size={13} /> {clip.durationLabel}</span>}
 				<span className="ai-mark"><Sparkles size={13} /> IA</span>
 			</div>
 
 			<div className="feed-post-body">
-				<div className="ai-tags"><span>Pico de velocidade</span><span>Ação analisada</span></div>
-				<p className="post-caption">Lance destacado pela análise automática do SmartScout.</p>
+				{athlete.isAvailable && <div className="ai-tags"><span>Disponível para clube</span></div>}
 				<div className="post-actions">
-					<button className={isLiked ? "action-button active" : "action-button"} onClick={() => setIsLiked(!isLiked)} aria-label="Curtir clipe" title="Curtido">
-						<Heart size={19} fill={isLiked ? "currentColor" : "none"} /> <span>{isLiked ? "Curtido" : "Curtir"}</span>
+					<button
+						className={clip.likedByMe ? "action-button active" : "action-button"}
+						onClick={() => toggleLike.mutate({ clipId: clip.id, like: !clip.likedByMe })}
+						aria-pressed={clip.likedByMe}
+						aria-label={clip.likedByMe ? "Descurtir clipe" : "Curtir clipe"}
+					>
+						<Heart size={19} fill={clip.likedByMe ? "currentColor" : "none"} />
+						<span>{clip.likeCount}</span>
 					</button>
-					<button className={isSaved ? "action-button active" : "action-button"} onClick={() => setIsSaved(!isSaved)} aria-label="Salvar na shortlist" title="Salvar na shortlist">
-						{isSaved ? <Check size={19} /> : <Bookmark size={19} />} <span>{isSaved ? "Salvo" : "Salvar"}</span>
-					</button>
-					<button className="icon-action" onClick={handleShare} aria-label="Compartilhar clipe" title="Compartilhar"><Share2 size={18} /></button>
+					<button className="icon-action" onClick={handleShare} aria-label="Compartilhar perfil do atleta" title="Compartilhar"><Share2 size={18} /></button>
 					<button className="icon-action" onClick={handleDownload} aria-label="Baixar clipe" title="Baixar"><Download size={18} /></button>
 				</div>
 			</div>
@@ -128,24 +113,29 @@ function FeedCard({ clip }: { clip: FeedClip }) {
 }
 
 export default function Feed() {
-	const [groups, setGroups] = useState<ClipHistoryGroup[]>([]);
-	const [loading, setLoading] = useState(true);
-	const [error, setError] = useState("");
+	const [activeFilterId, setActiveFilterId] = useState(FILTERS[0].id);
 	const [search, setSearch] = useState("");
-	const [activeFilter, setActiveFilter] = useState(filters[0]);
+	const debouncedSearch = useDebounced(search, SEARCH_DEBOUNCE_MS);
 
-	function loadFeed() {
-		setLoading(true);
-		setError("");
-		listClips().then(setGroups).catch((err) => setError(err instanceof Error ? err.message : "Não foi possível carregar o feed.")).finally(() => setLoading(false));
-	}
+	const filters = useMemo<FeedFilters>(() => {
+		const preset = FILTERS.find((f) => f.id === activeFilterId) ?? FILTERS[0];
+		return { ...preset.filters, q: debouncedSearch.trim() || undefined };
+	}, [activeFilterId, debouncedSearch]);
 
-	useEffect(() => { loadFeed(); }, []);
+	const { items, isLoading, isError, error, hasNextPage, isFetchingNextPage, fetchNextPage, refetch } = useFeed(filters);
+	const isFiltered = activeFilterId !== FILTERS[0].id || Boolean(filters.q);
 
-	const clips = useMemo(() => {
-		const query = search.trim().toLowerCase();
-		return flattenGroups(groups).filter((clip) => !query || `jogador ${clip.playerNumber}`.includes(query) || clip.id.toLowerCase().includes(query));
-	}, [groups, search]);
+	// Scroll infinito: quando o "sentinela" no fim da lista aparece na tela, busca a próxima página.
+	const sentinelRef = useRef<HTMLDivElement | null>(null);
+	useEffect(() => {
+		const el = sentinelRef.current;
+		if (!el || !hasNextPage || typeof IntersectionObserver === "undefined") return;
+		const observer = new IntersectionObserver((entries) => {
+			if (entries[0]?.isIntersecting && !isFetchingNextPage) fetchNextPage();
+		}, { rootMargin: "400px" });
+		observer.observe(el);
+		return () => observer.disconnect();
+	}, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
 	return (
 		<div className="feed-page">
@@ -154,23 +144,60 @@ export default function Feed() {
 					<div>
 						<p className="eyebrow"><Sparkles size={14} /> SCOUT VIEW</p>
 						<h1>Descubra o próximo destaque.</h1>
-						<p className="feed-subtitle">Lances selecionados pela IA para acelerar suas decisões.</p>
+						<p className="feed-subtitle">Lances publicados pelos atletas, recortados pela IA do SmartScout.</p>
 					</div>
-					<div className="feed-stat"><Video size={17} /><strong>{clips.length}</strong><span>lances no feed</span></div>
+					<div className="feed-stat"><Video size={17} /><strong>{items.length}{hasNextPage ? "+" : ""}</strong><span>lances no feed</span></div>
 				</header>
 
 				<div className="feed-toolbar">
 					<div className="filter-scroll" role="group" aria-label="Filtros do feed">
-						{filters.map((filter) => <button key={filter} className={activeFilter === filter ? "filter-pill selected" : "filter-pill"} onClick={() => setActiveFilter(filter)}>{filter}</button>)}
+						{FILTERS.map((filter) => (
+							<button
+								key={filter.id}
+								className={activeFilterId === filter.id ? "filter-pill selected" : "filter-pill"}
+								aria-pressed={activeFilterId === filter.id}
+								onClick={() => setActiveFilterId(filter.id)}
+							>
+								{filter.label}
+							</button>
+						))}
 					</div>
-					<label className="feed-search"><Search size={17} /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar jogador ou clipe" aria-label="Buscar jogador ou clipe" /></label>
+					<label className="feed-search">
+						<Search size={17} />
+						<input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Buscar atleta pelo nome" aria-label="Buscar atleta pelo nome" />
+					</label>
 				</div>
 
-				{loading && <div className="feed-state"><RefreshCw className="spin" size={24} /><p>Preparando os melhores lances...</p></div>}
-				{!loading && error && <div className="feed-state"><p>{error}</p><button className="retry-button" onClick={loadFeed}><RefreshCw size={16} /> Tentar novamente</button></div>}
-				{!loading && !error && clips.length === 0 && <div className="feed-state"><Video size={30} /><p>Nenhum lance encontrado ainda.</p><span>Gere um clipe para começar a sua vitrine.</span></div>}
-				{!loading && !error && clips.length > 0 && <div className="feed-grid">{clips.map((clip) => <FeedCard key={clip.id} clip={clip} />)}</div>}
-				{activeFilter !== filters[0] && <p className="filter-note">O filtro “{activeFilter}” ficará mais preciso quando posição e disponibilidade forem adicionadas ao perfil do jogador.</p>}
+				{isLoading && <div className="feed-state"><RefreshCw className="spin" size={24} /><p>Preparando os melhores lances...</p></div>}
+
+				{!isLoading && isError && (
+					<div className="feed-state">
+						<p>{error?.message ?? "Não foi possível carregar o feed."}</p>
+						<button className="retry-button" onClick={refetch}><RefreshCw size={16} /> Tentar novamente</button>
+					</div>
+				)}
+
+				{!isLoading && !isError && items.length === 0 && (
+					<div className="feed-state">
+						<Video size={30} />
+						<p>{isFiltered ? "Nenhum lance encontrado com esse filtro." : "Nenhum lance publicado ainda."}</p>
+						<span>{isFiltered ? "Tente outro filtro ou limpe a busca." : "Quando os atletas publicarem clipes, eles aparecem aqui."}</span>
+					</div>
+				)}
+
+				{!isLoading && !isError && items.length > 0 && (
+					<>
+						<div className="feed-grid">{items.map((clip) => <FeedCard key={clip.id} clip={clip} />)}</div>
+						<div ref={sentinelRef} className="feed-sentinel" />
+						{hasNextPage && (
+							<div className="feed-more">
+								<button className="retry-button" onClick={fetchNextPage} disabled={isFetchingNextPage}>
+									{isFetchingNextPage ? <><RefreshCw className="spin" size={16} /> Carregando...</> : "Carregar mais"}
+								</button>
+							</div>
+						)}
+					</>
+				)}
 			</div>
 		</div>
 	);

@@ -17,7 +17,7 @@ from app.core.deps import get_current_user
 from app.core.exceptions import NotFoundError, ForbiddenError, ConflictError, DomainError
 from app.core.storage import get_storage
 from app.modules.identity.models import User, UserRole
-from app.modules.clips.models import Video, ProcessingJob, Clip, Candidate
+from app.modules.clips.models import Video, ProcessingJob, Clip, ClipStatus, Candidate
 from app.modules.clips.schemas import ConfirmPlayerRequest
 from app.modules.clips.tasks import run_fast_scan, run_full_tracking
 
@@ -246,6 +246,7 @@ def list_clips(
                     "file_url": f"/uploads/clips/{job.id}/{Path(c.storage_path).name}" if c.storage_path else None,
                     "duration": _format_duration(c.end_timestamp - c.start_timestamp),
                     "status": c.status,
+                    "published_at": c.published_at,
                 }
                 for c in clips
             ],
@@ -279,6 +280,62 @@ def delete_clip(
 
     session.commit()
 
+def _get_owned_clip(session: Session, clip_id: uuid.UUID, user: User) -> Clip:
+    clip = session.get(Clip, clip_id)
+    if not clip:
+        raise NotFoundError("Clipe não encontrado.")
+    job = session.get(ProcessingJob, clip.job_id)
+    video = session.get(Video, job.video_id) if job else None
+    if not video or video.user_id != user.id:
+        raise ForbiddenError("Este clipe não pertence ao usuário autenticado.")
+    return clip
+
+
+def _publication_state(clip: Clip) -> dict:
+    return {"id": str(clip.id), "status": clip.status, "published_at": clip.published_at}
+
+
+@clips_router.post("/{clip_id}/publish")
+def publish_clip(
+    clip_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    session: Session = Depends(get_session),
+):
+    """Publica no feed. Publicado, sai da retenção de 14 dias. Idempotente."""
+    if current_user.role != UserRole.ATHLETE:
+        raise ForbiddenError("Apenas atletas podem publicar clipes no feed.")
+
+    clip = _get_owned_clip(session, clip_id, current_user)
+    if clip.status == ClipStatus.DELETED or not clip.storage_path:
+        raise ConflictError("Este clipe expirou e não pode mais ser publicado.")
+
+    if clip.status != ClipStatus.PUBLISHED:
+        clip.status = ClipStatus.PUBLISHED
+        clip.published_at = datetime.now(timezone.utc)
+        session.add(clip)
+        session.commit()
+        session.refresh(clip)
+
+    return _publication_state(clip)
+
+
+@clips_router.delete("/{clip_id}/publish")
+def unpublish_clip(
+    clip_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    session: Session = Depends(get_session),
+):
+    """Tira do feed e volta para TEMPORARY (a retenção conta a partir de created_at)."""
+    clip = _get_owned_clip(session, clip_id, current_user)
+
+    if clip.status == ClipStatus.PUBLISHED:
+        clip.status = ClipStatus.TEMPORARY
+        clip.published_at = None
+        session.add(clip)
+        session.commit()
+        session.refresh(clip)
+
+    return _publication_state(clip)
 
 @clips_router.get("/athletes/{user_id}")
 def list_athlete_clips(
