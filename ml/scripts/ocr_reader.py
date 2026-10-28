@@ -159,8 +159,8 @@ class TraditionalOcrReader:
             interpolation=cv2.INTER_CUBIC,
         )
 
-        raw_results = self.reader.readtext(
-            upscaled,
+        raw_results = self.reader.recognize(
+            crop,
             allowlist="0123456789",
             detail=1,
         )

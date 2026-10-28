@@ -465,6 +465,11 @@ class VideoPipeline:
             )
         finally:
             cap.release()
+            del tracker, ball_tracker
+            import gc, torch
+            gc.collect()
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
 
         processed_total = max_frame + 1
 
