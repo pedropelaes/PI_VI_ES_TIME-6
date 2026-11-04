@@ -187,10 +187,12 @@ def run_fast_scan(job_id: uuid.UUID, video_path: str, target_number: int, start_
         finally:
             session.close()
 
-    except Exception:
+    except Exception as e:
         print("[FAST SCAN ERROR] Falha:")
         print(traceback.format_exc())
         update_job_status(job_id, "ERROR")
+        if "CUDA" in str(e):
+            raise
 
 
 @celery_app.task(name="app.modules.clips.tasks.run_full_tracking")
@@ -244,10 +246,13 @@ def run_full_tracking(job_id: uuid.UUID, video_path: str, target_number: int, ta
         update_job_status(job_id, "COMPLETED")
         print(f"[TRACKING] Job {job_id} concluÃ­do.")
 
-    except Exception:
+    except Exception as e:
         print("[TRACKING ERROR] Falha:")
         print(traceback.format_exc())
         update_job_status(job_id, "ERROR")
+        if "CUDA" in str(e):
+            raise
+
 
 @celery_app.task(name="app.modules.clips.tasks.run_retention_policy")
 def run_retention_policy():
@@ -304,4 +309,3 @@ def run_retention_policy():
         traceback.print_exc()
     finally:
         session.close()
-
