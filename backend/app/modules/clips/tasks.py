@@ -266,7 +266,7 @@ def run_full_tracking(job_id: uuid.UUID, video_path: str, target_number: int, ta
             end_ts=end_ts,
             on_clip_generated=save_clip_to_db,
             on_extracting_start=set_extracting_status,
-            debug=False,
+            debug=True,
         )
 
         update_job_status(job_id, "COMPLETED")
