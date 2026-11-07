@@ -3,6 +3,8 @@
 Movidas de `router.py`. O import de `ml` Ã© feito DENTRO da task (lazy), entÃ£o a
 API pode importar este mÃ³dulo (para publicar via `.delay()`) sem puxar torch.
 """
+from pathlib import Path
+from app.modules.clips.video_utils import ensure_h264
 import time
 import traceback
 import uuid
@@ -37,6 +39,28 @@ def update_job_status(job_id: uuid.UUID, status: str):
     finally:
         session.close()
 
+def normalize_job_video(job_id: uuid.UUID, video_path: str) -> str:
+    """Garante H.264 e atualiza o caminho do vídeo no banco se convertido."""
+    from app.core.database import get_session
+    from app.modules.clips.models import Video
+
+    new_path = ensure_h264(Path(video_path))
+    if str(new_path) == video_path:
+        return video_path
+
+    session = next(get_session())
+    try:
+        job = session.get(ProcessingJob, job_id)
+        if job:
+            video = session.get(Video, job.video_id)
+            if video:
+                video.storage_path = str(new_path)
+                video.file_size_mb = round(new_path.stat().st_size / (1024 * 1024), 2)
+                session.add(video)
+                session.commit()
+    finally:
+        session.close()
+    return str(new_path)
 
 @celery_app.task(name="app.modules.clips.tasks.download_and_process_drive_video")
 def download_and_process_drive_video(
@@ -118,7 +142,6 @@ def download_and_process_drive_video(
     finally:
         session.close()
 
-
 @celery_app.task(name="app.modules.clips.tasks.run_fast_scan")
 def run_fast_scan(job_id: uuid.UUID, video_path: str, target_number: int, start_ts: int, end_ts: int):
     """FASE 1: busca expressa; salva candidatos no DB em tempo real."""
@@ -161,6 +184,9 @@ def run_fast_scan(job_id: uuid.UUID, video_path: str, target_number: int, start_
             session.close()
 
     try:
+        # Converte para H.264 se o vídeo vier em AV1/VP9/etc (OpenCV não decodifica)
+        video_path = normalize_job_video(job_id, video_path)
+
         from ml.scripts.process_video import _get_pipeline
         pipeline = _get_pipeline()
         output_dir = str(CLIPS_DIR / str(job_id))
@@ -183,7 +209,7 @@ def run_fast_scan(job_id: uuid.UUID, video_path: str, target_number: int, start_
             if job and job.status == "FAST_SCAN":
                 job.status = "WAITING_USER"
                 session.commit()
-                print("[FAST SCAN] VÃ­deo inteiro verificado. Aguardando usuÃ¡rio.")
+                print("[FAST SCAN] Vídeo inteiro verificado. Aguardando usuário.")
         finally:
             session.close()
 
