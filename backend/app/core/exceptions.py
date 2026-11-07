@@ -40,3 +40,13 @@ class QuotaExceededError(DomainError):
 class ValidationError(DomainError):
     status_code = 422
     default_detail = "Dados inválidos."
+
+
+class UnauthorizedError(DomainError):
+    status_code = 401
+    default_detail = "Não autorizado."
+
+
+class BadRequestError(DomainError):
+    status_code = 400
+    default_detail = "Requisição inválida."

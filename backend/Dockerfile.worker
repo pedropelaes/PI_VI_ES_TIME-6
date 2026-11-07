@@ -3,7 +3,8 @@ FROM nvidia/cuda:11.8.0-runtime-ubuntu22.04
 
 ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONUNBUFFERED=1 \
-    PYTHONPATH=/app
+    PYTHONPATH=/app \
+    TZ=UTC
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
         python3.11 python3.11-dev python3-pip \
@@ -17,6 +18,11 @@ WORKDIR /app
 COPY backend/requirements/ requirements/
 RUN python -m pip install --no-cache-dir --upgrade pip \
     && python -m pip install --no-cache-dir -r requirements/worker.txt
+
+# Fusos horários (Celery/kombu precisa de ZoneInfo("UTC") no boot).
+# Camada separada para não invalidar o cache do pip/torch.
+RUN apt-get update && apt-get install -y --no-install-recommends tzdata \
+    && rm -rf /var/lib/apt/lists/*
 
 # App e pacote ml precisam ser importáveis como top-level (app.*, ml.*).
 COPY backend/ /app/

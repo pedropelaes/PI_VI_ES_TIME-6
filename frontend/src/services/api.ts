@@ -1,6 +1,6 @@
 import type { UserRole } from "../shared/lib/userRole";
 
-const API_BASE = import.meta.env.VITE_API_PATH ?? "http://127.0.0.1:8000/api/v1";
+export const API_BASE = import.meta.env.VITE_API_PATH ?? "http://127.0.0.1:8000/api/v1";
 const REQUEST_TIMEOUT_MS = 15000;
 
 function fetchWithTimeout(url: string, options: RequestInit): Promise<Response> {
@@ -44,7 +44,7 @@ export interface RegisterBody {
 
 
 
-export type JobStatusType = "PENDING" | "FAST_SCAN" | "WAITING_USER" | "DEEP_SCAN" | "TRACKING" | "EXTRACTING" | "COMPLETED" | "ERROR";
+export type JobStatusType = "DOWNLOADING" | "PENDING" | "FAST_SCAN" | "WAITING_USER" | "DEEP_SCAN" | "TRACKING" | "EXTRACTING" | "COMPLETED" | "ERROR";
 
 export interface ClipResult {
   id: string;
@@ -69,6 +69,7 @@ export type Candidate = {
 export interface JobStatus {
   job_id: string;
   status: JobStatusType;
+  download_progress?: number | null;
   candidates?: Candidate[];
   clips: ClipResult[];
 }
@@ -221,6 +222,54 @@ export async function createJob(
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
       throw new Error(data.detail ?? "Erro ao iniciar análise.");
+    }
+    return res.json();
+  } catch (err) {
+    if (err instanceof Error && err.name === "AbortError")
+      throw new Error("Servidor não respondeu. Verifique se o backend está rodando e tente novamente.");
+    throw err;
+  }
+}
+
+export interface GoogleDriveJobPayload {
+  fileId: string;
+  googleAccessToken: string;
+  targetNumber: number;
+  startTs: number;
+  endTs: number;
+}
+
+export async function createJobFromGoogleDrive(
+  payload: GoogleDriveJobPayload
+): Promise<{ job_id: string; status: string }> {
+  const token = getToken();
+  try {
+    const res = await fetch(`${import.meta.env.VITE_API_PATH}/jobs/import/google-drive`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({
+        file_id: payload.fileId,
+        google_access_token: payload.googleAccessToken,
+        target_number: payload.targetNumber,
+        start_ts: payload.startTs,
+        end_ts: payload.endTs,
+      }),
+    });
+    if (res.status === 401) {
+      const data = await res.json().catch(() => ({}));
+      if (data.detail && typeof data.detail === "string" && data.detail.includes("Google")) {
+        throw new Error(data.detail);
+      }
+      clearSession();
+      window.location.href = "/login";
+      throw new Error("Sessão expirada.");
+    }
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data.detail ?? "Erro ao iniciar importação do Google Drive.");
     }
     return res.json();
   } catch (err) {

@@ -35,12 +35,14 @@ services:
     env_file: ./backend/.env
     environment:
       - REDIS_URL=redis://redis:6379/0
+      - TZ=UTC
     volumes:
-      - ./backend:/app           
+      - ./backend:/app
       - ./ml:/app/ml
       - ./backend/uploads:/app/uploads
     depends_on:
       - redis
+    restart: unless-stopped
     deploy:
       resources:
         reservations:
@@ -48,7 +50,6 @@ services:
             - driver: nvidia
               count: 1
               capabilities: [gpu]
-
   web:
     build: ./frontend
     ports:
@@ -56,5 +57,7 @@ services:
     volumes:
       - ./frontend:/app
       - /app/node_modules
+    env_file:
+      - ./frontend/.env
     depends_on:
       - api
