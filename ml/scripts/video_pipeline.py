@@ -1195,22 +1195,31 @@ class VideoPipeline:
         debug_dir: str,
         source: str = "yolo",
     ) -> None:
-        """Salva crop do torso com nome indicativo do que foi lido."""
-        x1, y1, x2, y2 = bbox
-        # Re-crop para salvar (mesma região que foi para o OCR)
-        h = y2 - y1
-        fh, fw = frame_orig.shape[:2]
-        # Aqui usamos valores fixos de torso, mas o ideal é delegar pro JerseyReader
-        # (mantido assim por simplicidade, já que é só debug)
-        crop = frame_orig[
-            max(0, y1 + int(h * 0.15)):min(fh, y1 + int(h * 0.55)),
-            max(0, x1):min(fw, x2),
-        ]
-        nums_str = "_".join(f"{n}-c{int(conf*100)}" for n, conf in numbers)
+        """Salva crop do torso com nome indicativo do que foi lido.
+        Só para debug: nunca deve derrubar o pipeline."""
+        try:
+            x1, y1, x2, y2 = map(int, bbox)
+            h = y2 - y1
+            fh, fw = frame_orig.shape[:2]
 
-        filename = f"ocr_f{frame_idx:05d}_t{track_id}_src-{source}_leu_{nums_str}.png"
-        cv2.imwrite(os.path.join(debug_dir, filename), crop)
+            top = max(0, y1 + int(h * 0.15))
+            bottom = min(fh, y1 + int(h * 0.55))
+            left = max(0, x1)
+            right = min(fw, x2)
 
+            # bbox fora do frame ou degenerada → recorte vazio
+            if bottom <= top or right <= left:
+                return
+
+            crop = frame_orig[top:bottom, left:right]
+            if crop.size == 0:
+                return
+
+            nums_str = "_".join(f"{n}-c{int(conf*100)}" for n, conf in numbers)
+            filename = f"ocr_f{frame_idx:05d}_t{track_id}_src-{source}_leu_{nums_str}.png"
+            cv2.imwrite(os.path.join(debug_dir, filename), crop)
+        except Exception as e:
+            print(f"[DEBUG] Falha ao salvar crop f{frame_idx} t{track_id} (ignorado): {e}")
 
     def _print_kinematic_events(self, events: list[dict]) -> None:
         """Imprime no terminal os timestamps de anomalias cinemáticas detectadas."""

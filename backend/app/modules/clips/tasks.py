@@ -223,7 +223,7 @@ def run_fast_scan(job_id: uuid.UUID, video_path: str, target_number: int, start_
 
 @celery_app.task(name="app.modules.clips.tasks.run_full_tracking")
 def run_full_tracking(job_id: uuid.UUID, video_path: str, target_number: int, target_signature: str, start_ts: int, end_ts: int):
-    """FASE 2: rastreio rigoroso filtrando pela assinatura (nÃºmero + cor)."""
+    """FASE 2: rastreio rigoroso filtrando pela assinatura (número + cor)."""
     print(f"[TRACKING] Iniciando recorte final do job {job_id}")
     update_job_status(job_id, "TRACKING")
 
@@ -266,11 +266,11 @@ def run_full_tracking(job_id: uuid.UUID, video_path: str, target_number: int, ta
             end_ts=end_ts,
             on_clip_generated=save_clip_to_db,
             on_extracting_start=set_extracting_status,
-            debug=True,
+            debug=False,
         )
 
         update_job_status(job_id, "COMPLETED")
-        print(f"[TRACKING] Job {job_id} concluÃ­do.")
+        print(f"[TRACKING] Job {job_id} concluído.")
 
     except Exception as e:
         print("[TRACKING ERROR] Falha:")
@@ -278,7 +278,6 @@ def run_full_tracking(job_id: uuid.UUID, video_path: str, target_number: int, ta
         update_job_status(job_id, "ERROR")
         if "CUDA" in str(e):
             raise
-
 
 @celery_app.task(name="app.modules.clips.tasks.run_retention_policy")
 def run_retention_policy():
