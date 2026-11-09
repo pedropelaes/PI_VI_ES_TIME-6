@@ -11,16 +11,11 @@ export function formatDuration(seconds: number): string {
 }
 
 /**
- * O backend grava `published_at` sem fuso, já em UTC ("2026-10-27T20:00:00").
- * Sem o "Z", o navegador leria como hora local e o "há 3 h" sairia errado.
+ * A API devolve datetime com fuso ("...+00:00"), entao new Date() ja interpreta certo.
+ * Se o Safari mostrar "recentemente", corte os microssegundos do valor antes de parsear.
  */
-export function parseApiDate(value: string): Date {
-  const temFuso = /([zZ]|[+-]\d{2}:?\d{2})$/.test(value);
-  return new Date(temFuso ? value : `${value}Z`);
-}
-
 export function formatRelativeTime(value: string, now: number = Date.now()): string {
-  const timestamp = parseApiDate(value).getTime();
+  const timestamp = new Date(value).getTime();
   if (!Number.isFinite(timestamp)) return 'recentemente';
 
   const minutes = Math.max(0, Math.floor((now - timestamp) / 60000));
@@ -48,7 +43,7 @@ export function toFeedItemView(dto: FeedItemDTO, now: number = Date.now()): Feed
     videoUrl: `${API_BASE}${dto.file_url}`,
     fileUrl: dto.file_url,
     durationLabel: formatDuration(dto.duration_seconds),
-    publishedLabel: formatRelativeTime(dto.published_at, now),
+    publishedAt: dto.published_at,
     likeCount: dto.like_count,
     likedByMe: dto.liked_by_me,
     athlete: {

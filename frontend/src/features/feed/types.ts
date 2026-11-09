@@ -49,7 +49,8 @@ export interface FeedItemView {
   /** Caminho relativo da API, usado pelo download autenticado. */
   fileUrl: string;
   durationLabel: string;
-  publishedLabel: string;
+  /** Data ISO vinda da API. O "há X min" e calculado no card, com um relogio que atualiza. */
+  publishedAt: string;
   likeCount: number;
   likedByMe: boolean;
   athlete: {

@@ -108,20 +108,19 @@ class FeedRepository:
         return clip
 
     def add_like(self, user_id: uuid.UUID, clip_id: uuid.UUID) -> None:
-        # Idempotente: curtir duas vezes não dá erro
-        self.session.exec(
+        # Idempotente: curtir duas vezes nao e erro, so nao faz nada.
+        self.session.execute(
             pg_insert(ClipLike)
             .values(user_id=user_id, clip_id=clip_id, created_at=datetime.now(timezone.utc))
             .on_conflict_do_nothing(index_elements=["user_id", "clip_id"])
         )
 
     def remove_like(self, user_id: uuid.UUID, clip_id: uuid.UUID) -> None:
-        self.session.exec(
+        self.session.execute(
             sa.delete(ClipLike)
             .where(ClipLike.user_id == user_id)
             .where(ClipLike.clip_id == clip_id)
         )
-
 
 def _escapa_like(texto: str) -> str:
     """% e _ digitados pelo usuário são texto, não curinga."""

@@ -6,6 +6,7 @@ import { useFeed } from "../../features/feed/hooks/useFeed";
 import { useToggleLike } from "../../features/feed/hooks/useToggleLike";
 import type { FeedFilters, FeedItemView } from "../../features/feed/types";
 import "./feed.css";
+import { formatRelativeTime } from "../../features/feed/mappers";
 
 interface FilterPreset {
 	id: string;
@@ -38,7 +39,7 @@ function useDebounced<T>(value: T, delay: number): T {
 	return debounced;
 }
 
-function FeedCard({ clip }: { clip: FeedItemView }) {
+function FeedCard({ clip, now }: { clip: FeedItemView; now: number }) {
 	const [isPlaying, setIsPlaying] = useState(false);
 	const toggleLike = useToggleLike();
 	const { athlete } = clip;
@@ -73,7 +74,7 @@ function FeedCard({ clip }: { clip: FeedItemView }) {
 				</Link>
 				<div className="player-meta">
 					<Link to={athlete.profilePath} className="player-name">{athlete.fullName}</Link>
-					<span>{athlete.details} · {clip.publishedLabel}</span>
+					<span>{athlete.details} · {formatRelativeTime(clip.publishedAt, now)}</span>
 				</div>
 			</div>
 
@@ -98,6 +99,7 @@ function FeedCard({ clip }: { clip: FeedItemView }) {
 					<button
 						className={clip.likedByMe ? "action-button active" : "action-button"}
 						onClick={() => toggleLike.mutate({ clipId: clip.id, like: !clip.likedByMe })}
+						disabled={toggleLike.isPending}
 						aria-pressed={clip.likedByMe}
 						aria-label={clip.likedByMe ? "Descurtir clipe" : "Curtir clipe"}
 					>
@@ -115,6 +117,11 @@ function FeedCard({ clip }: { clip: FeedItemView }) {
 export default function Feed() {
 	const [activeFilterId, setActiveFilterId] = useState(FILTERS[0].id);
 	const [search, setSearch] = useState("");
+	const [now, setNow] = useState(() => Date.now());
+	useEffect(() => {
+    	const id = setInterval(() => setNow(Date.now()), 60_000);
+    	return () => clearInterval(id);
+	}, []);
 	const debouncedSearch = useDebounced(search, SEARCH_DEBOUNCE_MS);
 
 	const filters = useMemo<FeedFilters>(() => {
@@ -187,8 +194,7 @@ export default function Feed() {
 
 				{!isLoading && !isError && items.length > 0 && (
 					<>
-						<div className="feed-grid">{items.map((clip) => <FeedCard key={clip.id} clip={clip} />)}</div>
-						<div ref={sentinelRef} className="feed-sentinel" />
+					<div className="feed-grid">{items.map((clip) => <FeedCard key={clip.id} clip={clip} now={now} />)}</div>						<div ref={sentinelRef} className="feed-sentinel" />
 						{hasNextPage && (
 							<div className="feed-more">
 								<button className="retry-button" onClick={fetchNextPage} disabled={isFetchingNextPage}>

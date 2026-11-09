@@ -20,6 +20,7 @@ from app.modules.identity.models import User, UserRole
 from app.modules.clips.models import Video, ProcessingJob, Clip, ClipStatus, Candidate
 from app.modules.clips.schemas import ConfirmPlayerRequest
 from app.modules.clips.tasks import run_fast_scan, run_full_tracking
+from app.modules.profiles.models import AthleteProfile
 
 router = APIRouter(prefix="/jobs", tags=["jobs"])
 
@@ -305,6 +306,13 @@ def publish_clip(
     if current_user.role != UserRole.ATHLETE:
         raise ForbiddenError("Apenas atletas podem publicar clipes no feed.")
 
+        # O feed junta o clipe ao perfil do atleta (INNER JOIN): sem perfil, o clipe nao apareceria.
+    perfil = session.exec(
+        select(AthleteProfile).where(AthleteProfile.user_id == current_user.id)
+    ).first()
+    if perfil is None:
+        raise ConflictError("Complete seu perfil de atleta antes de publicar no feed.")
+
     clip = _get_owned_clip(session, clip_id, current_user)
     if clip.status == ClipStatus.DELETED or not clip.storage_path:
         raise ConflictError("Este clipe expirou e não pode mais ser publicado.")
@@ -325,18 +333,21 @@ def unpublish_clip(
     current_user: User = Depends(get_current_user),
     session: Session = Depends(get_session),
 ):
-    """Tira do feed e volta para TEMPORARY (a retenção conta a partir de created_at)."""
+    """
+    Tira o clipe do feed e o devolve a TEMPORARY. A retencao de 14 dias passa a contar
+    a partir da despublicacao (created_at e reiniciado), e nao da geracao original.
+    """
     clip = _get_owned_clip(session, clip_id, current_user)
 
     if clip.status == ClipStatus.PUBLISHED:
         clip.status = ClipStatus.TEMPORARY
         clip.published_at = None
+        clip.created_at = datetime.now(timezone.utc)
         session.add(clip)
         session.commit()
         session.refresh(clip)
 
     return _publication_state(clip)
-
 @clips_router.get("/athletes/{user_id}")
 def list_athlete_clips(
     user_id: uuid.UUID,
