@@ -1,7 +1,7 @@
-"""Tasks Celery de processamento de vÃ­deo (rodam no worker, com torch/GPU).
+"""Tasks Celery de processamento de vídeo (rodam no worker, com torch/GPU).
 
-Movidas de `router.py`. O import de `ml` Ã© feito DENTRO da task (lazy), entÃ£o a
-API pode importar este mÃ³dulo (para publicar via `.delay()`) sem puxar torch.
+Movidas de `router.py`. O import de `ml` é feito DENTRO da task (lazy), então a
+API pode importar este módulo (para publicar via `.delay()`) sem puxar torch.
 """
 from pathlib import Path
 from app.modules.clips.video_utils import ensure_h264
@@ -14,7 +14,7 @@ from app.celery_app import celery_app
 from app.core.storage import get_storage
 from app.modules.clips.models import ProcessingJob, Clip, Candidate
 
-# Resolve pela abstracao de storage (Â§4.2): o worker precisa gravar na MESMA
+# Resolve pela abstracao de storage (§4.2): o worker precisa gravar na MESMA
 # raiz de uploads que a API serve via StaticFiles. Caminho relativo a __file__
 # apontava um nivel fundo demais e deixava os clipes fora do volume montado.
 CLIPS_DIR = get_storage().path_for("clips")
@@ -254,20 +254,24 @@ def run_full_tracking(job_id: uuid.UUID, video_path: str, target_number: int, ta
 
     try:
         from ml.scripts.process_video import _get_pipeline
+        # Import lazy: psutil/pynvml só existem no worker, não na API
+        from app.modules.clips.perf_monitor import PerformanceMonitor
         pipeline = _get_pipeline()
         output_dir = str(CLIPS_DIR / str(job_id))
 
-        pipeline.process(
-            video_path=video_path,
-            target_number=target_number,
-            target_signature=target_signature,
-            output_dir=output_dir,
-            start_ts=start_ts,
-            end_ts=end_ts,
-            on_clip_generated=save_clip_to_db,
-            on_extracting_start=set_extracting_status,
-            debug=True,
-        )
+        # Mede CPU/RAM do worker e uso da GPU durante a geração dos clipes
+        with PerformanceMonitor("tracking", job_id, video_path, output_dir):
+            pipeline.process(
+                video_path=video_path,
+                target_number=target_number,
+                target_signature=target_signature,
+                output_dir=output_dir,
+                start_ts=start_ts,
+                end_ts=end_ts,
+                on_clip_generated=save_clip_to_db,
+                on_extracting_start=set_extracting_status,
+                debug=True,
+            )
 
         update_job_status(job_id, "COMPLETED")
         print(f"[TRACKING] Job {job_id} concluído.")
