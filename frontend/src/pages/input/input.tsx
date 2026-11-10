@@ -1,4 +1,4 @@
-import { ArrowRight, Image, Upload, VideoIcon, X } from "lucide-react";
+import { ArrowRight, Image, VideoIcon, X } from "lucide-react";
 import React, { SyntheticEvent, useRef, useState, useEffect, KeyboardEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import "rc-slider/assets/index.css";
@@ -250,21 +250,15 @@ export default function InputPage() {
                 ) : (
                     <div
                         className={`upload-area ${isDragging ? "dragging" : ""}`}
+                        onClick={handleVideoClick}
                         onDragOver={handleDragOver}
                         onDragLeave={handleDragLeave}
                         onDrop={handleDrop}
                     >
                         <VideoIcon size={80} color="rgba(255,255,255,0.25)" strokeWidth={0.75} />
                         <p className="upload-area-text">
-                            Arraste o seu vídeo aqui<br />ou
+                            <span>Clique para selecionar</span> ou arraste<br />o seu vídeo aqui
                         </p>
-                        <button
-                            type="button"
-                            className="btn btn-primary"
-                            onClick={handleVideoClick}
-                        >
-                            <Upload size={18} /> Selecionar vídeo
-                        </button>
                     </div>
                 )}
 
