@@ -50,6 +50,7 @@ function groupToClips(group: ClipHistoryGroup): ClipWithDate[] {
         generatedAt:  group.generated_at,
         videoUrl:     clip.file_url || undefined,
         jobId:        group.job_id,
+        published:    Boolean(clip.published_at),
     }));
 }
 
@@ -83,6 +84,23 @@ export default function ClipsHistory() {
             if (!prev) return prev;
             const clips = prev.clips.filter(c => c.id !== clipId);
             return clips.length > 0 ? { ...prev, clips } : null;
+        });
+    }
+
+    function handleClipPublishChanged(clipId: string, published: boolean) {
+        const publishedAt = published ? new Date().toISOString() : null;
+        setGroups(prev =>
+            prev.map(group => ({
+                ...group,
+                clips: group.clips.map(c => c.id === clipId ? { ...c, published_at: publishedAt } : c),
+            }))
+        );
+        setModalSession(prev => {
+            if (!prev) return prev;
+            return {
+                ...prev,
+                clips: prev.clips.map(c => c.id === clipId ? { ...c, published } : c),
+            };
         });
     }
 
@@ -206,7 +224,12 @@ export default function ClipsHistory() {
                                     {clips
                                         .slice(0, clips.length > visibleCount ? Math.max(0, visibleCount - 1) : visibleCount)
                                         .map(clip => (
-                                            <ClipCard key={clip.id} clip={clip} onDeleted={handleClipDeleted} />
+                                            <ClipCard
+                                                key={clip.id}
+                                                clip={clip}
+                                                onDeleted={handleClipDeleted}
+                                                onPublishChanged={handleClipPublishChanged}
+                                            />
                                         ))}
                                     {clips.length > visibleCount && (
                                         <div
@@ -253,7 +276,12 @@ export default function ClipsHistory() {
                         </div>
                         <Grid>
                             {modalSession.clips.map(clip => (
-                                <ClipCard key={clip.id} clip={clip} onDeleted={handleClipDeleted} />
+                                <ClipCard
+                                    key={clip.id}
+                                    clip={clip}
+                                    onDeleted={handleClipDeleted}
+                                    onPublishChanged={handleClipPublishChanged}
+                                />
                             ))}
                         </Grid>
                     </div>

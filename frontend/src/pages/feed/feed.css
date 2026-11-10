@@ -398,3 +398,49 @@
 		gap: 18px;
 	}
 }
+/* --- Feed real: avatar com foto, nome clicável, paginação --- */
+.player-avatar {
+	overflow: hidden;
+	flex-shrink: 0;
+	font-weight: 700;
+	text-decoration: none;
+}
+
+.player-avatar img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
+.player-meta {
+	min-width: 0;
+}
+
+.player-name {
+	overflow: hidden;
+	color: #fff;
+	font-size: .88rem;
+	font-weight: 700;
+	text-decoration: none;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.player-name:hover {
+	color: #72c2eb;
+}
+
+.feed-sentinel {
+	height: 1px;
+}
+
+.feed-more {
+	display: flex;
+	justify-content: center;
+	margin-top: 26px;
+}
+
+.feed-more .retry-button:disabled {
+	opacity: .6;
+	cursor: default;
+}

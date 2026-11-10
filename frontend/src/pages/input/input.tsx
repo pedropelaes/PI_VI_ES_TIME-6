@@ -167,9 +167,9 @@ export default function InputPage() {
         setLoading(true);
         try {
             const { job_id } = await createJob(
-                videoFile, 
-                Number(refNumber), 
-                timeRange[0], 
+                videoFile,
+                Number(refNumber),
+                timeRange[0],
                 timeRange[1]
             );
             localStorage.setItem("job_start_ts", String(timeRange[0]));
