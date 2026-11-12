@@ -9,7 +9,7 @@ import base64
 import binascii
 import uuid
 from datetime import datetime, timezone
-from typing import Callable, Optional
+from typing import Callable, List, Optional
 
 from fastapi import APIRouter, Depends, Query, Response
 from sqlmodel import Session
@@ -18,11 +18,18 @@ from app.core.database import get_session
 from app.core.deps import get_current_user
 from app.core.exceptions import ConflictError, ForbiddenError, NotFoundError, ValidationError
 from app.modules.identity.models import User, UserRole
-from app.modules.opportunities.models import ApplicationStatus, Opportunity, OpportunityMode
-from app.modules.opportunities.repository import ListFilters, OpportunityRepository
+from app.modules.opportunities.models import (
+    ApplicationStatus,
+    Opportunity,
+    OpportunityApplication,
+    OpportunityMode,
+)
+from app.modules.opportunities.repository import ListFilters, OpportunityRepository, ocupadas_de
 from app.modules.opportunities.schemas import (
+    ApplicationOut,
     Eligibility,
     MyApplication,
+    MyApplicationItem,
     OpportunityCreate,
     OpportunityDetail,
     OpportunityPage,
@@ -279,3 +286,72 @@ def delete_opportunity(
     repo.delete(opp.id)
     repo.session.commit()
     return Response(status_code=204)
+
+
+# --- atleta ------------------------------------------------------------------------
+
+@router.post("/{opportunity_id}/apply", status_code=201, response_model=ApplicationOut)
+def apply(
+    opportunity_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    repo: OpportunityRepository = Depends(get_repository),
+    now: Callable[[], datetime] = Depends(get_now),
+):
+    _exige_atleta(current_user)
+    # FOR UPDATE: duas inscrições simultâneas não ocupam a mesma última vaga.
+    opp = _busca(repo, opportunity_id, lock=True)
+    agora = now()
+
+    if repo.get_application(opp.id, current_user.id) is not None:
+        raise ConflictError("Você já está inscrito nesta peneira.")
+    if opp.cancelled_at is not None or opp.registration_deadline < agora:
+        raise ConflictError("As inscrições desta peneira estão encerradas.")
+    if opp.max_applications is not None and repo.occupied(opp.id) >= opp.max_applications:
+        raise ConflictError("Vagas esgotadas.")
+    motivo = motivo_inelegivel(opp, repo.athlete_profile(current_user.id), agora.date())
+    if motivo is not None:
+        raise ValidationError(motivo)
+
+    inscricao = OpportunityApplication(opportunity_id=opp.id, athlete_id=current_user.id)
+    repo.session.add(inscricao)
+    repo.session.commit()
+    return ApplicationOut(
+        opportunity_id=opp.id, athlete_id=current_user.id, status=inscricao.status
+    )
+
+
+@router.delete("/{opportunity_id}/apply", status_code=204)
+def cancel_application(
+    opportunity_id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    repo: OpportunityRepository = Depends(get_repository),
+):
+    _exige_atleta(current_user)
+    inscricao = repo.get_application(opportunity_id, current_user.id)
+    if inscricao is None:
+        raise NotFoundError("Você não está inscrito nesta peneira.")
+    if inscricao.status != ApplicationStatus.PENDENTE:
+        raise ConflictError("Só dá para cancelar inscrição ainda em análise.")
+    repo.session.delete(inscricao)
+    repo.session.commit()
+    return Response(status_code=204)
+
+
+@router.get("/applications/me", response_model=List[MyApplicationItem])
+def my_applications(
+    current_user: User = Depends(get_current_user),
+    repo: OpportunityRepository = Depends(get_repository),
+):
+    _exige_atleta(current_user)
+    linhas = repo.list_by_athlete(current_user.id)
+    contagens = repo.counts_by_status([opp.id for _, opp, _ in linhas])
+    return [
+        MyApplicationItem(
+            status=inscricao.status,
+            created_at=inscricao.created_at,
+            opportunity=OpportunitySummary(
+                **_resumo(opp, organizador, ocupadas_de(contagens.get(opp.id, {})))
+            ),
+        )
+        for inscricao, opp, organizador in linhas
+    ]

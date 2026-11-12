@@ -163,3 +163,15 @@ class OpportunityRepository:
         modelo = ClubProfile if user.role == UserRole.CLUB else ScoutProfile
         perfil = self.session.get(modelo, user.id)
         return perfil.avatar_path if perfil else None
+
+    def list_by_athlete(
+        self, athlete_id: uuid.UUID
+    ) -> List[tuple[OpportunityApplication, Opportunity, User]]:
+        stmt = (
+            select(OpportunityApplication, Opportunity, User)
+            .join(Opportunity, Opportunity.id == OpportunityApplication.opportunity_id)
+            .join(User, User.id == Opportunity.organizer_id)
+            .where(OpportunityApplication.athlete_id == athlete_id)
+            .order_by(Opportunity.event_at.desc())
+        )
+        return list(self.session.exec(stmt).all())

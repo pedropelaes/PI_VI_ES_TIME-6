@@ -342,3 +342,111 @@ def test_titulo_so_com_espacos_e_invalido(client, session):
     dono = _usuario(session, UserRole.CLUB)
     r = client.post("/api/v1/opportunities", json=_payload(title="   "), headers=_headers(dono))
     assert r.status_code == 422
+
+
+# --- inscrição ---------------------------------------------------------------------
+
+def _apply(client, atleta: User, opp: dict):
+    return client.post(f"/api/v1/opportunities/{opp['id']}/apply", headers=_headers(atleta))
+
+
+def test_atleta_se_inscreve_e_ve_status_no_detalhe(client, session):
+    opp = _criar(client, _usuario(session, UserRole.CLUB), max_applications=3)
+    atleta = _atleta(session)
+
+    r = _apply(client, atleta, opp)
+    assert r.status_code == 201, r.text
+    assert r.json()["status"] == "PENDENTE"
+
+    detalhe = client.get(f"/api/v1/opportunities/{opp['id']}", headers=_headers(atleta)).json()
+    assert detalhe["my_application"] == {"status": "PENDENTE"}
+    assert detalhe["eligibility"] == {"eligible": True, "reason": None}
+    assert detalhe["spots_left"] == 2
+
+
+def test_clube_nao_se_inscreve(client, session):
+    dono = _usuario(session, UserRole.CLUB)
+    opp = _criar(client, dono)
+    assert _apply(client, _usuario(session, UserRole.SCOUT), opp).status_code == 403
+
+
+def test_inscricao_duplicada_da_409(client, session):
+    opp = _criar(client, _usuario(session, UserRole.CLUB))
+    atleta = _atleta(session)
+    _apply(client, atleta, opp)
+    assert _apply(client, atleta, opp).status_code == 409
+
+
+def test_ultima_vaga(client, session):
+    opp = _criar(client, _usuario(session, UserRole.CLUB), max_applications=1)
+    assert _apply(client, _atleta(session), opp).status_code == 201
+    r = _apply(client, _atleta(session), opp)
+    assert r.status_code == 409
+    assert "Vagas" in r.json()["detail"]
+
+
+def test_inelegivel_da_422_com_motivo(client, session):
+    opp = _criar(client, _usuario(session, UserRole.CLUB), max_age=17)
+    r = _apply(client, _atleta(session), opp)  # 18 anos
+    assert r.status_code == 422
+    assert r.json()["detail"] == "Idade máxima: 17 anos."
+
+
+def test_peneira_cancelada_ou_com_prazo_vencido_da_409(client, session):
+    dono = _usuario(session, UserRole.CLUB)
+    cancelada = _criar(client, dono)
+    client.post(f"/api/v1/opportunities/{cancelada['id']}/cancel", headers=_headers(dono))
+    vencida = _criar(client, dono, registration_deadline=(AGORA - timedelta(hours=1)).isoformat())
+    atleta = _atleta(session)
+
+    assert _apply(client, atleta, cancelada).status_code == 409
+    assert _apply(client, atleta, vencida).status_code == 409
+
+
+def test_cancelar_inscricao_pendente_e_se_inscrever_de_novo(client, session):
+    opp = _criar(client, _usuario(session, UserRole.CLUB))
+    atleta = _atleta(session)
+    _apply(client, atleta, opp)
+
+    r = client.delete(f"/api/v1/opportunities/{opp['id']}/apply", headers=_headers(atleta))
+    assert r.status_code == 204
+    assert _apply(client, atleta, opp).status_code == 201
+
+
+def test_cancelar_sem_inscricao_da_404(client, session):
+    opp = _criar(client, _usuario(session, UserRole.CLUB))
+    r = client.delete(f"/api/v1/opportunities/{opp['id']}/apply", headers=_headers(_atleta(session)))
+    assert r.status_code == 404
+
+
+def test_minhas_inscricoes_incluem_peneira_cancelada(client, session):
+    dono = _usuario(session, UserRole.CLUB)
+    opp = _criar(client, dono, title="Vai cancelar")
+    atleta = _atleta(session)
+    _apply(client, atleta, opp)
+    client.post(f"/api/v1/opportunities/{opp['id']}/cancel", headers=_headers(dono))
+
+    r = client.get("/api/v1/opportunities/applications/me", headers=_headers(atleta))
+    assert r.status_code == 200
+    [item] = r.json()
+    assert item["status"] == "PENDENTE"
+    assert item["opportunity"]["title"] == "Vai cancelar"
+    assert item["opportunity"]["is_cancelled"] is True
+
+
+def test_apagar_peneira_some_das_minhas_inscricoes(client, session):
+    dono = _usuario(session, UserRole.CLUB)
+    opp = _criar(client, dono)
+    atleta = _atleta(session)
+    _apply(client, atleta, opp)
+    client.delete(f"/api/v1/opportunities/{opp['id']}", headers=_headers(dono))
+
+    r = client.get("/api/v1/opportunities/applications/me", headers=_headers(atleta))
+    assert r.json() == []
+
+
+def test_minhas_inscricoes_so_para_atleta(client, session):
+    r = client.get(
+        "/api/v1/opportunities/applications/me", headers=_headers(_usuario(session, UserRole.CLUB))
+    )
+    assert r.status_code == 403
