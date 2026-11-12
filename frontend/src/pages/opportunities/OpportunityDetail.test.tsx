@@ -104,7 +104,7 @@ describe('OpportunityDetail — dono', () => {
     expect(screen.getByRole('button', { name: 'Apagar' })).toBeInTheDocument();
     expect(await screen.findByRole('link', { name: 'Jeh Rodrigues' })).toHaveAttribute('href', '/athletes/a1');
 
-    fireEvent.click(screen.getByRole('button', { name: 'Aprovar' }));
+    fireEvent.click(screen.getByRole('button', { name: /Aprovar/ }));
     await waitFor(() =>
       expect(calls.some((c) => c.method === 'PATCH' && c.url.endsWith('/opportunities/o1/applications/a1'))).toBe(true)
     );
@@ -125,5 +125,57 @@ describe('OpportunityDetail — dono', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Confirmar' }));
     await waitFor(() => expect(calls.some((c) => c.method === 'DELETE')).toBe(true));
+  });
+
+  it('apagar com sucesso navega sem mostrar "não encontrada"', async () => {
+    login('CLUB', 'c1');
+    let apagada = false;
+    mockFetch((url, method) => {
+      if (method === 'DELETE') {
+        apagada = true;
+        return json(null, 204);
+      }
+      if (apagada) return json({ detail: 'Not found' }, 404);
+      if (url.endsWith('/applications')) return json([]);
+      return json(detail());
+    });
+    // rota fixa: /opportunities/mine não deve casar com :id
+    renderAt('/opportunities/o1', '/opportunities/o1', <OpportunityDetail />);
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Apagar' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Confirmar' }));
+    expect(await screen.findByText('outra página')).toBeInTheDocument();
+    expect(screen.queryByText(/não encontrada/i)).not.toBeInTheDocument();
+  });
+
+  it('Escape fecha o modal sem apagar', async () => {
+    login('CLUB', 'c1');
+    const calls = mockFetch((url) => (url.endsWith('/applications') ? json([]) : json(detail())));
+    renderDetail();
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Apagar' }));
+    fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape' });
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(calls.some((c) => c.method === 'DELETE')).toBe(false);
+  });
+});
+
+describe('OpportunityDetail — erros', () => {
+  it('mostra o erro da ação e limpa na próxima tentativa', async () => {
+    login('ATHLETE');
+    let falha = true;
+    mockFetch((_url, method) => {
+      if (method !== 'POST') return json(detail());
+      if (falha) return json({ detail: 'Vagas esgotadas.' }, 409);
+      return json({ opportunity_id: 'o1', athlete_id: 'u1', status: 'PENDENTE' }, 201);
+    });
+    renderDetail();
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Inscrever-se' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Vagas esgotadas.');
+
+    falha = false;
+    fireEvent.click(screen.getByRole('button', { name: 'Inscrever-se' }));
+    await waitFor(() => expect(screen.queryByRole('alert')).not.toBeInTheDocument());
   });
 });

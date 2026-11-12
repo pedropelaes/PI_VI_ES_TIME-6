@@ -44,9 +44,22 @@ export default function OpportunityDetail() {
 
   const [confirmacao, setConfirmacao] = useState<Confirmacao>(null);
   const [filtroStatus, setFiltroStatus] = useState<ApplicationStatus | ''>('');
+  const [erro, setErro] = useState<string | null>(null);
 
+  function run<A>(
+    m: { mutate: (a: A, o?: { onError?: (e: Error) => void; onSuccess?: () => void }) => void },
+    args: A,
+    onSuccess?: () => void
+  ) {
+    setErro(null);
+    m.mutate(args, { onSuccess, onError: (e) => setErro(e.message) });
+  }
+
+  if (remove.isPending || remove.isSuccess) {
+    return <main className="opp-page"><p className="opp-state">Apagando…</p></main>;
+  }
   if (isPending) return <main className="opp-page"><p className="opp-state">Carregando…</p></main>;
-  if (isError || !o) {
+  if (!o) {
     const naoExiste = error instanceof ApiError && error.notFound;
     return (
       <main className="opp-page">
@@ -55,15 +68,14 @@ export default function OpportunityDetail() {
     );
   }
 
-  const erroAcao = [apply, unapply, cancel, remove, setStatus].find((m) => m.isError)?.error?.message;
   const idade = ageRangeLabel(o.min_age, o.max_age);
   const inscritos = (applicants.data ?? []).filter((a) => !filtroStatus || a.status === filtroStatus);
 
   function confirmar() {
     if (confirmacao === 'delete') {
-      remove.mutate(id, { onSuccess: () => navigate('/opportunities/mine') });
+      run(remove, id, () => navigate('/opportunities/mine'));
     } else {
-      cancel.mutate(id);
+      run(cancel, id);
     }
     setConfirmacao(null);
   }
@@ -84,7 +96,7 @@ export default function OpportunityDetail() {
         </header>
 
         {o.is_cancelled && <p className="opp-alert">Esta peneira foi cancelada pelo organizador.</p>}
-        {erroAcao && <p className="opp-alert" role="alert">{erroAcao}</p>}
+        {erro && <p className="opp-alert" role="alert">{erro}</p>}
 
         <section className="opp-panel">
           <ul className="opp-meta">
@@ -111,7 +123,7 @@ export default function OpportunityDetail() {
                   Status da inscrição: <strong>{APPLICATION_STATUS_LABELS[o.my_application.status]}</strong>
                 </p>
                 {o.my_application.status === 'PENDENTE' && !o.is_cancelled && (
-                  <button className="opp-btn ghost" onClick={() => unapply.mutate(id)} disabled={unapply.isPending}>
+                  <button className="opp-btn ghost" onClick={() => run(unapply, id)} disabled={unapply.isPending}>
                     Cancelar inscrição
                   </button>
                 )}
@@ -126,7 +138,7 @@ export default function OpportunityDetail() {
                 </p>
               </>
             ) : (
-              <button className="opp-btn" onClick={() => apply.mutate(id)} disabled={apply.isPending}>
+              <button className="opp-btn" onClick={() => run(apply, id)} disabled={apply.isPending}>
                 Inscrever-se
               </button>
             )}
@@ -177,12 +189,12 @@ export default function OpportunityDetail() {
                             {!o.is_cancelled && (
                               <span className="opp-actions">
                                 {a.status !== 'APROVADA' && (
-                                  <button className="opp-btn" onClick={() => setStatus.mutate({ athleteId: a.athlete_id, status: 'APROVADA' })}>
+                                  <button className="opp-btn" disabled={setStatus.isPending} aria-label={`Aprovar ${a.first_name} ${a.last_name}`} onClick={() => run(setStatus, { athleteId: a.athlete_id, status: 'APROVADA' })}>
                                     Aprovar
                                   </button>
                                 )}
                                 {a.status !== 'RECUSADA' && (
-                                  <button className="opp-btn ghost" onClick={() => setStatus.mutate({ athleteId: a.athlete_id, status: 'RECUSADA' })}>
+                                  <button className="opp-btn ghost" disabled={setStatus.isPending} aria-label={`Recusar ${a.first_name} ${a.last_name}`} onClick={() => run(setStatus, { athleteId: a.athlete_id, status: 'RECUSADA' })}>
                                     Recusar
                                   </button>
                                 )}
@@ -200,7 +212,11 @@ export default function OpportunityDetail() {
         )}
 
         {confirmacao && (
-          <div className="opp-modal-backdrop">
+          <div
+            className="opp-modal-backdrop"
+            onKeyDown={(e) => e.key === 'Escape' && setConfirmacao(null)}
+            onClick={(e) => e.target === e.currentTarget && setConfirmacao(null)}
+          >
             <div className="opp-modal" role="dialog" aria-modal="true" aria-labelledby="opp-confirm-title">
               <h2 id="opp-confirm-title">{confirmacao === 'delete' ? 'Apagar peneira?' : 'Cancelar peneira?'}</h2>
               <p>
@@ -209,7 +225,7 @@ export default function OpportunityDetail() {
                   : 'Ninguém mais poderá se inscrever. Os inscritos verão que a peneira foi cancelada.'}
               </p>
               <div className="opp-actions">
-                <button className="opp-btn ghost" onClick={() => setConfirmacao(null)}>Voltar</button>
+                <button className="opp-btn ghost" autoFocus onClick={() => setConfirmacao(null)}>Voltar</button>
                 <button className="opp-btn danger" onClick={confirmar}>Confirmar</button>
               </div>
             </div>
