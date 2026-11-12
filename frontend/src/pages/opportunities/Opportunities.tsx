@@ -84,8 +84,8 @@ export default function Opportunities() {
             onChange={(e) => {
               const valor = e.target.value.toUpperCase();
               setUf(valor);
-              // UF só filtra completa; vazio limpa.
-              if (valor.length === 2 || valor.length === 0) set({ state: valor || undefined });
+              // UF só filtra completa; parcial ou vazio limpa o filtro.
+              set({ state: valor.length === 2 ? valor : undefined });
             }}
           />
           {role === 'ATHLETE' && (
