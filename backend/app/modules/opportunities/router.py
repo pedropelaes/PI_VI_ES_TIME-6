@@ -5,24 +5,28 @@ Spec: docs/superpowers/specs/2026-11-11-oportunidades-peneiras-design.md
 Ordem importa: rotas de caminho fixo de um segmento (`/mine`) ficam ACIMA de
 `/{opportunity_id}`, senão "mine" é lido como UUID e vira 422.
 """
+import base64
+import binascii
 import uuid
 from datetime import datetime, timezone
-from typing import Callable
+from typing import Callable, Optional
 
-from fastapi import APIRouter, Depends, Response
+from fastapi import APIRouter, Depends, Query, Response
 from sqlmodel import Session
 
 from app.core.database import get_session
 from app.core.deps import get_current_user
-from app.core.exceptions import ConflictError, ForbiddenError, NotFoundError
+from app.core.exceptions import ConflictError, ForbiddenError, NotFoundError, ValidationError
 from app.modules.identity.models import User, UserRole
-from app.modules.opportunities.models import ApplicationStatus, Opportunity
-from app.modules.opportunities.repository import OpportunityRepository
+from app.modules.opportunities.models import ApplicationStatus, Opportunity, OpportunityMode
+from app.modules.opportunities.repository import ListFilters, OpportunityRepository
 from app.modules.opportunities.schemas import (
     Eligibility,
     MyApplication,
     OpportunityCreate,
     OpportunityDetail,
+    OpportunityPage,
+    OpportunitySummary,
     OpportunityUpdate,
     Organizer,
 )
@@ -32,6 +36,7 @@ from app.modules.opportunities.service import (
     validar_e_normalizar,
 )
 from app.modules.profiles.models import Position
+from app.modules.profiles.service import calcular_idade
 
 router = APIRouter(prefix="/opportunities", tags=["opportunities"])
 
@@ -138,6 +143,67 @@ def _detalhe(
         cancelled_at=opp.cancelled_at,
         my_application=minha,
         eligibility=elegibilidade,
+    )
+
+
+def _encode_cursor(opp: Opportunity) -> str:
+    bruto = f"{opp.event_at.isoformat()}|{opp.id}"
+    return base64.urlsafe_b64encode(bruto.encode()).decode()
+
+
+def _decode_cursor(cursor: Optional[str]) -> Optional[tuple[datetime, uuid.UUID]]:
+    if not cursor:
+        return None
+    try:
+        quando, opp_id = base64.urlsafe_b64decode(cursor.encode()).decode().split("|")
+        return datetime.fromisoformat(quando), uuid.UUID(opp_id)
+    except (ValueError, binascii.Error, UnicodeDecodeError):
+        raise ValidationError("Cursor inválido.")
+
+
+# --- leitura -----------------------------------------------------------------------
+
+@router.get("", response_model=OpportunityPage)
+def list_opportunities(
+    mode: Optional[OpportunityMode] = None,
+    state: Optional[str] = Query(None, min_length=2, max_length=2),
+    position: Optional[Position] = None,
+    eligible: bool = False,
+    q: Optional[str] = Query(None, max_length=100),
+    cursor: Optional[str] = None,
+    limit: int = Query(12, ge=1, le=50),
+    current_user: User = Depends(get_current_user),
+    repo: OpportunityRepository = Depends(get_repository),
+    now: Callable[[], datetime] = Depends(get_now),
+):
+    agora = now()
+    idade = posicao = None
+    if eligible:
+        if current_user.role != UserRole.ATHLETE:
+            raise ValidationError("O filtro de elegíveis é só para atletas.")
+        perfil = repo.athlete_profile(current_user.id)
+        if perfil is not None:
+            posicao = perfil.position
+            if perfil.birth_date is not None:
+                idade = calcular_idade(perfil.birth_date, agora.date())
+
+    filtros = ListFilters(
+        mode=mode,
+        state=state.upper() if state else None,
+        position=position,
+        query=(q or "").strip() or None,
+        only_eligible=eligible,
+        athlete_age=idade,
+        athlete_position=posicao,
+    )
+    # Busca 1 a mais para saber se existe próxima página
+    linhas = repo.list_open(filtros, agora, limit + 1, after=_decode_cursor(cursor))
+    tem_mais = len(linhas) > limit
+    linhas = linhas[:limit]
+
+    return OpportunityPage(
+        items=[OpportunitySummary(**_resumo(o, u, ocupadas)) for o, u, ocupadas in linhas],
+        next_cursor=_encode_cursor(linhas[-1][0]) if tem_mais else None,
     )
 
 

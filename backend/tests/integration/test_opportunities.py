@@ -244,3 +244,95 @@ def test_apagar_peneira(client, session):
 
     assert client.delete(url, headers=_headers(dono)).status_code == 204
     assert client.get(url, headers=_headers(dono)).status_code == 404
+
+
+# --- listagem ----------------------------------------------------------------------
+
+def _titulos(client, user: User, query: str = "") -> list[str]:
+    r = client.get(f"/api/v1/opportunities?{query}", headers=_headers(user))
+    assert r.status_code == 200, r.text
+    return [item["title"] for item in r.json()["items"]]
+
+
+def test_lista_so_abertas_ordenadas_pela_data_do_evento(client, session):
+    dono = _usuario(session, UserRole.CLUB)
+    _criar(client, dono, title="Depois", event_at=(AGORA + timedelta(days=20)).isoformat())
+    _criar(client, dono, title="Antes")
+    cancelada = _criar(client, dono, title="Cancelada")
+    client.post(f"/api/v1/opportunities/{cancelada['id']}/cancel", headers=_headers(dono))
+    _criar(
+        client,
+        dono,
+        title="Prazo vencido",
+        registration_deadline=(AGORA - timedelta(days=1)).isoformat(),
+    )
+
+    assert _titulos(client, _atleta(session)) == ["Antes", "Depois"]
+
+
+def test_lista_esconde_peneira_com_vagas_esgotadas(client, session):
+    dono = _usuario(session, UserRole.CLUB)
+    cheia = _criar(client, dono, title="Cheia", max_applications=1)
+    atleta = _atleta(session)
+    session.add(OpportunityApplication(opportunity_id=uuid.UUID(cheia["id"]), athlete_id=atleta.id))
+    session.commit()
+
+    assert _titulos(client, atleta) == []
+
+
+def test_filtros_de_modo_uf_posicao_e_busca(client, session):
+    dono = _usuario(session, UserRole.CLUB, first="Guarani", last="FC")
+    _criar(client, dono, title="Presencial SP", positions=["GOLEIRO"])
+    _criar(client, dono, title="Presencial RJ", state="RJ", city="Rio")
+    _criar(client, dono, title="Online", mode="ONLINE", meeting_url="https://m.example.com/x")
+    user = _atleta(session)
+
+    assert _titulos(client, user, "mode=ONLINE") == ["Online"]
+    assert _titulos(client, user, "state=rj") == ["Presencial RJ"]
+    # posição: peneiras que aceitam a posição ou qualquer posição
+    assert sorted(_titulos(client, user, "position=ATACANTE")) == ["Online", "Presencial RJ"]
+    assert _titulos(client, user, "q=online") == ["Online"]
+    assert len(_titulos(client, user, "q=guarani")) == 3
+
+
+def test_filtro_elegiveis_usa_idade_e_posicao_do_atleta(client, session):
+    dono = _usuario(session, UserRole.CLUB)
+    _criar(client, dono, title="Livre")
+    _criar(client, dono, title="Sub-17", max_age=17)
+    _criar(client, dono, title="Goleiros", positions=["GOLEIRO"])
+    _criar(client, dono, title="Atacantes 16-20", min_age=16, max_age=20, positions=["ATACANTE"])
+
+    atleta = _atleta(session)  # 18 anos, atacante
+    assert sorted(_titulos(client, atleta, "eligible=true")) == ["Atacantes 16-20", "Livre"]
+
+    sem_dados = _atleta(session, position=None, birth_date=None)
+    assert _titulos(client, sem_dados, "eligible=true") == ["Livre"]
+
+
+def test_filtro_elegiveis_e_so_para_atleta(client, session):
+    clube = _usuario(session, UserRole.CLUB)
+    r = client.get("/api/v1/opportunities?eligible=true", headers=_headers(clube))
+    assert r.status_code == 422
+
+
+def test_paginacao_por_cursor_nao_repete_nem_pula(client, session):
+    dono = _usuario(session, UserRole.CLUB)
+    for i in range(5):
+        _criar(client, dono, title=f"Pen{i}", event_at=(AGORA + timedelta(days=10 + i)).isoformat())
+    user = _atleta(session)
+
+    vistos, cursor = [], None
+    while True:
+        query = "limit=2" + (f"&cursor={cursor}" if cursor else "")
+        corpo = client.get(f"/api/v1/opportunities?{query}", headers=_headers(user)).json()
+        vistos += [item["title"] for item in corpo["items"]]
+        cursor = corpo["next_cursor"]
+        if not cursor:
+            break
+
+    assert vistos == ["Pen0", "Pen1", "Pen2", "Pen3", "Pen4"]
+
+
+def test_cursor_invalido_da_422(client, session):
+    r = client.get("/api/v1/opportunities?cursor=lixo", headers=_headers(_atleta(session)))
+    assert r.status_code == 422
