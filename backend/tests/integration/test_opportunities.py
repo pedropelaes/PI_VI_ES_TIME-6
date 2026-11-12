@@ -336,3 +336,9 @@ def test_paginacao_por_cursor_nao_repete_nem_pula(client, session):
 def test_cursor_invalido_da_422(client, session):
     r = client.get("/api/v1/opportunities?cursor=lixo", headers=_headers(_atleta(session)))
     assert r.status_code == 422
+
+
+def test_titulo_so_com_espacos_e_invalido(client, session):
+    dono = _usuario(session, UserRole.CLUB)
+    r = client.post("/api/v1/opportunities", json=_payload(title="   "), headers=_headers(dono))
+    assert r.status_code == 422

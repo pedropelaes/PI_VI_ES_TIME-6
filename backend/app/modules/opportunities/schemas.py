@@ -2,7 +2,7 @@ import uuid
 from datetime import datetime
 from typing import List, Optional
 
-from pydantic import AwareDatetime, BaseModel, Field
+from pydantic import AwareDatetime, BaseModel, ConfigDict, Field
 
 from app.modules.identity.models import UserRole
 from app.modules.opportunities.models import ApplicationStatus, OpportunityMode
@@ -12,6 +12,8 @@ _URL = r"^https?://"
 
 
 class OpportunityCreate(BaseModel):
+    model_config = ConfigDict(str_strip_whitespace=True)
+
     title: str = Field(min_length=3, max_length=120)
     description: str = Field(min_length=1, max_length=5000)
     mode: OpportunityMode
@@ -30,6 +32,8 @@ class OpportunityCreate(BaseModel):
 
 class OpportunityUpdate(BaseModel):
     """PATCH: só os campos enviados mudam (`exclude_unset`). null limpa campo opcional."""
+
+    model_config = ConfigDict(str_strip_whitespace=True)
 
     title: Optional[str] = Field(None, min_length=3, max_length=120)
     description: Optional[str] = Field(None, min_length=1, max_length=5000)
