@@ -17,6 +17,12 @@ import EditProfile from './pages/EditProfile/EditProfile';
 import Feed from './pages/feed/feed';
 import NotFound from './pages/NotFound/NotFound';
 import Inbox from './pages/inbox/Inbox';
+import { RoleRoute } from "./components/RoleRoute/RoleRoute";
+import Opportunities from './pages/opportunities/Opportunities';
+import OpportunityDetail from './pages/opportunities/OpportunityDetail';
+import OpportunityForm from './pages/opportunities/OpportunityForm';
+import MyOpportunities from './pages/opportunities/MyOpportunities';
+import MyApplications from './pages/opportunities/MyApplications';
 
 export default function App() {
   return (
@@ -40,6 +46,16 @@ export default function App() {
             <Route path="/clubs/:userId"    element={<ClubProfile />} />
             <Route path="/profiles/me/edit" element={<EditProfile />} />
             <Route path="/messages" element={<Inbox />} />
+            <Route path="/opportunities" element={<Opportunities />} />
+            <Route path="/opportunities/:id" element={<OpportunityDetail />} />
+            <Route element={<RoleRoute allow={['CLUB', 'SCOUT']} />}>
+              <Route path="/opportunities/new" element={<OpportunityForm />} />
+              <Route path="/opportunities/:id/edit" element={<OpportunityForm />} />
+              <Route path="/opportunities/mine" element={<MyOpportunities />} />
+            </Route>
+            <Route element={<RoleRoute allow={['ATHLETE']} />}>
+              <Route path="/opportunities/applications" element={<MyApplications />} />
+            </Route>
           </Route>
 
           <Route path="/processing-clips/:jobId" element={<MainLayout />}>
