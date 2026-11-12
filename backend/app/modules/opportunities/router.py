@@ -361,6 +361,7 @@ def cancel_application(
     repo: OpportunityRepository = Depends(get_repository),
 ):
     _exige_atleta(current_user)
+    _busca(repo, opportunity_id, lock=True)  # serializa com aprovar/recusar do organizador
     inscricao = repo.get_application(opportunity_id, current_user.id)
     if inscricao is None:
         raise NotFoundError("Você não está inscrito nesta peneira.")
