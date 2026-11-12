@@ -32,6 +32,20 @@ describe('httpClient', () => {
     });
   });
 
+  it('junta as mensagens quando o detail do 422 e uma lista', async () => {
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(
+        JSON.stringify({ detail: [{ msg: 'Campo invalido' }, { msg: 'Outro erro' }] }),
+        { status: 422 }
+      )
+    );
+
+    await expect(httpGet('/x')).rejects.toMatchObject({
+      status: 422,
+      message: 'Campo invalido; Outro erro',
+    });
+  });
+
   it('lanca ApiError com o status em resposta de erro', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(
       new Response(JSON.stringify({ detail: 'Atleta não encontrado.' }), { status: 404 })

@@ -74,7 +74,7 @@ function Formulario({ id, inicial }: { id?: string; inicial: OpportunityFormStat
               <label>Endereço<input required maxLength={200} {...campo('address')} /></label>
             </div>
           ) : (
-            <label>Link da reunião<input required type="url" maxLength={500} {...campo('meeting_url')} /></label>
+            <label>Link da reunião<input required type="url" pattern="https?://.+" maxLength={500} {...campo('meeting_url')} /></label>
           )}
 
           <div className="opp-row">

@@ -54,7 +54,11 @@ async function request<T>(
 
     if (!res.ok) {
       const corpo = await res.json().catch(() => ({}));
-      throw new ApiError(res.status, corpo.detail ?? 'Erro inesperado na requisicao.');
+      const d = corpo.detail;
+      const msg = Array.isArray(d)
+        ? d.map((e: { msg?: string }) => e.msg).filter(Boolean).join('; ')
+        : d;
+      throw new ApiError(res.status, msg || 'Erro inesperado na requisicao.');
     }
 
     if (res.status === 204) {
