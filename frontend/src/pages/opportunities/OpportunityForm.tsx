@@ -4,6 +4,7 @@ import { createOpportunity, updateOpportunity } from '../../features/opportuniti
 import { useOpportunity, useOpportunityMutation } from '../../features/opportunities/hooks/queries';
 import { EMPTY_FORM, MODE_LABELS, toForm, toInput } from '../../features/opportunities/mappers';
 import type { OpportunityFormState, OpportunityInput, OpportunityMode } from '../../features/opportunities/types';
+import { getUser } from '../../services/api';
 import { POSITION_OPTIONS } from '../../features/profiles/options';
 import type { Position } from '../../features/profiles/types';
 import './opportunities.css';
@@ -19,6 +20,8 @@ function Edicao({ id }: { id: string }) {
   const { data, isPending, isError } = useOpportunity(id);
   if (isPending) return <main className="opp-page"><p className="opp-state">Carregando…</p></main>;
   if (isError || !data) return <main className="opp-page"><p className="opp-state">Peneira não encontrada.</p></main>;
+  if (data.is_cancelled || data.organizer.user_id !== getUser()?.id)
+    return <main className="opp-page"><p className="opp-state">Esta peneira não pode ser editada.</p></main>;
   // `key` remonta o form se o id mudar; estado inicial vem pronto, sem useEffect.
   return <Formulario key={id} id={id} inicial={toForm(data)} />;
 }

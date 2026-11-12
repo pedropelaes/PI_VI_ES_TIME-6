@@ -52,6 +52,7 @@ export default function Opportunities() {
             type="search"
             placeholder="Buscar por título ou organizador"
             aria-label="Buscar"
+            maxLength={100}
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
           />

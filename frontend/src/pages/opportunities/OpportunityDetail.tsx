@@ -129,7 +129,7 @@ export default function OpportunityDetail() {
                 )}
               </>
             ) : !o.is_open ? (
-              !o.is_cancelled && <p>Inscrições encerradas.</p>
+              !o.is_cancelled && <p>{o.spots_left === 0 ? 'Vagas esgotadas.' : 'Inscrições encerradas.'}</p>
             ) : o.eligibility && !o.eligibility.eligible ? (
               <>
                 <button className="opp-btn" disabled>Inscrever-se</button>

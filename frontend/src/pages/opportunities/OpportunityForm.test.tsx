@@ -60,4 +60,13 @@ describe('OpportunityForm', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Salvar' }));
     await waitFor(() => expect(calls.some((c) => c.method === 'PATCH' && c.url.endsWith('/opportunities/o1'))).toBe(true));
   });
+
+  it('não deixa quem não é o organizador editar', async () => {
+    login('CLUB', 'outro');
+    mockFetch(() => json({ ...summary('o1'), description: 'd', is_open: true, cancelled_at: null, my_application: null, eligibility: null }));
+    renderAt('/opportunities/o1/edit', '/opportunities/:id/edit', <OpportunityForm />);
+
+    expect(await screen.findByText('Esta peneira não pode ser editada.')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Salvar' })).not.toBeInTheDocument();
+  });
 });

@@ -1,3 +1,4 @@
+/* global process */
 // Testes de data dependem do fuso; fixa antes de qualquer uso de Date.
 process.env.TZ = 'America/Sao_Paulo'
 
