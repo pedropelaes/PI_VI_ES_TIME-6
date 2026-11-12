@@ -12,6 +12,7 @@ from app.modules.identity.router import router as identity_router
 from app.modules.messaging.router import router as messaging_router
 from app.modules.profiles.router import router as profiles_router
 from app.modules.feed.router import router as feed_router
+from app.modules.opportunities.router import router as opportunities_router
 
 app = FastAPI(title="SmartScout API")
 
@@ -40,6 +41,7 @@ app.include_router(clips_router, prefix="/api/v1")
 app.include_router(profiles_router, prefix="/api/v1")
 app.include_router(messaging_router, prefix="/api/v1")
 app.include_router(feed_router, prefix="/api/v1")
+app.include_router(opportunities_router, prefix="/api/v1")
 
 @app.on_event("startup")
 def on_startup():
