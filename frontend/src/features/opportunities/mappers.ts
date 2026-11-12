@@ -32,14 +32,13 @@ export function buildOpportunityQuery(filters: OpportunityFilters, cursor?: stri
   return params.toString();
 }
 
-// Fuso fixo: as peneiras são no Brasil e o teste não pode depender do fuso da máquina.
+// Fuso do navegador, o mesmo que o formulário usa (localInputToIso/isoToLocalInput).
 const DATA_HORA = new Intl.DateTimeFormat('pt-BR', {
   day: '2-digit',
   month: '2-digit',
   year: 'numeric',
   hour: '2-digit',
   minute: '2-digit',
-  timeZone: 'America/Sao_Paulo',
 });
 
 export function formatDateTime(iso: string): string {

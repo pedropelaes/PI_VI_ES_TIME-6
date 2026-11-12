@@ -48,7 +48,7 @@ describe('rótulos', () => {
 });
 
 describe('datas', () => {
-  it('formata no fuso de Brasília', () => {
+  it('formata no fuso local (pinado em America/Sao_Paulo no vitest)', () => {
     const texto = formatDateTime('2026-12-01T12:00:00Z');
     expect(texto).toContain('01/12/2026');
     expect(texto).toContain('09:00');
