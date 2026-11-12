@@ -51,6 +51,16 @@ def _criar(client, dono: User, **over) -> dict:
     return r.json()
 
 
+def _vence(session: Session, opp: dict) -> None:
+    """Move o prazo para o passado direto no banco (a criação não aceita)."""
+    session.execute(
+        sa.update(Opportunity)
+        .where(Opportunity.id == uuid.UUID(opp["id"]))
+        .values(registration_deadline=AGORA - timedelta(hours=1))
+    )
+    session.commit()
+
+
 def _headers(user: User) -> dict[str, str]:
     return {"Authorization": f"Bearer {create_access_token(str(user.id))}"}
 
@@ -254,18 +264,24 @@ def _titulos(client, user: User, query: str = "") -> list[str]:
     return [item["title"] for item in r.json()["items"]]
 
 
+def test_criar_com_prazo_vencido_da_422(client, session):
+    dono = _usuario(session, UserRole.CLUB)
+    r = client.post(
+        "/api/v1/opportunities",
+        json=_payload(registration_deadline=(AGORA - timedelta(hours=1)).isoformat()),
+        headers=_headers(dono),
+    )
+    assert r.status_code == 422
+    assert r.json()["detail"] == "O prazo de inscrição já passou."
+
+
 def test_lista_so_abertas_ordenadas_pela_data_do_evento(client, session):
     dono = _usuario(session, UserRole.CLUB)
     _criar(client, dono, title="Depois", event_at=(AGORA + timedelta(days=20)).isoformat())
     _criar(client, dono, title="Antes")
     cancelada = _criar(client, dono, title="Cancelada")
     client.post(f"/api/v1/opportunities/{cancelada['id']}/cancel", headers=_headers(dono))
-    _criar(
-        client,
-        dono,
-        title="Prazo vencido",
-        registration_deadline=(AGORA - timedelta(days=1)).isoformat(),
-    )
+    _vence(session, _criar(client, dono, title="Prazo vencido"))
 
     assert _titulos(client, _atleta(session)) == ["Antes", "Depois"]
 
@@ -396,7 +412,8 @@ def test_peneira_cancelada_ou_com_prazo_vencido_da_409(client, session):
     dono = _usuario(session, UserRole.CLUB)
     cancelada = _criar(client, dono)
     client.post(f"/api/v1/opportunities/{cancelada['id']}/cancel", headers=_headers(dono))
-    vencida = _criar(client, dono, registration_deadline=(AGORA - timedelta(hours=1)).isoformat())
+    vencida = _criar(client, dono)
+    _vence(session, vencida)
     atleta = _atleta(session)
 
     assert _apply(client, atleta, cancelada).status_code == 409

@@ -230,10 +230,13 @@ def create_opportunity(
     _exige_organizador(current_user)
     opp = Opportunity(organizer_id=current_user.id)
     _aplica(opp, payload.model_dump())
+    agora = now()
+    if opp.registration_deadline < agora:
+        raise ValidationError("O prazo de inscrição já passou.")
     repo.session.add(opp)
     repo.session.commit()
     repo.session.refresh(opp)
-    return _detalhe(repo, opp, current_user, now())
+    return _detalhe(repo, opp, current_user, agora)
 
 
 @router.get("/mine", response_model=List[MyOpportunity])
