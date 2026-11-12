@@ -26,10 +26,14 @@ from app.modules.opportunities.models import (
 )
 from app.modules.opportunities.repository import ListFilters, OpportunityRepository, ocupadas_de
 from app.modules.opportunities.schemas import (
+    Applicant,
+    ApplicationCounts,
     ApplicationOut,
+    ApplicationStatusUpdate,
     Eligibility,
     MyApplication,
     MyApplicationItem,
+    MyOpportunity,
     OpportunityCreate,
     OpportunityDetail,
     OpportunityPage,
@@ -232,6 +236,36 @@ def create_opportunity(
     return _detalhe(repo, opp, current_user, now())
 
 
+@router.get("/mine", response_model=List[MyOpportunity])
+def my_opportunities(
+    current_user: User = Depends(get_current_user),
+    repo: OpportunityRepository = Depends(get_repository),
+    now: Callable[[], datetime] = Depends(get_now),
+):
+    _exige_organizador(current_user)
+    agora = now()
+    opps = repo.list_by_organizer(current_user.id)
+    contagens = repo.counts_by_status([opp.id for opp in opps])
+
+    resposta = []
+    for opp in opps:
+        c = contagens.get(opp.id, {})
+        counts = ApplicationCounts(
+            pendente=c.get(ApplicationStatus.PENDENTE, 0),
+            aprovada=c.get(ApplicationStatus.APROVADA, 0),
+            recusada=c.get(ApplicationStatus.RECUSADA, 0),
+        )
+        ocupadas = ocupadas_de(c)
+        resposta.append(
+            MyOpportunity(
+                **_resumo(opp, current_user, ocupadas),
+                is_open=esta_aberta(opp, ocupadas, agora),
+                counts=counts,
+            )
+        )
+    return resposta
+
+
 @router.get("/{opportunity_id}", response_model=OpportunityDetail)
 def get_opportunity(
     opportunity_id: uuid.UUID,
@@ -355,3 +389,67 @@ def my_applications(
         )
         for inscricao, opp, organizador in linhas
     ]
+
+
+# --- gestão de inscritos (dono) ----------------------------------------------------
+
+@router.get("/{opportunity_id}/applications", response_model=List[Applicant])
+def list_applications(
+    opportunity_id: uuid.UUID,
+    status: Optional[ApplicationStatus] = None,
+    current_user: User = Depends(get_current_user),
+    repo: OpportunityRepository = Depends(get_repository),
+    now: Callable[[], datetime] = Depends(get_now),
+):
+    opp = _da_minha_autoria(repo, opportunity_id, current_user)
+    hoje = now().date()
+    return [
+        Applicant(
+            athlete_id=user.id,
+            first_name=user.first_name,
+            last_name=user.last_name,
+            avatar_url=perfil.avatar_path if perfil else None,
+            position=perfil.position if perfil else None,
+            age=calcular_idade(perfil.birth_date, hoje) if perfil and perfil.birth_date else None,
+            city=perfil.city if perfil else None,
+            state=perfil.state if perfil else None,
+            status=inscricao.status,
+            created_at=inscricao.created_at,
+        )
+        for inscricao, user, perfil in repo.list_applicants(opp.id, status)
+    ]
+
+
+@router.patch("/{opportunity_id}/applications/{athlete_id}", response_model=ApplicationOut)
+def set_application_status(
+    opportunity_id: uuid.UUID,
+    athlete_id: uuid.UUID,
+    payload: ApplicationStatusUpdate,
+    current_user: User = Depends(get_current_user),
+    repo: OpportunityRepository = Depends(get_repository),
+):
+    # Permitido depois do prazo: a avaliação acontece depois das inscrições.
+    opp = _da_minha_autoria(repo, opportunity_id, current_user, lock=True)
+    if opp.cancelled_at is not None:
+        raise ConflictError("Peneira cancelada.")
+    if payload.status == ApplicationStatus.PENDENTE:
+        raise ValidationError("Use APROVADA ou RECUSADA.")
+    inscricao = repo.get_application(opp.id, athlete_id)
+    if inscricao is None:
+        raise NotFoundError("Inscrição não encontrada.")
+
+    # Recusada não ocupa vaga; voltar a aprovar precisa de vaga livre.
+    volta_a_ocupar = (
+        inscricao.status == ApplicationStatus.RECUSADA
+        and payload.status == ApplicationStatus.APROVADA
+    )
+    if (
+        volta_a_ocupar
+        and opp.max_applications is not None
+        and repo.occupied(opp.id) >= opp.max_applications
+    ):
+        raise ConflictError("Vagas esgotadas.")
+
+    inscricao.status = payload.status
+    repo.session.commit()
+    return ApplicationOut(opportunity_id=opp.id, athlete_id=athlete_id, status=inscricao.status)

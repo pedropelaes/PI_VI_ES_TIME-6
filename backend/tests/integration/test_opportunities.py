@@ -450,3 +450,135 @@ def test_minhas_inscricoes_so_para_atleta(client, session):
         "/api/v1/opportunities/applications/me", headers=_headers(_usuario(session, UserRole.CLUB))
     )
     assert r.status_code == 403
+
+
+# --- gestão do organizador ---------------------------------------------------------
+
+def _status(client, dono: User, opp: dict, atleta: User, status: str):
+    return client.patch(
+        f"/api/v1/opportunities/{opp['id']}/applications/{atleta.id}",
+        json={"status": status},
+        headers=_headers(dono),
+    )
+
+
+def test_aprovar_libera_o_link_so_para_o_aprovado(client, session):
+    dono = _usuario(session, UserRole.CLUB)
+    opp = _criar(client, dono, mode="ONLINE", meeting_url="https://meet.example.com/abc")
+    aprovado, pendente = _atleta(session), _atleta(session)
+    _apply(client, aprovado, opp)
+    _apply(client, pendente, opp)
+
+    r = _status(client, dono, opp, aprovado, "APROVADA")
+    assert r.status_code == 200, r.text
+    assert r.json()["status"] == "APROVADA"
+
+    url = f"/api/v1/opportunities/{opp['id']}"
+    assert client.get(url, headers=_headers(aprovado)).json()["meeting_url"] == "https://meet.example.com/abc"
+    assert client.get(url, headers=_headers(pendente)).json()["meeting_url"] is None
+
+
+def test_inscricao_aprovada_nao_pode_ser_cancelada_pelo_atleta(client, session):
+    dono = _usuario(session, UserRole.CLUB)
+    opp = _criar(client, dono)
+    atleta = _atleta(session)
+    _apply(client, atleta, opp)
+    _status(client, dono, opp, atleta, "APROVADA")
+
+    r = client.delete(f"/api/v1/opportunities/{opp['id']}/apply", headers=_headers(atleta))
+    assert r.status_code == 409
+
+
+def test_status_pendente_nao_e_aceito(client, session):
+    dono = _usuario(session, UserRole.CLUB)
+    opp = _criar(client, dono)
+    atleta = _atleta(session)
+    _apply(client, atleta, opp)
+    assert _status(client, dono, opp, atleta, "PENDENTE").status_code == 422
+
+
+def test_status_de_inscricao_inexistente_da_404(client, session):
+    dono = _usuario(session, UserRole.CLUB)
+    opp = _criar(client, dono)
+    assert _status(client, dono, opp, _atleta(session), "APROVADA").status_code == 404
+
+
+def test_reaprovar_recusada_respeita_vagas(client, session):
+    dono = _usuario(session, UserRole.CLUB)
+    opp = _criar(client, dono, max_applications=1)
+    primeiro, segundo = _atleta(session), _atleta(session)
+    _apply(client, primeiro, opp)
+    _status(client, dono, opp, primeiro, "RECUSADA")  # libera a vaga
+    _apply(client, segundo, opp)
+
+    r = _status(client, dono, opp, primeiro, "APROVADA")
+    assert r.status_code == 409
+
+
+def test_mudar_status_depois_do_prazo_e_permitido(client, session):
+    dono = _usuario(session, UserRole.CLUB)
+    opp = _criar(client, dono)
+    atleta = _atleta(session)
+    _apply(client, atleta, opp)
+    app.dependency_overrides[get_now] = lambda: (lambda: AGORA + timedelta(days=7))
+
+    assert _status(client, dono, opp, atleta, "APROVADA").status_code == 200
+
+
+def test_lista_de_inscritos_so_para_o_dono_e_com_filtro(client, session):
+    dono = _usuario(session, UserRole.CLUB)
+    opp = _criar(client, dono)
+    a1 = _atleta(session, first="Ana")
+    a2 = _atleta(session, first="Bia")
+    _apply(client, a1, opp)
+    _apply(client, a2, opp)
+    _status(client, dono, opp, a2, "RECUSADA")
+    url = f"/api/v1/opportunities/{opp['id']}/applications"
+
+    todos = client.get(url, headers=_headers(dono)).json()
+    assert [(i["first_name"], i["status"], i["age"]) for i in todos] == [
+        ("Ana", "PENDENTE", 18),
+        ("Bia", "RECUSADA", 18),
+    ]
+    recusados = client.get(f"{url}?status=RECUSADA", headers=_headers(dono)).json()
+    assert [i["first_name"] for i in recusados] == ["Bia"]
+
+    intruso = _usuario(session, UserRole.SCOUT)
+    assert client.get(url, headers=_headers(intruso)).status_code == 403
+
+
+def test_minhas_peneiras_com_contagem_e_estado(client, session):
+    dono = _usuario(session, UserRole.CLUB)
+    aberta = _criar(client, dono, title="Aberta")
+    cancelada = _criar(client, dono, title="Cancelada", event_at=(AGORA + timedelta(days=30)).isoformat())
+    client.post(f"/api/v1/opportunities/{cancelada['id']}/cancel", headers=_headers(dono))
+    a1, a2 = _atleta(session), _atleta(session)
+    _apply(client, a1, aberta)
+    _apply(client, a2, aberta)
+    _status(client, dono, aberta, a1, "APROVADA")
+    _criar(client, _usuario(session, UserRole.CLUB), title="De outro clube")
+
+    r = client.get("/api/v1/opportunities/mine", headers=_headers(dono))
+    assert r.status_code == 200, r.text
+    por_titulo = {i["title"]: i for i in r.json()}
+    assert list(por_titulo) == ["Cancelada", "Aberta"]  # event_at desc
+    assert por_titulo["Aberta"]["counts"] == {"pendente": 1, "aprovada": 1, "recusada": 0}
+    assert por_titulo["Aberta"]["is_open"] is True
+    assert por_titulo["Cancelada"]["is_open"] is False
+
+
+def test_minhas_peneiras_so_para_organizador(client, session):
+    r = client.get("/api/v1/opportunities/mine", headers=_headers(_atleta(session)))
+    assert r.status_code == 403
+
+
+def test_reduzir_vagas_abaixo_das_inscricoes_ativas_da_409(client, session):
+    dono = _usuario(session, UserRole.CLUB)
+    opp = _criar(client, dono, max_applications=5)
+    _apply(client, _atleta(session), opp)
+    _apply(client, _atleta(session), opp)
+
+    r = client.patch(
+        f"/api/v1/opportunities/{opp['id']}", json={"max_applications": 1}, headers=_headers(dono)
+    )
+    assert r.status_code == 409

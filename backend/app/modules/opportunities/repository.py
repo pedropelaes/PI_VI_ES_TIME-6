@@ -175,3 +175,25 @@ class OpportunityRepository:
             .order_by(Opportunity.event_at.desc())
         )
         return list(self.session.exec(stmt).all())
+
+    def list_by_organizer(self, organizer_id: uuid.UUID) -> List[Opportunity]:
+        return list(
+            self.session.exec(
+                select(Opportunity)
+                .where(Opportunity.organizer_id == organizer_id)
+                .order_by(Opportunity.event_at.desc())
+            ).all()
+        )
+
+    def list_applicants(
+        self, opp_id: uuid.UUID, status: Optional[ApplicationStatus] = None
+    ) -> List[tuple[OpportunityApplication, User, Optional[AthleteProfile]]]:
+        stmt = (
+            select(OpportunityApplication, User, AthleteProfile)
+            .join(User, User.id == OpportunityApplication.athlete_id)
+            .outerjoin(AthleteProfile, AthleteProfile.user_id == User.id)
+            .where(OpportunityApplication.opportunity_id == opp_id)
+        )
+        if status is not None:
+            stmt = stmt.where(OpportunityApplication.status == status)
+        return list(self.session.exec(stmt.order_by(OpportunityApplication.created_at)).all())
