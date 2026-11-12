@@ -1,0 +1,53 @@
+.opp-page {
+  min-height: 100%;
+  padding: 42px clamp(16px, 4vw, 64px) 72px;
+  color: #f5f8fc;
+  background: #0a0f1e;
+}
+.opp-shell { max-width: 1100px; margin: 0 auto; }
+.opp-hero { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 16px; padding-bottom: 24px; }
+.opp-hero h1 { margin: 0; font-family: Georgia, serif; font-size: clamp(1.8rem, 4vw, 2.8rem); }
+.opp-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.opp-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 10px 18px; border: 0; border-radius: 999px; cursor: pointer;
+  background: #72c2eb; color: #0a0f1e; font-weight: 700; text-decoration: none;
+}
+.opp-btn:disabled { opacity: .45; cursor: not-allowed; }
+.opp-btn.ghost { background: transparent; color: #f5f8fc; border: 1px solid rgba(255, 255, 255, .25); }
+.opp-btn.danger { background: #e5484d; color: #fff; }
+.opp-filters { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 24px; }
+.opp-filters input, .opp-filters select, .opp-form input, .opp-form select, .opp-form textarea {
+  padding: 10px 12px; border-radius: 10px; border: 1px solid rgba(255, 255, 255, .18);
+  background: rgba(255, 255, 255, .06); color: inherit; font: inherit;
+}
+.opp-filters input[type="search"] { flex: 1 1 220px; }
+.opp-toggle { display: inline-flex; align-items: center; gap: 6px; }
+.opp-grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); }
+.opp-card { display: flex; flex-direction: column; border-radius: 16px; background: rgba(255, 255, 255, .05); border: 1px solid rgba(255, 255, 255, .08); }
+.opp-card-link { padding: 18px; color: inherit; text-decoration: none; flex: 1; }
+.opp-card h2 { margin: 10px 0 4px; font-size: 1.15rem; }
+.opp-card-top { display: flex; gap: 6px; }
+.opp-card-extra { padding: 12px 18px; border-top: 1px solid rgba(255, 255, 255, .08); }
+.opp-org { margin: 0 0 10px; color: #9fb3c8; font-size: .9rem; }
+.opp-meta { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; font-size: .9rem; color: #cfd9e5; }
+.opp-badge { padding: 3px 10px; border-radius: 999px; font-size: .75rem; font-weight: 700; background: rgba(114, 194, 235, .18); color: #72c2eb; }
+.opp-badge.online { background: rgba(241, 151, 76, .18); color: #f1974c; }
+.opp-badge.danger { background: rgba(229, 72, 77, .2); color: #ff8589; }
+.opp-badge.success { background: rgba(70, 167, 88, .2); color: #7ee08f; }
+.opp-panel { margin: 20px 0; padding: 18px; border-radius: 16px; background: rgba(255, 255, 255, .05); }
+.opp-panel h2 { margin-top: 0; font-size: 1.1rem; }
+.opp-alert { padding: 12px 16px; border-radius: 12px; background: rgba(229, 72, 77, .15); color: #ffb3b5; }
+.opp-reason { color: #ffcf99; }
+.opp-state { padding: 40px 0; text-align: center; color: #9fb3c8; }
+.opp-description { white-space: pre-line; line-height: 1.6; }
+.opp-applicants { width: 100%; border-collapse: collapse; }
+.opp-applicants td, .opp-applicants th { padding: 8px; text-align: left; border-bottom: 1px solid rgba(255, 255, 255, .08); }
+.opp-applicants a { color: #72c2eb; }
+.opp-table-wrap { overflow-x: auto; }
+.opp-form { display: grid; gap: 14px; max-width: 640px; }
+.opp-form label { display: grid; gap: 6px; }
+.opp-form fieldset { border: 1px solid rgba(255, 255, 255, .15); border-radius: 12px; padding: 12px; display: flex; flex-wrap: wrap; gap: 12px; }
+.opp-row { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr)); }
+.opp-modal-backdrop { position: fixed; inset: 0; display: grid; place-items: center; padding: 16px; background: rgba(0, 0, 0, .6); z-index: 50; }
+.opp-modal { max-width: 420px; padding: 24px; border-radius: 16px; background: #131a2e; }

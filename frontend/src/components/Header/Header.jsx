@@ -14,7 +14,8 @@ import {
   CircleUserRound,
   X,
   Mail,
-  MessageCircle
+  MessageCircle,
+  Megaphone
 } from 'lucide-react';
 import './Header.css';
 
@@ -126,6 +127,12 @@ export function Header() {
           <Link to="/feed">
             <button className="iconButton" aria-label="Feed de talentos" title="Feed de talentos">
               <Compass size={34} />
+            </button>
+          </Link>
+
+          <Link to="/opportunities">
+            <button className="iconButton" aria-label="Oportunidades" title="Oportunidades">
+              <Megaphone size={32} />
             </button>
           </Link>
 
