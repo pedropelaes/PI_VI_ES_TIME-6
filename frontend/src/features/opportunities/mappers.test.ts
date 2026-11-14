@@ -36,7 +36,7 @@ describe('rótulos', () => {
   it('vagas', () => {
     expect(spotsLabel(null)).toBe('Vagas ilimitadas');
     expect(spotsLabel(1)).toBe('1 vaga restante');
-    expect(spotsLabel(0)).toBe('0 vagas restantes');
+    expect(spotsLabel(0)).toBe('Vagas esgotadas');
   });
 
   it('local e posições', () => {

@@ -63,6 +63,7 @@ export function positionsLabel(positions: Position[]): string {
 
 export function spotsLabel(spots: number | null): string {
   if (spots === null) return 'Vagas ilimitadas';
+  if (spots === 0) return 'Vagas esgotadas';
   return spots === 1 ? '1 vaga restante' : `${spots} vagas restantes`;
 }
 
@@ -133,3 +134,6 @@ export function toInput(f: OpportunityFormState): OpportunityInput {
     max_applications: num(f.max_applications),
   };
 }
+
+/** Classe de badge por status de inscrição. */
+export const STATUS_BADGE: Record<ApplicationStatus, string> = { PENDENTE: '', APROVADA: 'success', RECUSADA: 'danger' };

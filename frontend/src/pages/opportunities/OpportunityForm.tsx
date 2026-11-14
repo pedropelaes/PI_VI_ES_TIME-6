@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { AlertCircle } from 'lucide-react';
 import { createOpportunity, updateOpportunity } from '../../features/opportunities/api';
 import { useOpportunity, useOpportunityMutation } from '../../features/opportunities/hooks/queries';
 import { EMPTY_FORM, MODE_LABELS, toForm, toInput } from '../../features/opportunities/mappers';
@@ -44,8 +45,14 @@ function Formulario({ id, inicial }: { id?: string; inicial: OpportunityFormStat
 
   return (
     <main className="opp-page">
-      <div className="opp-shell">
-        <h1>{id ? 'Editar peneira' : 'Publicar peneira'}</h1>
+      <div className="opp-shell narrow">
+        <header className="opp-hero">
+          <div>
+            <p className="eyebrow">OPORTUNIDADES</p>
+            <h1>{id ? 'Editar peneira' : 'Publicar peneira'}</h1>
+            <p className="opp-subtitle">Atletas elegíveis poderão se inscrever até o prazo definido.</p>
+          </div>
+        </header>
         <form
           className="opp-form"
           onSubmit={(e) => {
@@ -53,11 +60,19 @@ function Formulario({ id, inicial }: { id?: string; inicial: OpportunityFormStat
             save.mutate(toInput(f), { onSuccess: (salva) => navigate(`/opportunities/${salva.id}`) });
           }}
         >
-          {save.isError && <p className="opp-alert" role="alert">{save.error.message}</p>}
+          {save.isError && (
+            <p className="opp-alert" role="alert"><AlertCircle size={18} aria-hidden />{save.error.message}</p>
+          )}
 
+          <fieldset>
+          <legend>Informações</legend>
           <label>Título<input required minLength={3} maxLength={120} {...campo('title')} /></label>
           <label>Descrição<textarea required rows={5} maxLength={5000} {...campo('description')} /></label>
 
+          </fieldset>
+
+          <fieldset>
+          <legend>Local e datas</legend>
           <label>
             Modalidade
             <select
@@ -84,15 +99,20 @@ function Formulario({ id, inicial }: { id?: string; inicial: OpportunityFormStat
             <label>Data do evento<input required type="datetime-local" {...campo('event_at')} /></label>
             <label>Prazo de inscrição<input required type="datetime-local" {...campo('registration_deadline')} /></label>
           </div>
+          </fieldset>
+
+          <fieldset>
+          <legend>Requisitos</legend>
 
           <div className="opp-row">
             <label>Idade mínima<input type="number" min={5} max={60} {...campo('min_age')} /></label>
             <label>Idade máxima<input type="number" min={5} max={60} {...campo('max_age')} /></label>
-            <label>Vagas (vazio = ilimitado)<input type="number" min={1} max={10000} {...campo('max_applications')} /></label>
+            <label>Vagas<input type="number" placeholder="Ilimitadas" min={1} max={10000} {...campo('max_applications')} /></label>
           </div>
 
-          <fieldset>
-            <legend>Posições aceitas (nenhuma marcada = todas)</legend>
+          <div>
+            <p className="opp-hint">Posições aceitas — nenhuma marcada aceita todas</p>
+            <div className="opp-chips">
             {POSITION_OPTIONS.map((o) => (
               <label key={o.value} className="opp-toggle">
                 <input
@@ -103,9 +123,11 @@ function Formulario({ id, inicial }: { id?: string; inicial: OpportunityFormStat
                 {o.label}
               </label>
             ))}
+            </div>
+          </div>
           </fieldset>
 
-          <div className="opp-actions">
+          <div className="opp-form-footer">
             <button type="button" className="opp-btn ghost" onClick={() => navigate(-1)}>Voltar</button>
             <button type="submit" className="opp-btn" disabled={save.isPending}>{id ? 'Salvar' : 'Publicar'}</button>
           </div>

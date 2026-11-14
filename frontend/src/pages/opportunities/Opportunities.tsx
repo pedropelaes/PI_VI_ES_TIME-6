@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { Plus, Search, SearchX } from 'lucide-react';
 import { useOpportunities } from '../../features/opportunities/hooks/useOpportunities';
 import { MODE_LABELS } from '../../features/opportunities/mappers';
 import type { OpportunityFilters, OpportunityMode } from '../../features/opportunities/types';
@@ -26,6 +27,7 @@ export default function Opportunities() {
           <div>
             <p className="eyebrow">OPORTUNIDADES</p>
             <h1>Peneiras abertas</h1>
+            <p className="opp-subtitle">Avaliações presenciais e online publicadas por clubes e olheiros.</p>
           </div>
           <nav className="opp-actions">
             {role === 'ATHLETE' && (
@@ -34,7 +36,7 @@ export default function Opportunities() {
             {isOrganizer && (
               <>
                 <Link to="/opportunities/mine" className="opp-btn ghost">Minhas peneiras</Link>
-                <Link to="/opportunities/new" className="opp-btn">Publicar peneira</Link>
+                <Link to="/opportunities/new" className="opp-btn"><Plus size={18} aria-hidden />Publicar peneira</Link>
               </>
             )}
           </nav>
@@ -48,14 +50,17 @@ export default function Opportunities() {
             set({ q: busca.trim() || undefined });
           }}
         >
-          <input
+          <div className="opp-search">
+            <Search size={18} aria-hidden />
+            <input
             type="search"
             placeholder="Buscar por título ou organizador"
             aria-label="Buscar"
             maxLength={100}
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
-          />
+            />
+          </div>
           <select
             aria-label="Modalidade"
             value={filters.mode ?? ''}
@@ -80,7 +85,7 @@ export default function Opportunities() {
             aria-label="UF"
             placeholder="UF"
             maxLength={2}
-            size={3}
+            className="opp-uf"
             value={uf}
             onChange={(e) => {
               const valor = e.target.value.toUpperCase();
@@ -107,18 +112,18 @@ export default function Opportunities() {
         ) : isError ? (
           <p className="opp-state">Não foi possível carregar as peneiras.</p>
         ) : items.length === 0 ? (
-          <p className="opp-state">Nenhuma peneira aberta com esses filtros.</p>
+          <div className="opp-state"><SearchX size={40} aria-hidden /><p>Nenhuma peneira aberta com esses filtros.</p></div>
         ) : (
           <>
             <div className="opp-grid">
               {items.map((o) => <OpportunityCard key={o.id} o={o} />)}
             </div>
             {hasNextPage && (
-              <p className="opp-state">
+              <div className="opp-more">
                 <button className="opp-btn ghost" onClick={fetchNextPage} disabled={isFetchingNextPage}>
                   Carregar mais
                 </button>
-              </p>
+              </div>
             )}
           </>
         )}

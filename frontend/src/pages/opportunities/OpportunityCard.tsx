@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
+import { CalendarDays, Clock, MapPin, Users, UserRound } from 'lucide-react';
 import {
   ageRangeLabel,
   formatDateTime,
@@ -26,14 +27,14 @@ export function OpportunityCard({ o, extra }: { o: OpportunitySummaryDTO; extra?
           {o.organizer.first_name} {o.organizer.last_name} · {USER_ROLE_LABELS[o.organizer.role]}
         </p>
         <ul className="opp-meta">
-          <li>Data: {formatDateTime(o.event_at)}</li>
-          <li>Local: {locationLabel(o)}</li>
-          <li>Inscrições até {formatDateTime(o.registration_deadline)}</li>
+          <li><CalendarDays size={16} aria-hidden /> <span><span className="sr-only">Data: </span>{formatDateTime(o.event_at)}</span></li>
+          <li><MapPin size={16} aria-hidden /> <span><span className="sr-only">Local: </span>{locationLabel(o)}</span></li>
+          <li><Clock size={16} aria-hidden /> Inscrições até {formatDateTime(o.registration_deadline)}</li>
           <li>
-            {positionsLabel(o.positions)}
-            {idade ? ` · ${idade}` : ''}
+            <UserRound size={16} aria-hidden />
+            <span>{positionsLabel(o.positions)}{idade ? ` · ${idade}` : ''}</span>
           </li>
-          <li>{spotsLabel(o.spots_left)}</li>
+          <li><Users size={16} aria-hidden /> {spotsLabel(o.spots_left)}</li>
         </ul>
       </Link>
       {extra && <div className="opp-card-extra">{extra}</div>}
