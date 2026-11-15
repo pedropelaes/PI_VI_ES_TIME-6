@@ -90,38 +90,61 @@ class TestResolvePlayerIds:
         assert result == {"t1"}
 
     def test_resolve_player_ids_not_found(self):
-        """Raises ValueError when target number is not in jersey_map."""
+        """Retorna set vazio (sem crash) quando o número alvo não está no jersey_map."""
         p = make_pipeline()
         jersey_map = make_jersey_map("t1", 7, MIN_OCR_VOTES)
 
-        with pytest.raises(ValueError, match="Jogador alvo não encontrado"):
-            p._resolve_player_ids(
-                jersey_map=jersey_map,
-                target_number=10,
-                target_signature=None,
-                debug=False,
-            )
+        result = p._resolve_player_ids(
+            jersey_map=jersey_map,
+            target_number=10,
+            target_signature=None,
+            debug=False,
+        )
+
+        assert result == set()
+        p.logger.warning.assert_called()
 
     def test_resolve_player_ids_filters_noisy_tracks(self):
-        """Tracks with more than MAX_DISTINCT_READINGS different numbers are discarded."""
+        """Tracks com mais de MAX_DISTINCT_READINGS números distintos são descartados,
+        mesmo que o número alvo seja o mais votado neles."""
         p = make_pipeline()
 
-        # Create a noisy track that has MAX_DISTINCT_READINGS+1 different numbers
-        noisy_counter = Counter(
-            {i: 1 for i in range(MAX_DISTINCT_READINGS + 1)}
-        )
-        # Add target number 10 in the noisy counter so it would match if not discarded
-        noisy_counter[10] = 1
+        noisy_counter = Counter({i: 1 for i in range(MAX_DISTINCT_READINGS + 1)})
+        # 10 venceria com folga se o track NÃO fosse descartado
+        noisy_counter[10] = MIN_OCR_VOTES + 5
+        assert len(noisy_counter) > MAX_DISTINCT_READINGS  # sanity check do setup
 
         jersey_map = {"t1": noisy_counter}
 
-        with pytest.raises(ValueError, match="Jogador alvo não encontrado"):
-            p._resolve_player_ids(
-                jersey_map=jersey_map,
-                target_number=10,
-                target_signature=None,
-                debug=False,
-            )
+        result = p._resolve_player_ids(
+            jersey_map=jersey_map,
+            target_number=10,
+            target_signature=None,
+            debug=False,
+        )
+
+        assert result == set()
+
+    def test_resolve_player_ids_noisy_track_discarded_clean_track_kept(self):
+        """O filtro remove só o track ruidoso; o track limpo com o alvo é mantido."""
+        p = make_pipeline()
+
+        noisy_counter = Counter({i: 1 for i in range(MAX_DISTINCT_READINGS + 1)})
+        noisy_counter[10] = MIN_OCR_VOTES + 5
+
+        jersey_map = {
+            "t1": noisy_counter,
+            "t2": Counter({10: MIN_OCR_VOTES}),
+        }
+
+        result = p._resolve_player_ids(
+            jersey_map=jersey_map,
+            target_number=10,
+            target_signature=None,
+            debug=False,
+        )
+
+        assert result == {"t2"}
 
     def test_resolve_player_ids_with_signature(self):
         """Resolves by signature string when target_signature is provided."""

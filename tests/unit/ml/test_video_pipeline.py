@@ -364,33 +364,37 @@ class TestApplyOcrFallback:
         assert merged == [[(7, pytest.approx(0.9 * 0.6))]]
         assert sources == ["ocr"]
 
-    def test_respects_max_crops_limit_prioritizing_readings(self, pipeline):
+    def test_respects_max_crops_limit_prioritizing_readings(self, pipeline, monkeypatch):
+        # Patch onde a constante é USADA (video_pipeline importou por valor)
+        monkeypatch.setattr("ml.scripts.video_pipeline.MAX_EASYOCR_CROPS_PER_FRAME", 3)
         pipeline.ocr_reader.reset_mock()
+
         crops = self._crops(5)
         for c in crops:
-            c.shape = (100, 100, 3) # Mock shape for area calculation
+            c.shape = (100, 100, 3)  # mesma área → desempate pela ordem original
 
-        # 5 resultados de YOLO que vão disparar o fallback:
-        # 0: Vazio
-        # 1: 8 com baixa confiança (tem leitura)
-        # 2: Vazio
-        # 3: 6 com baixa confiança (tem leitura)
-        # 4: Vazio
+        # 0: vazio | 1: 8 baixa conf | 2: vazio | 3: 6 baixa conf | 4: vazio
         yolo_results = [[], [(8, 0.5)], [], [(6, 0.4)], []]
+
+        # Prioridade: leituras (1, 3) > vazios (0, 2, 4); sort estável → top-3 = {1, 3, 0}
+        # Depois é reordenado pelo índice original → EasyOCR recebe [0, 1, 3] nessa ordem
         pipeline.ocr_reader.read_batch.return_value = [
-            [(8, 0.9, 1.0)], [(6, 0.8, 1.0)], [(9, 0.9, 1.0)]
+            [(9, 0.9, 1.0)],   # crop 0
+            [(8, 0.9, 1.0)],   # crop 1
+            [(6, 0.8, 1.0)],   # crop 3
         ]
 
-        # Com MAX_EASYOCR_CROPS_PER_FRAME = 3 (do config modificado)
         merged, sources = pipeline._apply_ocr_fallback(crops, yolo_results, -1)
 
         called_crops = pipeline.ocr_reader.read_batch.call_args[0][0]
-        assert len(called_crops) == 3
-        # Assegura que priorizou os crops com leituras e 1 vazio (índices: 0, 1, 3 - a depender da ordenação, 1 e 3 devem estar lá)
-        # Fallback foi disparado para 0, 1, 2, 3, 4. 
-        # Prioridades por leitura: 1, 3. Empate nos demais. Pegará um dos vazios (provavelmente 0).
-        assert crops[1] in called_crops
-        assert crops[3] in called_crops
+        assert called_crops == [crops[0], crops[1], crops[3]]
+
+        assert sources[1] == "yolo+ocr"   # YOLO e OCR concordam em 8
+        assert sources[3] == "yolo+ocr"   # YOLO e OCR concordam em 6
+        assert sources[0] == "ocr"        # só OCR leu
+        assert sources[2] == "none"       # excedente, ignorado
+        assert sources[4] == "none"       # excedente, ignorado
+        assert merged[2] == [] and merged[4] == []
 
     def test_fps_at_boundary_120_valid(self):
         mock_cap = MagicMock()
