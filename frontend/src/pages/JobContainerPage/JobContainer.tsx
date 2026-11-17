@@ -85,6 +85,32 @@ export default function JobContainerPage() {
     );
   }
 
+  if (job.status === "DOWNLOADING") {
+    const progress = job.download_progress ?? null;
+    return (
+      <div className="job-container-page">
+        <div className="job-state-card">
+          <h2 className="job-state-title">
+            Importando vídeo do Google Drive... {progress !== null ? `(${progress}%)` : ""}
+          </h2>
+          <p className="job-state-message" style={{ marginBottom: "1rem", color: "rgba(255, 255, 255, 0.7)" }}>
+            Realizando download seguro diretamente para o servidor. A análise iniciará automaticamente em seguida.
+          </p>
+          <div className="progress-bar-container">
+            {progress !== null ? (
+              <div
+                className="progress-bar-fill"
+                style={{ width: `${Math.max(5, progress)}%`, transition: "width 0.3s ease" }}
+              />
+            ) : (
+              <div className="progress-bar-fill animating" />
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (job.status === "FAST_SCAN" || job.status === "WAITING_USER" || job.status === "DEEP_SCAN") {
     return <SelectPlayerView job={job} jobId={jobId!} />;
   }

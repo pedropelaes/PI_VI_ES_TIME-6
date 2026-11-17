@@ -36,9 +36,15 @@ from ml.scripts.config import (
     USE_GPU,
     TRACKING_COLOR_TOLERANCE,
     FAST_SCAN_COLOR_TOLERANCE,
+    MAX_EASYOCR_CROPS_PER_FRAME,
 )
 from ml.scripts.kinematic_analyzer import KinematicAnalyzer
 from ml.scripts.jersey_reader import JerseyReader
+from ml.scripts.ocr_reader import (
+    TraditionalOcrReader,
+    merge_jersey_reading,
+    needs_ocr_fallback,
+)
 from ml.scripts.trackers.ball_tracker import BallTracker
 from ml.scripts.trackers.tracker import PlayerTracker
 from ml.scripts.color_extractor import ColorExtractor
@@ -84,6 +90,7 @@ class VideoPipeline:
         self.detector = YoloDetector()
         self.ball_detector = BallDetector()
         self.jersey_reader = JerseyReader()
+        self.ocr_reader = TraditionalOcrReader()
         self.ball_event_detector = BallEventDetector()
         self.kinematic_analyzer = KinematicAnalyzer()
         self.clip_writer = ClipWriter()
@@ -121,7 +128,9 @@ class VideoPipeline:
         on_candidate_found: Callable[[dict], None] | None = None,
         should_stop: Callable[[], bool] | None = None,
         start_ts: int = 0,
-        end_ts: int = 0
+        end_ts: int = 0,
+        save_debug_torso: bool = False,
+        accumulate_appearances: bool = False,
     ) -> list[dict]:
         """
         Faz uma varredura super rápida no vídeo procurando candidatos.
@@ -146,6 +155,16 @@ class VideoPipeline:
         self.logger.debug(f"[FAST SCAN] Pulando para o frame {start_frame} (limite: {end_frame}).")
 
         candidates_found = {}
+        # [DIAGNOSTICO] Acumula, por assinatura, a MELHOR aparicao vista no
+        # scan inteiro (maior confianca; empate: maior area). Nao muda o
+        # que e emitido para on_candidate_found (comportamento ANTES fica
+        # intocado) -- serve so para medir o teto de ganho offline.
+        ceiling_found: dict = {}
+        antes_conf: dict = {}
+        ceiling_dir = None
+        if accumulate_appearances:
+            ceiling_dir = os.path.join(output_dir, "debug_ceiling")
+            os.makedirs(ceiling_dir, exist_ok=True)
 
         try:
             while True:
@@ -195,18 +214,23 @@ class VideoPipeline:
                 # =======================================================
                 target_num_pass = target_number if target_number is not None else -1
                 resultados_lote = self.jersey_reader.read_batch(crops_lote, target_num_pass)
-                
+
+                # Cross-check com EasyOCR apenas nos crops ambíguos/vazios
+                resultados_lote, sources_lote = self._apply_ocr_fallback(
+                    crops_lote, resultados_lote, target_num_pass
+                )
+
                 # =======================================================
                 # 4. PROCESSA OS RESULTADOS
                 # =======================================================
                 # zip une os bboxes, as imagens recortadas e os números lidos
-                for bbox_orig, crop, numbers in zip(bboxes_lote, crops_lote, resultados_lote):
+                for bbox_orig, crop, numbers, source in zip(bboxes_lote, crops_lote, resultados_lote, sources_lote):
                     if not numbers:
                         continue
-                        
+
                     # [CORREÇÃO] Desempacota a tupla retornada pelo novo JerseyReader
                     for num, conf in numbers:
-                        
+
                         # Ignora leituras de baixíssima confiança no Fast Scan para evitar spam na UI
                         if conf < 0.40:
                             continue
@@ -219,17 +243,54 @@ class VideoPipeline:
 
                         # DEDUPLICAÇÃO INTELIGENTE (Distância de Cor)
                         is_duplicate = False
+                        matched_sig = None
                         for existing_sig, existing_data in candidates_found.items():
                             if existing_data["number"] == num:
                                 if self._color_distance(hex_color, existing_data["color"]) < FAST_SCAN_COLOR_TOLERANCE:
                                     is_duplicate = True
+                                    matched_sig = existing_sig
                                     break
-                        
+
+                        if accumulate_appearances and is_duplicate:
+                            # [DIAGNOSTICO] Reusa a MESMA fronteira de identidade do
+                            # dedup de producao (numero + distancia de cor ao ancor
+                            # original) -- so atualiza confianca/area/imagem, nunca
+                            # a cor de ancoragem, para a identidade nao derivar.
+                            self._update_ceiling(
+                                ceiling_found, ceiling_dir, matched_sig,
+                                num, conf, hex_color, bbox_orig, frame_orig, frame_idx,
+                            )
+
                         if not is_duplicate:
                             signature = f"{num}_{hex_color}"
                             img_filename = f"cand_numero_{num}_{uuid.uuid4().hex[:8]}.jpg"
                             img_path = os.path.join(output_dir, img_filename)
-                            
+
+                            if save_debug_torso:
+                                # [DIAGNOSTICO] Salva o MESMO tensor de crop que foi
+                                # passado ao JerseyReader (nao uma re-derivacao), mais
+                                # uma variante de torso mais generosa pra comparacao.
+                                torso_dir = os.path.join(output_dir, "debug_torso_real")
+                                os.makedirs(torso_dir, exist_ok=True)
+                                cv2.imwrite(
+                                    os.path.join(torso_dir, f"torso_exato_{num}_{uuid.uuid4().hex[:8]}.png"),
+                                    crop,
+                                )
+                                px1_g, py1_g, px2_g, py2_g = bbox_orig
+                                h_g = py2_g - py1_g
+                                w_g = px2_g - px1_g
+                                fh_g, fw_g = frame_orig.shape[:2]
+                                pad_x = int(w_g * 0.10)
+                                y1_g = max(0, py1_g)
+                                y2_g = min(fh_g, py1_g + int(h_g * 0.80))
+                                x1_g = max(0, px1_g - pad_x)
+                                x2_g = min(fw_g, px2_g + pad_x)
+                                torso_generoso = frame_orig[y1_g:y2_g, x1_g:x2_g]
+                                cv2.imwrite(
+                                    os.path.join(torso_dir, f"torso_generoso_{num}_{uuid.uuid4().hex[:8]}.png"),
+                                    torso_generoso,
+                                )
+
                             px1, py1, px2, py2 = bbox_orig
                             h_box = py2 - py1
                             w_box = px2 - px1
@@ -271,15 +332,41 @@ class VideoPipeline:
                                 "image": f"/uploads/clips/{os.path.basename(output_dir)}/{img_filename}"
                             }
                             candidates_found[signature] = cand_dict
-                            self.logger.info(f"[FAST SCAN] Novo candidato encontrado e enviado à UI: {num} (conf: {conf:.2f})")
-                            
+                            self.logger.info(f"[FAST SCAN] Novo candidato encontrado e enviado à UI: {num} (conf: {conf:.2f}, fonte: {source})")
+
+                            if accumulate_appearances:
+                                # semeia o teto com a propria aparicao ANTES (primeiro hit)
+                                antes_conf[signature] = conf
+                                self._update_ceiling(
+                                    ceiling_found, ceiling_dir, signature,
+                                    num, conf, hex_color, bbox_orig, frame_orig, frame_idx,
+                                )
+
                             if on_candidate_found:
                                 on_candidate_found(cand_dict)
-                            
+
         finally:
             cap.release()
-            
+
         self.logger.info(f"[FAST SCAN] Concluído. {len(candidates_found)} perfis distintos encontrados.")
+
+        if accumulate_appearances:
+            import json
+            report = {}
+            for sig, data in ceiling_found.items():
+                antes = candidates_found.get(sig)
+                report[sig] = {
+                    "number": data["number"],
+                    "antes_conf": antes_conf.get(sig),
+                    "teto_conf": data["conf"],
+                    "teto_area": data["area"],
+                    "teto_frame": data["frame_idx"],
+                    "teto_image": data["image_path"],
+                    "antes_image": antes["image"] if antes else None,
+                }
+            with open(os.path.join(output_dir, "ceiling_report.json"), "w", encoding="utf-8") as f:
+                json.dump(report, f, indent=2, ensure_ascii=False)
+            self.logger.info(f"[DIAGNOSTICO] Relatorio de teto salvo em ceiling_report.json ({len(report)} assinaturas).")
         return list(candidates_found.values())
 
     def process(
@@ -378,6 +465,11 @@ class VideoPipeline:
             )
         finally:
             cap.release()
+            del tracker, ball_tracker
+            import gc, torch
+            gc.collect()
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
 
         processed_total = max_frame + 1
 
@@ -602,12 +694,19 @@ class VideoPipeline:
         target_num_pass = target_number if target_number is not None else -1
         resultados_lote = self.jersey_reader.read_batch(crops_lote, target_num_pass)
 
+        # 2.5. Cross-check com EasyOCR apenas nos crops ambíguos/vazios
+        resultados_lote, sources_lote = self._apply_ocr_fallback(
+            crops_lote, resultados_lote, target_num_pass
+        )
+
         # 3. Processa os resultados
-        for track_id, bbox, crop, numbers in zip(track_ids_lote, bboxes_orig_lote, crops_lote, resultados_lote):
+        for track_id, bbox, crop, numbers, source in zip(
+            track_ids_lote, bboxes_orig_lote, crops_lote, resultados_lote, sources_lote
+        ):
             if not numbers:
                 continue
 
-            for n, conf in numbers: 
+            for n, conf in numbers:
                 if target_color and n == target_number:
                     hex_color = self._extract_core_color(crop)
                     if hex_color and self._color_distance(target_color, hex_color) < TRACKING_COLOR_TOLERANCE:
@@ -623,8 +722,79 @@ class VideoPipeline:
 
             if debug and debug_dir:
                 # Nota: 'numbers' agora será impresso no log como uma lista de tuplas. Ex: [(10, 0.85)]
-                self._save_debug_crop(frame_orig, bbox, frame_idx, track_id, numbers, debug_dir)
-                self.logger.debug(f"  [MAP] frame={frame_idx} track={track_id} leu={numbers}")
+                self._save_debug_crop(frame_orig, bbox, frame_idx, track_id, numbers, debug_dir, source=source)
+                self.logger.debug(f"  [MAP] frame={frame_idx} track={track_id} fonte={source} leu={numbers}")
+
+    def _apply_ocr_fallback(
+        self,
+        crops_lote: list[np.ndarray],
+        yolo_results: list[list[tuple[int, float]]],
+        target_num_pass: int,
+    ) -> tuple[list[list[tuple[int, float]]], list[str]]:
+        """
+        Roda o EasyOCR (TraditionalOcrReader) apenas nos crops cujo resultado
+        do YOLO dispara `needs_ocr_fallback` (leitura vazia, ou dígito
+        ambíguo — 2/6/8 — com baixa confiança), e funde as duas leituras
+        via `merge_jersey_reading`.
+
+        Retorna:
+          - resultados no MESMO formato de JerseyReader.read_batch (já com
+            o merge aplicado — um único voto por crop, evitando diluir o
+            soft-voting entre o número certo e o errado);
+          - lista paralela de fontes ("yolo" | "ocr" | "yolo+ocr" | "none").
+
+        Custo: proporcional ao número de crops ambíguos/vazios, não ao
+        tamanho total do lote — se nenhum crop disparar a condição, o
+        EasyOCR nunca chega a ser chamado.
+        """
+        sources = ["yolo" if r else "none" for r in yolo_results]
+
+        fallback_indices = [
+            i for i, r in enumerate(yolo_results)
+            if needs_ocr_fallback(r[0] if r else None)
+        ]
+        if not fallback_indices:
+            return yolo_results, sources
+
+        if len(fallback_indices) > MAX_EASYOCR_CROPS_PER_FRAME:
+            # Prioriza:
+            # 1. Crops com alguma leitura (dígito ambíguo detectado) ao invés de crops vazios
+            # 2. Em caso de empate, prioriza crops maiores (maior área = resolução melhor)
+            fallback_indices.sort(
+                key=lambda i: (
+                    bool(yolo_results[i]),
+                    crops_lote[i].shape[0] * crops_lote[i].shape[1]
+                ),
+                reverse=True
+            )
+            
+            excedentes = len(fallback_indices) - MAX_EASYOCR_CROPS_PER_FRAME
+            self.logger.warning(
+                f"[OCR FALLBACK] Limite de processamento excedido no lote. "
+                f"Processando os {MAX_EASYOCR_CROPS_PER_FRAME} melhores de {len(fallback_indices)}. "
+                f"Ignorando {excedentes} crops."
+            )
+            # Mantém apenas os top-K e re-ordena pelo índice original do lote
+            fallback_indices = sorted(fallback_indices[:MAX_EASYOCR_CROPS_PER_FRAME])
+
+        fallback_crops = [crops_lote[i] for i in fallback_indices]
+        ocr_results = self.ocr_reader.read_batch(fallback_crops, target_num_pass)
+
+        merged_results = list(yolo_results)
+        for idx, ocr_result in zip(fallback_indices, ocr_results):
+            yolo_reading = yolo_results[idx][0] if yolo_results[idx] else None
+            ocr_reading = ocr_result[0] if ocr_result else None
+            merged = merge_jersey_reading(yolo_reading, ocr_reading)
+
+            if merged is None:
+                merged_results[idx] = []
+                sources[idx] = "none"
+            else:
+                num, conf, source = merged
+                merged_results[idx] = [(num, conf)]
+                sources[idx] = source
+
+        return merged_results, sources
 
     def _color_distance(self, hex1: str, hex2: str) -> float:
         return geometry_utils.color_distance(hex1, hex2, logger=self.logger)
@@ -924,6 +1094,68 @@ class VideoPipeline:
     def _extract_core_color(self, torso_crop: np.ndarray) -> str | None:
         return geometry_utils.extract_core_color(torso_crop)
 
+    def _update_ceiling(
+        self,
+        ceiling_found: dict,
+        ceiling_dir: str,
+        signature: str,
+        num: int,
+        conf: float,
+        hex_color: str,
+        bbox_orig: tuple,
+        frame_orig: np.ndarray,
+        frame_idx: int,
+    ) -> None:
+        """
+        [DIAGNOSTICO] Atualiza o "teto" de uma assinatura se esta aparicao
+        for melhor que a guardada (maior confianca; empate -> maior area).
+        NUNCA atualiza a cor de ancoragem (fica fixa na 1a aceitacao) para
+        a identidade nao derivar ao longo do scan.
+        """
+        x1, y1, x2, y2 = bbox_orig
+        area = max(0, x2 - x1) * max(0, y2 - y1)
+
+        atual = ceiling_found.get(signature)
+        is_better = (
+            atual is None
+            or conf > atual["conf"]
+            or (conf == atual["conf"] and area > atual["area"])
+        )
+        if not is_better:
+            return
+
+        torso_exato = self.jersey_reader._torso_crop(frame_orig, x1, y1, x2, y2)
+
+        fh, fw = frame_orig.shape[:2]
+        w_box, h_box = x2 - x1, y2 - y1
+        cx, cy = x1 + w_box // 2, y1 + h_box // 2
+        sq = int(max(w_box, h_box) * 1.2)
+        half = sq // 2
+        corpo_inteiro = frame_orig[
+            max(0, cy - half):min(fh, cy + half),
+            max(0, cx - half):min(fw, cx + half),
+        ]
+        if corpo_inteiro.size > 0:
+            corpo_inteiro = cv2.resize(corpo_inteiro, (256, 256), interpolation=cv2.INTER_AREA)
+
+        img_filename = f"teto_{num}_{signature}_f{frame_idx}.jpg"
+        img_path = os.path.join(ceiling_dir, img_filename)
+        if corpo_inteiro.size > 0:
+            cv2.imwrite(img_path, corpo_inteiro)
+        torso_path = os.path.join(ceiling_dir, f"teto_torso_{num}_{signature}_f{frame_idx}.png")
+        if torso_exato.size > 0:
+            cv2.imwrite(torso_path, torso_exato)
+
+        ceiling_found[signature] = {
+            "conf": conf,
+            "area": area,
+            "frame_idx": frame_idx,
+            "number": num,
+            "color_anchor_unchanged": hex_color if atual is None else atual.get("color_anchor_unchanged"),
+            "image_path": img_path,
+            "torso_path": torso_path,
+        }
+
     def _is_valid_player_detection(self, bbox_xywh: tuple, frame_h: float) -> bool:
         return geometry_utils.is_valid_player_detection(bbox_xywh, frame_h)
 
@@ -961,23 +1193,33 @@ class VideoPipeline:
         track_id,
         numbers: list[tuple[int, float]],
         debug_dir: str,
+        source: str = "yolo",
     ) -> None:
-        """Salva crop do torso com nome indicativo do que foi lido."""
-        x1, y1, x2, y2 = bbox
-        # Re-crop para salvar (mesma região que foi para o OCR)
-        h = y2 - y1
-        fh, fw = frame_orig.shape[:2]
-        # Aqui usamos valores fixos de torso, mas o ideal é delegar pro JerseyReader
-        # (mantido assim por simplicidade, já que é só debug)
-        crop = frame_orig[
-            max(0, y1 + int(h * 0.15)):min(fh, y1 + int(h * 0.55)),
-            max(0, x1):min(fw, x2),
-        ]
-        nums_str = "_".join(f"{n}-c{int(conf*100)}" for n, conf in numbers)
-        
-        filename = f"ocr_f{frame_idx:05d}_t{track_id}_leu_{nums_str}.png"
-        cv2.imwrite(os.path.join(debug_dir, filename), crop)
+        """Salva crop do torso com nome indicativo do que foi lido.
+        Só para debug: nunca deve derrubar o pipeline."""
+        try:
+            x1, y1, x2, y2 = map(int, bbox)
+            h = y2 - y1
+            fh, fw = frame_orig.shape[:2]
 
+            top = max(0, y1 + int(h * 0.15))
+            bottom = min(fh, y1 + int(h * 0.55))
+            left = max(0, x1)
+            right = min(fw, x2)
+
+            # bbox fora do frame ou degenerada → recorte vazio
+            if bottom <= top or right <= left:
+                return
+
+            crop = frame_orig[top:bottom, left:right]
+            if crop.size == 0:
+                return
+
+            nums_str = "_".join(f"{n}-c{int(conf*100)}" for n, conf in numbers)
+            filename = f"ocr_f{frame_idx:05d}_t{track_id}_src-{source}_leu_{nums_str}.png"
+            cv2.imwrite(os.path.join(debug_dir, filename), crop)
+        except Exception as e:
+            print(f"[DEBUG] Falha ao salvar crop f{frame_idx} t{track_id} (ignorado): {e}")
 
     def _print_kinematic_events(self, events: list[dict]) -> None:
         """Imprime no terminal os timestamps de anomalias cinemáticas detectadas."""

@@ -35,8 +35,9 @@ services:
     env_file: ./backend/.env
     environment:
       - REDIS_URL=redis://redis:6379/0
+      - TZ=UTC
     volumes:
-      - ./backend:/app           
+      - ./backend:/app
       - ./ml:/app/ml
       - ./backend/uploads:/app/uploads
     depends_on:
@@ -57,5 +58,7 @@ services:
     volumes:
       - ./frontend:/app
       - /app/node_modules
+    env_file:
+      - ./frontend/.env
     depends_on:
       - api

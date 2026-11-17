@@ -4,6 +4,7 @@ Unit tests for YoloDetector helper methods.
 YOLO model is never loaded — all tests patch `ml.detector.YOLO` at import time.
 All tests use synthetic/fabricated data.
 """
+import numpy as np
 import pytest
 from unittest.mock import MagicMock, patch
 
@@ -189,16 +190,20 @@ class TestParseDetections:
         assert detections == []
         assert balls == []
 
-    def test_low_confidence_player_discarded(self):
-        """Detection below min_conf=0.5 is discarded."""
+    def test_min_conf_is_passed_to_yolo_inference(self):
+        """O filtro de confiança é feito pelo YOLO (conf=min_conf), não no parse."""
         det = self._make_det()
-        results = make_mock_results(
-            xyxy_list=[[0.0, 0.0, 50.0, 100.0]],
-            cls_list=[0],
-            conf_list=[0.2],  # < 0.5 → discarded
-        )
-        detections, balls = det._parse_detections(results)
-        assert detections == []
+        det.model = MagicMock(return_value=make_mock_results(
+            xyxy_list=[], cls_list=[], conf_list=[]
+        ))
+        det.use_gpu = False
+        det.yolo_classes = [0]
+
+        det.detect(np.zeros((720, 1280, 3), dtype=np.uint8))
+
+        kwargs = det.model.call_args.kwargs
+        assert kwargs["conf"] == det.min_conf
+        assert kwargs["classes"] == [0]
 
     def test_small_bbox_player_discarded(self):
         """Player bbox smaller than min_player_w or min_player_h is discarded."""
