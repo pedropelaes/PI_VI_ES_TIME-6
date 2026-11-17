@@ -1,6 +1,7 @@
-import { AlertCircle, Download, Trash2 } from "lucide-react";
+import { useState } from "react";
+import { AlertCircle, Download, EyeOff, Send, Trash2 } from "lucide-react";
 import './ClipCard.css';
-import { downloadClip, deleteClip } from "../../services/api";
+import { downloadClip, deleteClip, publishClip, unpublishClip } from "../../services/api";
 
 export type ClipStatus = 'generating' | 'completed' | 'error' | 'expired';
 
@@ -12,23 +13,26 @@ export interface ClipData {
     thumbnailUrl?: string;
     duration?: string;
     videoUrl?: string;
+    published?: boolean;
 }
 
 interface ClipCardProps {
     clip: ClipData;
     onDeleted?: (clipId: string) => void;
+    onPublishChanged?: (clipId: string, published: boolean) => void;
 }
 
-export function ClipCard({ clip, onDeleted }: ClipCardProps) {
+export function ClipCard({ clip, onDeleted, onPublishChanged }: ClipCardProps) {
+    const [publishing, setPublishing] = useState(false);
 
     async function handleDownload() {
         if (!clip.videoUrl) return;
-            try {
-                await downloadClip(clip.videoUrl, clip.title);
-            } catch (err) {
-                console.error("Erro ao baixar clipe:", err);
-                alert("Não foi possível baixar o clipe. Tente novamente.");
-            }
+        try {
+            await downloadClip(clip.videoUrl, clip.title);
+        } catch (err) {
+            console.error("Erro ao baixar clipe:", err);
+            alert("Não foi possível baixar o clipe. Tente novamente.");
+        }
     }
 
     async function handleDelete() {
@@ -42,13 +46,32 @@ export function ClipCard({ clip, onDeleted }: ClipCardProps) {
         }
     }
 
+    async function handleTogglePublish() {
+        if (publishing) return;
+        setPublishing(true);
+        try {
+            if (clip.published) {
+                await unpublishClip(clip.id);
+                onPublishChanged?.(clip.id, false);
+            } else {
+                await publishClip(clip.id);
+                onPublishChanged?.(clip.id, true);
+            }
+        } catch (err) {
+            console.error("Erro ao alterar publicação do clipe:", err);
+            alert(err instanceof Error ? err.message : "Não foi possível alterar a publicação do clipe.");
+        } finally {
+            setPublishing(false);
+        }
+    }
+
     // EARLY RETURN: Renderiza o Skeleton se estiver processando
     if (clip.status === 'generating') {
         return (
             <div className="clip-card">
                 {/* Parte superior (Mídia) com gradiente claro */}
                 <div className="clip-card-media skeleton-shimmer-light"></div>
-                
+
                 {/* Parte inferior (Info) com gradiente escuro */}
                 <div className="clip-card-info skeleton-shimmer-dark">
                     <div className="skeleton-text-line"></div>
@@ -60,7 +83,7 @@ export function ClipCard({ clip, onDeleted }: ClipCardProps) {
     // Renderização normal para Concluído, Erro ou Expirado
     return (
         <div className="clip-card">
-            
+
             <div className={`clip-card-media ${clip.status}`}>
                 {clip.status === 'error' && (
                     <div className="media-overlay error">
@@ -93,6 +116,16 @@ export function ClipCard({ clip, onDeleted }: ClipCardProps) {
                         {clip.status === 'completed' && (
                             <>
                                 <button
+                                    className="publish-button"
+                                    onClick={handleTogglePublish}
+                                    disabled={publishing}
+                                    title={clip.published ? "Remover do feed" : "Publicar no feed"}
+                                    aria-label={clip.published ? `Remover ${clip.title} do feed` : `Publicar ${clip.title} no feed`}
+                                >
+                                    {clip.published ? <EyeOff size={18} /> : <Send size={18} />}
+                                    <span>{clip.published ? "Remover do feed" : "Publicar no feed"}</span>
+                                </button>
+                                <button
                                     className="download-button"
                                     onClick={handleDownload}
                                     disabled={!clip.videoUrl}
@@ -114,7 +147,7 @@ export function ClipCard({ clip, onDeleted }: ClipCardProps) {
                     </div>
                 </div>
             )}
-            
+
         </div>
     );
 }

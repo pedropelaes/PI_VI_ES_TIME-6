@@ -79,6 +79,7 @@ export interface ClipHistoryItem {
   file_url: string | null;
   status: string;
   duration: string;
+  published_at: string | null;
 }
 
 export interface ClipHistoryGroup {
@@ -289,6 +290,14 @@ export async function listClips(): Promise<ClipHistoryGroup[]> {
 
 export async function deleteClip(clipId: string): Promise<void> {
   await authRequest<void>(`/clips/${clipId}`, { method: "DELETE" });
+}
+
+export async function publishClip(clipId: string): Promise<void> {
+  await authRequest<void>(`/clips/${clipId}/publish`, { method: "POST" });
+}
+
+export async function unpublishClip(clipId: string): Promise<void> {
+  await authRequest<void>(`/clips/${clipId}/publish`, { method: "DELETE" });
 }
 
 export async function deleteJobClips(jobId: string): Promise<void> {
