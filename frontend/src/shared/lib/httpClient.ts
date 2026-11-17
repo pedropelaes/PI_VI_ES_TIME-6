@@ -54,7 +54,11 @@ async function request<T>(
 
     if (!res.ok) {
       const corpo = await res.json().catch(() => ({}));
-      throw new ApiError(res.status, corpo.detail ?? 'Erro inesperado na requisicao.');
+      const d = corpo.detail;
+      const msg = Array.isArray(d)
+        ? d.map((e: { msg?: string }) => e.msg).filter(Boolean).join('; ')
+        : d;
+      throw new ApiError(res.status, msg || 'Erro inesperado na requisicao.');
     }
 
     if (res.status === 204) {
@@ -80,6 +84,10 @@ export function httpPost<T>(path: string, body?: unknown): Promise<T> {
 
 export function httpPut<T>(path: string, body: unknown): Promise<T> {
   return request<T>(path, { method: 'PUT', body: JSON.stringify(body) });
+}
+
+export function httpPatch<T>(path: string, body: unknown): Promise<T> {
+  return request<T>(path, { method: 'PATCH', body: JSON.stringify(body) });
 }
 
 export function httpDelete<T>(path: string): Promise<T> {
