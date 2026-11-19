@@ -28,4 +28,4 @@ RUN apt-get update && apt-get install -y --no-install-recommends tzdata \
 COPY backend/ /app/
 COPY ml/ /app/ml/
 
-CMD ["celery", "-A", "app.celery_app", "worker", "--concurrency=1", "--loglevel=info"]
+CMD ["celery", "-A", "app.celery_app", "worker", "--concurrency=1", "--max-tasks-per-child=1", "--loglevel=info"]
