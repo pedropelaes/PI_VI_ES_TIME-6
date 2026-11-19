@@ -111,6 +111,22 @@ export default function JobContainerPage() {
     );
   }
 
+  if (job.status === "CONVERTING") {
+    return (
+      <div className="job-container-page">
+        <div className="job-state-card">
+          <h2 className="job-state-title">Convertendo vídeo para formato compatível (H.264)...</h2>
+          <p className="job-state-message" style={{ marginBottom: "1rem", color: "rgba(255, 255, 255, 0.7)" }}>
+            O codec original precisa ser convertido antes da análise. Isso pode levar alguns instantes.
+          </p>
+          <div className="progress-bar-container">
+            <div className="progress-bar-fill animating" />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (job.status === "FAST_SCAN" || job.status === "WAITING_USER" || job.status === "DEEP_SCAN") {
     return <SelectPlayerView job={job} jobId={jobId!} />;
   }

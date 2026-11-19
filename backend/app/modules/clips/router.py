@@ -2,6 +2,7 @@
 Rotas para criação e consulta de jobs de processamento.
 Fluxo: Upload vídeo → cria Video → cria ProcessingJob → roda ML em background.
 """
+import asyncio
 import uuid
 import json
 import time
@@ -14,22 +15,26 @@ from fastapi import APIRouter, Depends, Query, UploadFile, File, Form, Request
 from fastapi.responses import StreamingResponse
 from sqlmodel import Session, select
 
+from app.core.config import MAX_VIDEO_SIZE_MB
 from app.core.database import get_session, engine
 from app.core.deps import get_current_user
 from app.core.exceptions import NotFoundError, ForbiddenError, ConflictError, DomainError, UnauthorizedError, BadRequestError
+from app.core.security import decode_access_token, encrypt_drive_token
 from app.core.storage import get_storage
 from app.modules.identity.models import User, UserRole
-from app.modules.clips.models import Video, ProcessingJob, Clip, Candidate
-from app.modules.clips.schemas import ConfirmPlayerRequest, GoogleDriveImportRequest
+from app.modules.clips.models import Video, ProcessingJob, Clip, ClipStatus, Candidate
+from app.modules.clips.schemas import (
+    ConfirmPlayerRequest,
+    GoogleDriveImportRequest,
+    RefineSearchRequest,
+)
 from app.modules.clips.google_drive import get_google_drive_file_metadata
 from app.modules.clips.tasks import (
     run_fast_scan,
+    run_deep_scan,
     run_full_tracking,
     download_and_process_drive_video,
 )
-from app.modules.clips.models import Video, ProcessingJob, Clip, ClipStatus, Candidate
-from app.modules.clips.schemas import ConfirmPlayerRequest
-from app.modules.clips.tasks import run_fast_scan, run_full_tracking
 from app.modules.profiles.models import AthleteProfile
 
 router = APIRouter(prefix="/jobs", tags=["jobs"])
@@ -67,8 +72,66 @@ def _delete_job_and_orphan_video(session: Session, job: ProcessingJob) -> None:
         session.delete(video)
 
 
+def _get_stream_user(
+    request: Request,
+    token: str | None = Query(default=None),
+    session: Session = Depends(get_session),
+) -> User:
+    """Autentica conexões SSE aceitando `?token=` (EventSource) ou `Authorization: Bearer`."""
+    raw_token = token
+    if not raw_token:
+        auth_header = request.headers.get("Authorization", "")
+        if auth_header.lower().startswith("bearer "):
+            raw_token = auth_header[7:].strip()
+
+    if not raw_token:
+        raise UnauthorizedError("Token inválido ou expirado.")
+
+    user_id = decode_access_token(raw_token)
+    if not user_id:
+        raise UnauthorizedError("Token inválido ou expirado.")
+
+    try:
+        uid = uuid.UUID(user_id)
+    except ValueError as exc:
+        raise UnauthorizedError("Token inválido ou expirado.") from exc
+
+    user = session.get(User, uid)
+    if not user:
+        raise UnauthorizedError("Token inválido ou expirado.")
+
+    return user
+
+
+def _get_owned_job(
+    session: Session,
+    job_id: uuid.UUID,
+    current_user: User,
+) -> tuple[ProcessingJob, Video]:
+    """Busca um job e valida que pertence ao usuário autenticado."""
+    job = session.get(ProcessingJob, job_id)
+    if not job:
+        raise NotFoundError("Job não encontrado.")
+
+    video = session.get(Video, job.video_id)
+    if not video or video.user_id != current_user.id:
+        raise ForbiddenError("Este job não pertence ao usuário autenticado.")
+
+    return job, video
+
+
 @router.get("/{job_id}/stream")
-def stream_job_status(job_id: uuid.UUID):
+def stream_job_status(
+    job_id: uuid.UUID,
+    current_user: User = Depends(_get_stream_user),
+    session: Session = Depends(get_session),
+):
+    job = session.get(ProcessingJob, job_id)
+    if job:
+        video = session.get(Video, job.video_id)
+        if not video or video.user_id != current_user.id:
+            raise ForbiddenError("Este job não pertence ao usuário autenticado.")
+
     def event_generator():
         while True:
             with Session(engine) as session:
@@ -137,16 +200,28 @@ async def create_job(
     current_user: User  = Depends(get_current_user),
     session: Session    = Depends(get_session),
 ):
-    """Fase 1: Recebe vídeo e dispara o Fast Scan."""
-    # 1. Salva o arquivo em disco
+    """Fase 1: Recebe vídeo em chunks de 4 MB no disco e dispara o Fast Scan."""
+    # 1. Salva o arquivo em disco por partes (sem carregar tudo na RAM)
     video_id   = uuid.uuid4()
-    safe_name  = Path(str(video.filename)).name
+    safe_name  = Path(str(video.filename or "video.mp4")).name or "video.mp4"
 
-    content = await video.read()
     storage = get_storage()
-    video_path = storage.save(content, f"videos/{video_id}_{safe_name}")
+    max_bytes = MAX_VIDEO_SIZE_MB * 1024 * 1024
+    await video.seek(0)
+    try:
+        video_path, total_bytes = await asyncio.to_thread(
+            storage.save_stream,
+            video.file,
+            f"videos/{video_id}_{safe_name}",
+            4 * 1024 * 1024,
+            max_bytes,
+        )
+    except ValueError as exc:
+        raise BadRequestError(
+            f"O arquivo excede o limite máximo permitido de {MAX_VIDEO_SIZE_MB}MB."
+        ) from exc
 
-    size_mb = len(content) / (1024 * 1024)
+    size_mb = total_bytes / (1024 * 1024)
 
     # 2. Cria registro Video
     db_video = Video(
@@ -221,7 +296,7 @@ async def import_video_from_google_drive(
     download_and_process_drive_video.delay(
         job.id,
         payload.file_id,
-        payload.google_access_token,
+        encrypt_drive_token(payload.google_access_token),
         payload.target_number,
         payload.start_ts,
         payload.end_ts,
@@ -297,13 +372,7 @@ def delete_job_clips(
     session: Session = Depends(get_session),
 ):
     """Apaga todos os clipes de um job (remove o job do histórico)."""
-    job = session.get(ProcessingJob, job_id)
-    if not job:
-        raise NotFoundError("Job não encontrado.")
-
-    video = session.get(Video, job.video_id)
-    if not video or video.user_id != current_user.id:
-        raise ForbiddenError("Este job não pertence ao usuário autenticado.")
+    job, _ = _get_owned_job(session, job_id, current_user)
 
     storage = get_storage()
     clips = session.exec(select(Clip).where(Clip.job_id == job_id)).all()
@@ -319,20 +388,19 @@ def delete_job_clips(
 
 @router.post("/{job_id}/confirm")
 def confirm_player(
-    job_id: uuid.UUID, 
-    payload: ConfirmPlayerRequest, 
-    session: Session = Depends(get_session)
+    job_id: uuid.UUID,
+    payload: ConfirmPlayerRequest,
+    current_user: User = Depends(get_current_user),
+    session: Session = Depends(get_session),
 ):
-    job = session.get(ProcessingJob, job_id)
-    if not job:
-        raise NotFoundError("Job não encontrado.")
+    job, video = _get_owned_job(session, job_id, current_user)
 
-    if job.status not in ["FAST_SCAN", "WAITING_USER"]:
+    if job.status not in ["FAST_SCAN", "WAITING_USER", "DEEP_SCAN"]:
         raise ConflictError("Este job não aceita mais confirmações.")
 
-    if not job.video:
+    if not video.storage_path:
         raise DomainError("Erro interno: Vídeo não atrelado ao Job.")
- 
+
     if "_" in payload.candidate_signature:
         try:
             novo_numero = int(payload.candidate_signature.split("_")[0])
@@ -341,15 +409,55 @@ def confirm_player(
             pass
 
     job.status = "TRACKING"
+    job.updated_at = datetime.now(timezone.utc)
     session.add(job)
     session.commit()
 
     run_full_tracking.delay(
-        job.id, job.video.storage_path, job.target_number,
-        payload.candidate_signature, payload.start_ts, payload.end_ts,
+        job.id,
+        video.storage_path,
+        job.target_number,
+        payload.candidate_signature,
+        payload.start_ts,
+        payload.end_ts,
     )
 
     return {"message": "Processamento retomado.", "status": "TRACKING"}
+
+
+@router.post("/{job_id}/refine")
+def refine_search(
+    job_id: uuid.UUID,
+    payload: RefineSearchRequest | None = None,
+    current_user: User = Depends(get_current_user),
+    session: Session = Depends(get_session),
+):
+    """Dispara uma busca aprofundada (DEEP_SCAN) para localizar o jogador-alvo."""
+    job, video = _get_owned_job(session, job_id, current_user)
+
+    if job.status not in ["FAST_SCAN", "WAITING_USER"]:
+        raise ConflictError("Este job não aceita refinamento de busca no momento.")
+
+    if not video.storage_path:
+        raise DomainError("Erro interno: Vídeo não atrelado ao Job.")
+
+    start_ts = payload.start_ts if payload else 0
+    end_ts = payload.end_ts if payload else 0
+
+    job.status = "DEEP_SCAN"
+    job.updated_at = datetime.now(timezone.utc)
+    session.add(job)
+    session.commit()
+
+    run_deep_scan.delay(
+        job.id,
+        video.storage_path,
+        job.target_number,
+        start_ts,
+        end_ts,
+    )
+
+    return {"message": "Busca aprofundada iniciada.", "status": "DEEP_SCAN"}
 
 clips_router = APIRouter(prefix="/clips", tags=["clips"])
 brasilia = timezone(timedelta(hours=-3))
