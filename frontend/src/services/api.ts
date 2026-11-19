@@ -44,7 +44,7 @@ export interface RegisterBody {
 
 
 
-export type JobStatusType = "DOWNLOADING" | "PENDING" | "CONVERTING" | "FAST_SCAN" | "WAITING_USER" | "DEEP_SCAN" | "TRACKING" | "EXTRACTING" | "COMPLETED" | "ERROR";
+export type JobStatusType = "DOWNLOADING" | "PENDING" | "FAST_SCAN" | "WAITING_USER" | "DEEP_SCAN" | "TRACKING" | "EXTRACTING" | "COMPLETED" | "ERROR";
 
 export interface ClipResult {
   id: string;

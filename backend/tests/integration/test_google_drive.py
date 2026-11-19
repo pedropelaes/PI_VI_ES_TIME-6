@@ -183,12 +183,6 @@ async def test_import_google_drive_success(client: TestClient, session: Session)
     assert data["status"] == "DOWNLOADING"
     mock_task.delay.assert_called_once()
 
-    from app.core.security import decrypt_drive_token
-    delay_args = mock_task.delay.call_args.args
-    assert delay_args[2].startswith("enc:")
-    assert delay_args[2] != "ya29.valid_token"
-    assert decrypt_drive_token(delay_args[2]) == "ya29.valid_token"
-
     # Verifica persistência no banco
     job_uuid = uuid.UUID(data["job_id"])
     job = session.get(ProcessingJob, job_uuid)
@@ -239,23 +233,19 @@ def test_download_and_process_drive_video_task_success(session: Session, tmp_pat
     # Mock de storage e download
     fake_video_dest = tmp_path / "jogo.mp4"
 
-    from app.core.security import encrypt_drive_token
-    encrypted_token = encrypt_drive_token("ya29.token")
-
     with patch("app.core.storage.LocalStorageBackend.path_for", return_value=fake_video_dest):
         with patch("app.modules.clips.google_drive.download_google_drive_file_streaming", return_value=1048576) as mock_dl:
             with patch("app.modules.clips.tasks.run_fast_scan") as mock_fast_scan:
                 download_and_process_drive_video(
                     job_id=job.id,
                     file_id="drive-123",
-                    access_token=encrypted_token,
+                    access_token="ya29.token",
                     target_number=10,
                     start_ts=0,
                     end_ts=0,
                 )
 
     mock_dl.assert_called_once()
-    assert mock_dl.call_args.kwargs["access_token"] == "ya29.token"
     mock_fast_scan.delay.assert_called_once_with(job.id, str(fake_video_dest), 10, 0, 0)
 
     session.refresh(video)

@@ -26,11 +26,3 @@ celery_app = Celery(
 # Sem result backend: o progresso e os resultados são gravados no DB pelos
 # callbacks das tasks; o SSE lê o DB. Não usamos o resultado do Celery.
 celery_app.conf.task_ignore_result = True
-
-# Recicla o processo filho do worker após cada task para evitar retenção/OOM de VRAM.
-celery_app.conf.worker_max_tasks_per_child = 1
-celery_app.conf.worker_prefetch_multiplier = 1
-
-# Confirmação tardia: se o worker cair no meio da task, a mensagem volta à fila.
-celery_app.conf.task_acks_late = True
-celery_app.conf.task_reject_on_worker_lost = True

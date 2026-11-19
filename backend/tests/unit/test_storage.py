@@ -1,7 +1,4 @@
-from io import BytesIO
 from pathlib import Path
-
-import pytest
 
 from app.core.storage import LocalStorageBackend
 
@@ -33,26 +30,3 @@ def test_delete_removes_file(tmp_path: Path):
 def test_delete_missing_file_is_noop(tmp_path: Path):
     backend = LocalStorageBackend(root=tmp_path)
     backend.delete(str(tmp_path / "clips" / "nao_existe.mp4"))
-
-
-def test_save_stream_writes_chunks_and_returns_total_bytes(tmp_path: Path):
-    backend = LocalStorageBackend(root=tmp_path)
-    stream = BytesIO(b"abcdefghij")
-    stored, total_bytes = backend.save_stream(stream, "videos/chunked.mp4", chunk_size=3)
-
-    saved = Path(stored)
-    assert total_bytes == 10
-    assert saved.exists()
-    assert saved.read_bytes() == b"abcdefghij"
-    assert not saved.with_name("chunked.mp4.part").exists()
-
-
-def test_save_stream_rejects_above_max_bytes_and_cleans_part(tmp_path: Path):
-    backend = LocalStorageBackend(root=tmp_path)
-    stream = BytesIO(b"0123456789")
-
-    with pytest.raises(ValueError):
-        backend.save_stream(stream, "videos/too_big.mp4", chunk_size=4, max_bytes=6)
-
-    assert not (tmp_path / "videos" / "too_big.mp4").exists()
-    assert not (tmp_path / "videos" / "too_big.mp4.part").exists()

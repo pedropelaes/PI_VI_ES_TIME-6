@@ -26,12 +26,6 @@ export default function SelectPlayerView({ job, jobId }: SelectPlayerProps) {
     }
   }, [job.candidates, hasAutoOpened]);
 
-  useEffect(() => {
-    if (job.status === "WAITING_USER") {
-      setIsRefining(false);
-    }
-  }, [job.status]);
-
   const handleAdvance = () => { if (selectedPlayer) setIsModalOpen(true); };
 
   const handleConfirmPlayer = async () => {
@@ -39,7 +33,7 @@ export default function SelectPlayerView({ job, jobId }: SelectPlayerProps) {
           const startTs = Number(localStorage.getItem("job_start_ts") ?? 0);
           const endTs = Number(localStorage.getItem("job_end_ts") ?? 0);
 
-          const res = await fetch(`${import.meta.env.VITE_API_PATH}/jobs/${jobId}/confirm`, {
+          await fetch(`${import.meta.env.VITE_API_PATH}/jobs/${jobId}/confirm`, {
               method: "POST",
               headers: {
                   "Content-Type": "application/json",
@@ -51,9 +45,6 @@ export default function SelectPlayerView({ job, jobId }: SelectPlayerProps) {
                   end_ts: endTs,
               })
           });
-          if (!res.ok) {
-              throw new Error(`Erro ${res.status}`);
-          }
           setIsModalOpen(false);
       } catch (err) {
           console.error("Erro ao confirmar o jogador:", err);
@@ -61,32 +52,7 @@ export default function SelectPlayerView({ job, jobId }: SelectPlayerProps) {
       }
   };
 
-  const handleRefineSearch = async () => {
-      setIsRefining(true);
-      try {
-          const startTs = Number(localStorage.getItem("job_start_ts") ?? 0);
-          const endTs = Number(localStorage.getItem("job_end_ts") ?? 0);
-
-          const res = await fetch(`${import.meta.env.VITE_API_PATH}/jobs/${jobId}/refine`, {
-              method: "POST",
-              headers: {
-                  "Content-Type": "application/json",
-                  "Authorization": `Bearer ${getToken()}`,
-              },
-              body: JSON.stringify({
-                  start_ts: startTs,
-                  end_ts: endTs,
-              }),
-          });
-          if (!res.ok) {
-              throw new Error(`Erro ${res.status}`);
-          }
-      } catch (err) {
-          console.error("Erro ao iniciar busca aprofundada:", err);
-          setIsRefining(false);
-          alert("Falha ao iniciar busca aprofundada. Tente novamente.");
-      }
-  };
+  const handleRefineSearch = async () => { setIsRefining(true); };
 
   const selectedCandidateData = job.candidates?.find(c => c.id === selectedPlayer);
   const candidatesList = job.candidates || [];
@@ -97,14 +63,12 @@ export default function SelectPlayerView({ job, jobId }: SelectPlayerProps) {
 
         <div className="processing-header">
           <h2 className="processing-title">
-            {job.status === "DEEP_SCAN" || isRefining
-              ? "Realizando busca aprofundada no vídeo..."
-              : job.status === "FAST_SCAN"
-                ? "Analisando jogadores em campo..."
-                : `Buscando o jogador nº ${job.candidates?.[0]?.number || "..."}`}
+            {job.status === "FAST_SCAN" || isRefining
+              ? "Analisando jogadores em campo..."
+              : `Buscando o jogador nº ${job.candidates?.[0]?.number || "..."}`}
           </h2>
           <div className="select-progress-container">
-            <div className={`select-progress-fill ${job.status === "WAITING_USER" && !isRefining ? "finished" : "animating"}`} />
+            <div className={`select-progress-fill ${job.status === "WAITING_USER" ? "finished" : "animating"}`} />
           </div>
         </div>
 
@@ -139,7 +103,7 @@ export default function SelectPlayerView({ job, jobId }: SelectPlayerProps) {
           <button
             className="btn btn-secondary"
             onClick={handleRefineSearch}
-            disabled={job.status !== "WAITING_USER" || isRefining}
+            disabled={job.status !== "WAITING_USER"}
           >
             Meu jogador não está aqui
           </button>
