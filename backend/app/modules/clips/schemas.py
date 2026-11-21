@@ -7,6 +7,11 @@ class ConfirmPlayerRequest(BaseModel):
     end_ts: int = 0
 
 
+class RefineSearchRequest(BaseModel):
+    start_ts: int = 0
+    end_ts: int = 0
+
+
 class GoogleDriveImportRequest(BaseModel):
     file_id: str
     google_access_token: str

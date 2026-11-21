@@ -8,6 +8,10 @@ def test_celery_app_broker_is_redis():
     # Sem result backend: resultado vai pro DB, não pro Celery.
     assert celery_app.conf.result_backend in (None, "")
     assert celery_app.conf.task_ignore_result is True
+    assert celery_app.conf.worker_max_tasks_per_child == 1
+    assert celery_app.conf.worker_prefetch_multiplier == 1
+    assert celery_app.conf.task_acks_late is True
+    assert celery_app.conf.task_reject_on_worker_lost is True
 
 
 def test_ml_tasks_are_registered():
@@ -16,7 +20,9 @@ def test_ml_tasks_are_registered():
     import app.modules.clips.tasks  # noqa: F401
 
     registered = set(celery_app.tasks.keys())
+    assert "app.modules.clips.tasks.download_and_process_drive_video" in registered
     assert "app.modules.clips.tasks.run_fast_scan" in registered
+    assert "app.modules.clips.tasks.run_deep_scan" in registered
     assert "app.modules.clips.tasks.run_full_tracking" in registered
 
 
@@ -61,3 +67,40 @@ def test_worker_entrypoint_resolves_all_mappers():
     )
 
     assert result.returncode == 0, result.stderr[-800:]
+
+
+def test_ensure_h264_triggers_on_converting_callback(tmp_path):
+    from unittest.mock import patch
+    from app.modules.clips.video_utils import ensure_h264
+
+    src = tmp_path / "sample.webm"
+    src.write_bytes(b"av1-bytes")
+    converted = tmp_path / "sample_h264.mp4"
+    events = []
+
+    def fake_run(cmd, check=False):
+        converted.write_bytes(b"h264-bytes")
+
+    with patch("app.modules.clips.video_utils.get_video_codec", return_value="av1"):
+        with patch("app.modules.clips.video_utils.subprocess.run", side_effect=fake_run):
+            out = ensure_h264(src, on_converting=lambda: events.append("CONVERTING"))
+
+    assert events == ["CONVERTING"]
+    assert out == converted
+    assert not src.exists()
+    assert converted.exists()
+
+
+def test_ensure_h264_skips_callback_when_already_h264(tmp_path):
+    from unittest.mock import patch
+    from app.modules.clips.video_utils import ensure_h264
+
+    src = tmp_path / "sample.mp4"
+    src.write_bytes(b"h264-bytes")
+    events = []
+
+    with patch("app.modules.clips.video_utils.get_video_codec", return_value="h264"):
+        out = ensure_h264(src, on_converting=lambda: events.append("CONVERTING"))
+
+    assert events == []
+    assert out == src

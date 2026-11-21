@@ -39,7 +39,6 @@ services:
     volumes:
       - ./backend:/app
       - ./ml:/app/ml
-      - ./backend/uploads:/app/uploads
     depends_on:
       - redis
     # Descomente o bloco abaixo em máquinas com GPU NVIDIA:
