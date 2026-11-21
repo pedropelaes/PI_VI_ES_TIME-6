@@ -269,10 +269,24 @@
   flex-direction: column;
   align-items: center;
   gap: 0.4rem;
-  color: rgba(255, 255, 255, 0.25);
+  color: rgba(255, 255, 255, 0.35);
   font-family: 'DM Sans', sans-serif;
   font-size: 0.78rem;
-  animation: fadeUp 0.6s 0.5s ease both;
+  text-decoration: none;
+  white-space: nowrap;
+  user-select: none;
+  cursor: pointer;
+  z-index: 10;
+  animation: fadeUpCenter 0.6s 0.5s ease both;
+  transition: color 0.2s ease, opacity 0.2s ease;
+}
+
+.hero-scroll-hint:hover {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.hero-scroll-hint:hover .scroll-mouse {
+  border-color: rgba(255, 255, 255, 0.45);
 }
 
 .scroll-mouse {
@@ -283,6 +297,7 @@
   display: flex;
   justify-content: center;
   padding-top: 6px;
+  transition: border-color 0.2s ease;
 }
 
 .scroll-wheel {
@@ -296,6 +311,11 @@
 @keyframes scrollWheel {
   0% { transform: translateY(0); opacity: 1; }
   100% { transform: translateY(8px); opacity: 0; }
+}
+
+@keyframes fadeUpCenter {
+  from { opacity: 0; transform: translate(-50%, 20px); }
+  to   { opacity: 1; transform: translate(-50%, 0); }
 }
 
 /* ══════════════════════════════════════════
@@ -692,6 +712,8 @@
 @media (max-width: 768px) {
   .landing-nav { padding: 0 1.25rem; }
   .nav-links { display: none; }
+  .hero { padding: 7rem 1.25rem 5.5rem; }
+  .hero-scroll-hint { bottom: 1.25rem; }
   .steps-grid { grid-template-columns: 1fr; }
   .features-grid { grid-template-columns: 1fr; }
   .about-inner { grid-template-columns: 1fr; gap: 2.5rem; }

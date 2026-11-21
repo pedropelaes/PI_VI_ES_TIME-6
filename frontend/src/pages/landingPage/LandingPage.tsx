@@ -182,12 +182,16 @@ export default function LandingPage() {
           </div>
         </div>
 
-        <div className="hero-scroll-hint">
+        <a
+          href="#como-funciona"
+          className="hero-scroll-hint"
+          aria-label="Rolar para a seção como funciona"
+        >
           <div className="scroll-mouse">
             <div className="scroll-wheel" />
           </div>
           <span>Role para baixo</span>
-        </div>
+        </a>
       </section>
 
       <div className="stats-bar">
