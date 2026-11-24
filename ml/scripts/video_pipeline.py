@@ -215,7 +215,7 @@ class VideoPipeline:
                 target_num_pass = target_number if target_number is not None else -1
                 resultados_lote = self.jersey_reader.read_batch(crops_lote, target_num_pass)
 
-                # Cross-check com EasyOCR apenas nos crops ambíguos/vazios
+                # Cross-check com EasyOCR apenas nos crops de baixa confiança do YOLO
                 resultados_lote, sources_lote = self._apply_ocr_fallback(
                     crops_lote, resultados_lote, target_num_pass
                 )
@@ -694,7 +694,7 @@ class VideoPipeline:
         target_num_pass = target_number if target_number is not None else -1
         resultados_lote = self.jersey_reader.read_batch(crops_lote, target_num_pass)
 
-        # 2.5. Cross-check com EasyOCR apenas nos crops ambíguos/vazios
+        # 2.5. Cross-check com EasyOCR apenas nos crops de baixa confiança do YOLO
         resultados_lote, sources_lote = self._apply_ocr_fallback(
             crops_lote, resultados_lote, target_num_pass
         )
@@ -733,9 +733,9 @@ class VideoPipeline:
     ) -> tuple[list[list[tuple[int, float]]], list[str]]:
         """
         Roda o EasyOCR (TraditionalOcrReader) apenas nos crops cujo resultado
-        do YOLO dispara `needs_ocr_fallback` (leitura vazia, ou dígito
-        ambíguo — 2/6/8 — com baixa confiança), e funde as duas leituras
-        via `merge_jersey_reading`.
+        do YOLO dispara `needs_ocr_fallback` (leitura de baixa confiança por
+        padrão, ou vazia se `FALLBACK_ON_EMPTY_YOLO=True`), e funde as duas
+        leituras via `merge_jersey_reading`.
 
         Retorna:
           - resultados no MESMO formato de JerseyReader.read_batch (já com
@@ -743,8 +743,8 @@ class VideoPipeline:
             soft-voting entre o número certo e o errado);
           - lista paralela de fontes ("yolo" | "ocr" | "yolo+ocr" | "none").
 
-        Custo: proporcional ao número de crops ambíguos/vazios, não ao
-        tamanho total do lote — se nenhum crop disparar a condição, o
+        Custo: proporcional ao número de crops de baixa confiança do YOLO, não
+        ao tamanho total do lote — se nenhum crop disparar a condição, o
         EasyOCR nunca chega a ser chamado.
         """
         sources = ["yolo" if r else "none" for r in yolo_results]
