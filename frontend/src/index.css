@@ -128,6 +128,18 @@ html, body {
   border-color: var(--color-brand-light); 
   box-shadow: 0 0 0 3px rgba(40, 114, 161, 0.15);
 }
+
+/* Chrome pinta o campo preenchido automaticamente de azul claro e o ícone claro some. */
+.input-base:-webkit-autofill,
+.input-base:-webkit-autofill:hover,
+.input-base:-webkit-autofill:focus,
+.input-base:-webkit-autofill:active {
+  -webkit-text-fill-color: #ffffff;
+  -webkit-box-shadow: 0 0 0 1000px #1a2233 inset;
+  box-shadow: 0 0 0 1000px #1a2233 inset;
+  caret-color: #ffffff;
+  transition: background-color 9999s ease-out;
+}
  
 .input-icon {
   position: absolute;

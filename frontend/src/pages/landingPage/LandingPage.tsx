@@ -14,12 +14,15 @@ import {
   X,
   Mail,
   LogOut,
+  Pencil,
+  User,
 } from "lucide-react";
 import "./LandingPage.css";
 import logo from "../../assets/logo-smartscout.png";
 import { isAuthenticated, getUser, clearSession } from "../../services/api";
 import { useMyProfile } from "../../features/profiles/hooks/useMyProfile";
 import { resolveAvatarUrl } from "../../features/profiles/mappers";
+import { getProfilePath, PROFILE_EDIT_PATH } from "../../shared/lib/profileRoutes";
 
 export default function LandingPage() {
   const navigate = useNavigate();
@@ -43,6 +46,11 @@ export default function LandingPage() {
     clearSession();
     setShowProfileModal(false);
     navigate(0);
+  }
+
+  function irPara(caminho: string) {
+    setShowProfileModal(false);
+    navigate(caminho);
   }
 
   useEffect(() => {
@@ -126,7 +134,16 @@ export default function LandingPage() {
               </div>
             </div>
 
-            <div className="landing-profile-actions">
+              <div className="landing-profile-actions">
+              <button
+                className="landing-btn-analyze"
+                onClick={() => user && irPara(getProfilePath(user))}
+              >
+                <User size={16} /> Ver meu perfil
+              </button>
+              <button className="landing-btn-close" onClick={() => irPara(PROFILE_EDIT_PATH)}>
+                <Pencil size={16} /> Editar perfil
+              </button>
               <Link to="/app" className="landing-btn-analyze" onClick={() => setShowProfileModal(false)}>
                 Iniciar análise <ArrowRight size={16} />
               </Link>

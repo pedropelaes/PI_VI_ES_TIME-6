@@ -48,13 +48,12 @@ export type JobStatusType = "DOWNLOADING" | "PENDING" | "CONVERTING" | "FAST_SCA
 
 export interface ClipResult {
   id: string;
-  // A retencao faz soft delete: zera o storage_path e marca status=DELETED, entao
-  // o backend devolve file_url nulo para clipe expirado.
   file_url: string | null;
   status: string;
   start_timestamp: number;
   end_timestamp: number;
   duration: number;
+  published_at?: string | null;
 }
 
 export type Candidate = {

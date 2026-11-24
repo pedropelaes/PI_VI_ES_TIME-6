@@ -175,6 +175,7 @@ def stream_job_status(
                             "end_timestamp": c.end_timestamp,
                             "duration": round(c.end_timestamp - c.start_timestamp, 2),
                             "status": c.status,
+                            "published_at": c.published_at.isoformat() if c.published_at else None,
                         }
                         for c in clips
                     ]
