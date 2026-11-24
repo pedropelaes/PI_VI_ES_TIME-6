@@ -5,6 +5,9 @@ O `StorageBackend` é substituído por um enraizado em `tmp_path`. Sem isso cada
 da suíte deixaria arquivos em `backend/uploads/avatars/`, e o teste de "trocar avatar
 apaga o anterior" passaria a depender do lixo da rodada passada.
 """
+import re
+from pathlib import Path
+
 import pytest
 from sqlmodel import select
 
@@ -20,6 +23,14 @@ JPEG = b"\xff\xd8\xff\xe0" + b"0" * 64
 PNG = b"\x89PNG\r\n\x1a\n" + b"0" * 64
 
 DOIS_MB = 2 * 1024 * 1024
+
+
+def _arquivo_de(uploads: Path, url: str) -> Path:
+    return uploads / url.removeprefix("/uploads/")
+
+
+def _url_valida(user_id, ext: str, url: str) -> bool:
+    return bool(re.fullmatch(rf"/uploads/avatars/{user_id}_[0-9a-f]{{8}}\.{ext}", url))
 
 
 def _envio(conteudo: bytes, nome: str, tipo: str) -> dict:
@@ -106,8 +117,9 @@ def test_upload_grava_o_arquivo_e_devolve_o_perfil(
     assert resposta.status_code == 200
     corpo = resposta.json()
     assert corpo["role"] == "ATHLETE"
-    assert corpo["profile"]["avatar_url"] == f"/uploads/avatars/{usuario.id}.jpg"
-    assert (uploads / "avatars" / f"{usuario.id}.jpg").read_bytes() == JPEG
+    url = corpo["profile"]["avatar_url"]
+    assert _url_valida(usuario.id, "jpg", url)
+    assert _arquivo_de(uploads, url).read_bytes() == JPEG
 
 
 def test_upload_devolve_birth_date_no_perfil_de_atleta(
@@ -129,14 +141,16 @@ def test_upload_devolve_birth_date_no_perfil_de_atleta(
 
 def test_upload_reflete_no_get_me_seguinte(client, auth_headers, usuario, perfil, uploads):
     """Prova o commit do handler: a leitura seguinte usa outra Session (ver conftest)."""
-    client.post(
+    envio = client.post(
         "/api/v1/profiles/me/avatar",
         headers=auth_headers,
         files=_envio(PNG, "foto.png", "image/png"),
     )
+    url = envio.json()["profile"]["avatar_url"]
 
     corpo = client.get("/api/v1/profiles/me", headers=auth_headers).json()
-    assert corpo["profile"]["avatar_url"] == f"/uploads/avatars/{usuario.id}.png"
+    assert _url_valida(usuario.id, "png", url)
+    assert corpo["profile"]["avatar_url"] == url
 
 
 def test_upload_de_tipo_invalido_devolve_422(client, auth_headers, perfil, uploads):
@@ -172,7 +186,8 @@ def test_upload_no_limite_de_2mb_e_aceito(client, auth_headers, usuario, perfil,
     )
 
     assert resposta.status_code == 200
-    assert (uploads / "avatars" / f"{usuario.id}.jpg").stat().st_size == DOIS_MB
+    url = resposta.json()["profile"]["avatar_url"]
+    assert _arquivo_de(uploads, url).stat().st_size == DOIS_MB
 
 
 def test_upload_sem_jwt_devolve_401(client, perfil, uploads):
@@ -204,12 +219,12 @@ def test_upload_sem_perfil_do_papel_devolve_404_e_nao_grava_nada(
 def test_trocar_avatar_apaga_o_arquivo_anterior(
     client, auth_headers, usuario, perfil, uploads
 ):
-    client.post(
+    primeiro = client.post(
         "/api/v1/profiles/me/avatar",
         headers=auth_headers,
         files=_envio(PNG, "antiga.png", "image/png"),
     )
-    anterior = uploads / "avatars" / f"{usuario.id}.png"
+    anterior = _arquivo_de(uploads, primeiro.json()["profile"]["avatar_url"])
     assert anterior.exists()
 
     resposta = client.post(
@@ -219,7 +234,7 @@ def test_trocar_avatar_apaga_o_arquivo_anterior(
     )
 
     assert resposta.status_code == 200
-    novo = uploads / "avatars" / f"{usuario.id}.jpg"
+    novo = _arquivo_de(uploads, resposta.json()["profile"]["avatar_url"])
     assert novo.read_bytes() == JPEG
     assert not anterior.exists(), "o avatar antigo ficou órfão no disco"
 
@@ -228,22 +243,26 @@ def test_trocar_avatar_pela_mesma_extensao_mantem_o_arquivo_novo(
     client, auth_headers, usuario, perfil, uploads
 ):
     """
-    Mesma extensão reaproveita a chave: o `delete` do anterior apagaria o arquivo
-    recém-gravado se não olhasse que o caminho não mudou.
+    Mesma extensão gera uma nova chave com token distinto: o arquivo novo permanece
+    íntegro e o anterior é removido.
     """
-    client.post(
+    primeiro = client.post(
         "/api/v1/profiles/me/avatar",
         headers=auth_headers,
         files=_envio(JPEG, "antiga.jpg", "image/jpeg"),
     )
-    client.post(
+    anterior = _arquivo_de(uploads, primeiro.json()["profile"]["avatar_url"])
+
+    segundo = client.post(
         "/api/v1/profiles/me/avatar",
         headers=auth_headers,
         files=_envio(b"\xff\xd8\xff\xe0nova", "nova.jpg", "image/jpeg"),
     )
 
-    arquivo = uploads / "avatars" / f"{usuario.id}.jpg"
+    arquivo = _arquivo_de(uploads, segundo.json()["profile"]["avatar_url"])
+    assert arquivo != anterior
     assert arquivo.read_bytes() == b"\xff\xd8\xff\xe0nova"
+    assert not anterior.exists()
 
 
 # ---------------------------------------------------------------------------
@@ -253,12 +272,12 @@ def test_trocar_avatar_pela_mesma_extensao_mantem_o_arquivo_novo(
 def test_delete_remove_o_arquivo_e_zera_o_campo(
     client, auth_headers, usuario, perfil, uploads
 ):
-    client.post(
+    envio = client.post(
         "/api/v1/profiles/me/avatar",
         headers=auth_headers,
         files=_envio(JPEG, "foto.jpg", "image/jpeg"),
     )
-    arquivo = uploads / "avatars" / f"{usuario.id}.jpg"
+    arquivo = _arquivo_de(uploads, envio.json()["profile"]["avatar_url"])
     assert arquivo.exists()
 
     resposta = client.delete("/api/v1/profiles/me/avatar", headers=auth_headers)
@@ -306,7 +325,8 @@ def test_upload_de_scout_grava_no_perfil_de_scout(
     gravado = session.exec(
         select(ScoutProfile).where(ScoutProfile.user_id == usuario_scout.id)
     ).one()
-    assert gravado.avatar_path == f"/uploads/avatars/{usuario_scout.id}.png"
+    assert _url_valida(usuario_scout.id, "png", gravado.avatar_path)
+    assert gravado.avatar_path == resposta.json()["profile"]["avatar_url"]
 
 
 def test_upload_de_clube_grava_no_perfil_de_clube(
@@ -325,7 +345,8 @@ def test_upload_de_clube_grava_no_perfil_de_clube(
     gravado = session.exec(
         select(ClubProfile).where(ClubProfile.user_id == usuario_clube.id)
     ).one()
-    assert gravado.avatar_path == f"/uploads/avatars/{usuario_clube.id}.jpg"
+    assert _url_valida(usuario_clube.id, "jpg", gravado.avatar_path)
+    assert gravado.avatar_path == resposta.json()["profile"]["avatar_url"]
 
 
 def test_upload_de_scout_nao_toca_no_perfil_do_atleta(

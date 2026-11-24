@@ -4,6 +4,7 @@ Regras do avatar sem HTTP e sem banco: só o `StorageBackend` em `tmp_path`.
 Cobre os caminhos que a suíte de integração não alcança -- em especial valores de
 `avatar_path` que não vieram deste endpoint, já que a coluna existe desde antes dele.
 """
+import re
 import uuid
 
 import pytest
@@ -23,8 +24,8 @@ def test_salvar_devolve_a_url_publica_e_grava_pela_chave(avatares, tmp_path):
 
     url = avatares.salvar(user_id, b"bytes", "image/webp")
 
-    assert url == f"/uploads/avatars/{user_id}.webp"
-    assert (tmp_path / "avatars" / f"{user_id}.webp").read_bytes() == b"bytes"
+    assert re.fullmatch(rf"/uploads/avatars/{user_id}_[0-9a-f]{{8}}\.webp", url)
+    assert (tmp_path / url.removeprefix("/uploads/")).read_bytes() == b"bytes"
 
 
 def test_content_type_com_parametro_e_aceito(avatares):
@@ -51,7 +52,7 @@ def test_remover_apaga_o_arquivo_da_url(avatares, tmp_path):
 
     avatares.remover(url)
 
-    assert not (tmp_path / "avatars" / f"{user_id}.png").exists()
+    assert not (tmp_path / url.removeprefix("/uploads/")).exists()
 
 
 def test_remover_sem_avatar_e_no_op(avatares):

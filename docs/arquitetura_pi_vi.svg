@@ -1,0 +1,456 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2220" height="1440" viewBox="0 0 2220 1440">
+  <defs>
+    <filter id="shadow" x="-3%" y="-3%" width="108%" height="108%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3.5" flood-color="#0F172A" flood-opacity="0.07"/>
+    </filter>
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#F8FAFC"/>
+      <stop offset="100%" stop-color="#F1F5F9"/>
+    </linearGradient>
+    <pattern id="dots" width="24" height="24" patternUnits="userSpaceOnUse">
+      <circle cx="2" cy="2" r="0.9" fill="#CBD5E1" opacity="0.5"/>
+    </pattern>
+    <marker id="arr-blue" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 1 1.5 L 9 5 L 1 8.5 z" fill="#2563EB"/></marker><marker id="arr-teal" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 1 1.5 L 9 5 L 1 8.5 z" fill="#0D9488"/></marker><marker id="arr-purple" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 1 1.5 L 9 5 L 1 8.5 z" fill="#7C3AED"/></marker><marker id="arr-green" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 1 1.5 L 9 5 L 1 8.5 z" fill="#15803D"/></marker><marker id="arr-orange" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 1 1.5 L 9 5 L 1 8.5 z" fill="#EA580C"/></marker><marker id="arr-amber" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 1 1.5 L 9 5 L 1 8.5 z" fill="#D97706"/></marker><marker id="arr-rose" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 1 1.5 L 9 5 L 1 8.5 z" fill="#BE123C"/></marker><marker id="arr-slate" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 1 1.5 L 9 5 L 1 8.5 z" fill="#475569"/></marker>
+  </defs>
+
+  <rect width="2220" height="1440" fill="url(#bgGrad)"/>
+  <rect width="2220" height="1440" fill="url(#dots)"/>
+
+  <!-- HEADER BANNER -->
+  <rect x="0" y="0" width="2220" height="86" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1"/>
+  <rect x="0" y="0" width="9" height="86" fill="#1E3A8A"/>
+  <text x="34" y="38" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="23" font-weight="800" fill="#0F172A">
+    Arquitetura do Sistema SmartScout — Evolução PI V → PI VI
+  </text>
+  <text x="34" y="63" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="13" fill="#475569">
+    React 19 + TypeScript • FastAPI Modular por Domínio • Redis + Celery Worker (GPU/ML) • PostgreSQL (Alembic) • SSE &amp; WebSocket
+  </text>
+
+<text x="1210" y="31" font-family="Segoe UI, sans-serif" font-size="11.5" font-weight="700" fill="#334155">PROTOCOLOS / FLUXOS:</text>
+<line x1="1362" y1="27" x2="1384" y2="27" stroke="#2563EB" stroke-width="2.4"/>
+<circle cx="1384" cy="27" r="2.8" fill="#2563EB"/>
+<text x="1392" y="31" font-family="Segoe UI, sans-serif" font-size="11" font-weight="600" fill="#334155">REST / JWT</text>
+<line x1="1471.0" y1="27" x2="1493.0" y2="27" stroke="#0D9488" stroke-width="2.4" stroke-dasharray="4,3"/>
+<circle cx="1493.0" cy="27" r="2.8" fill="#0D9488"/>
+<text x="1501.0" y="31" font-family="Segoe UI, sans-serif" font-size="11" font-weight="600" fill="#334155">Tempo Real (SSE / WS)</text>
+<line x1="1649.3" y1="27" x2="1671.3" y2="27" stroke="#7C3AED" stroke-width="2.4"/>
+<circle cx="1671.3" cy="27" r="2.8" fill="#7C3AED"/>
+<text x="1679.3" y="31" font-family="Segoe UI, sans-serif" font-size="11" font-weight="600" fill="#334155">Fila Celery / Redis</text>
+<line x1="1815.0" y1="27" x2="1837.0" y2="27" stroke="#15803D" stroke-width="2.4"/>
+<circle cx="1837.0" cy="27" r="2.8" fill="#15803D"/>
+<text x="1845.0" y="31" font-family="Segoe UI, sans-serif" font-size="11" font-weight="600" fill="#334155">PostgreSQL</text>
+<line x1="1924.0" y1="27" x2="1946.0" y2="27" stroke="#EA580C" stroke-width="2.4"/>
+<circle cx="1946.0" cy="27" r="2.8" fill="#EA580C"/>
+<text x="1954.0" y="31" font-family="Segoe UI, sans-serif" font-size="11" font-weight="600" fill="#334155">ML / Storage</text>
+<line x1="2045.6" y1="27" x2="2067.6" y2="27" stroke="#BE123C" stroke-width="2.4" stroke-dasharray="4,3"/>
+<circle cx="2067.6" cy="27" r="2.8" fill="#BE123C"/>
+<text x="2075.6" y="31" font-family="Segoe UI, sans-serif" font-size="11" font-weight="600" fill="#334155">APIs Externas</text>
+<text x="1210" y="61" font-family="Segoe UI, sans-serif" font-size="11.5" font-weight="700" fill="#334155">DESTAQUES PI VI:</text>
+<g><rect x="1330.0" y="49.0" width="69.0" height="16" rx="4" fill="#EDE9FE" stroke="#C4B5FD" stroke-width="0.9"/><text x="1364.5" y="60.2" text-anchor="middle" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="8.8" font-weight="700" fill="#6D28D9">NOVO PI VI</text></g>
+<text x="1408" y="61" font-family="Segoe UI, sans-serif" font-size="11" fill="#475569">Módulos sociais (Feed, Perfis, Oportunidades, Chat WS), desacoplamento Celery/Redis, Google Drive, Resend e Alembic</text>
+
+  <g filter="url(#shadow)">
+    <rect x="285" y="106" width="1900" height="430" rx="12" fill="#FFFFFF" stroke="#93C5FD" stroke-width="1.8" stroke-dasharray="8,5"/>
+    <rect x="285" y="106" width="1900" height="36" rx="12" fill="#EFF6FF"/>
+    <rect x="285" y="130" width="1900" height="12" fill="#EFF6FF"/>
+    <line x1="285" y1="142" x2="2185" y2="142" stroke="#BFDBFE" stroke-width="1.2"/>
+    <text x="306" y="129" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="14.5" font-weight="800" fill="#1E3A8A">
+      Camada de Interface — Frontend (React 19 / TypeScript / Vite)
+    </text>
+  </g>
+
+<g><rect x="2048.7" y="116.0" width="120.3" height="16" rx="4" fill="#DBEAFE" stroke="#93C5FD" stroke-width="0.9"/><text x="2108.8" y="127.2" text-anchor="middle" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="8.8" font-weight="700" fill="#1E40AF">Container web :5173</text></g>
+
+    <rect x="305" y="156" width="570" height="264" rx="10" fill="#FFF7ED" stroke="#FDBA74" stroke-width="1.3"/>
+    <text x="321" y="177" font-family="Segoe UI, sans-serif" font-size="11.5" font-weight="800" fill="#9A3412">APP CORE — PIPELINE DE VÍDEO &amp; CLIPES (PrivateRoute)</text>
+
+<rect x="321" y="190" width="538" height="40" rx="7" fill="#FFFFFF" stroke="#FDBA74" stroke-width="1.3"/>
+<text x="332" y="208" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="11.5" font-weight="700" fill="#7C2D12">InputPage (input.tsx)</text>
+<text x="332" y="223" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="10.1" fill="#475569">Upload local, recorte (trim) e Google Drive Picker (useGoogleDrivePicker)</text>
+<g><rect x="799.1" y="196.0" width="51.9" height="16" rx="4" fill="#FEF3C7" stroke="#FCD34D" stroke-width="0.9"/><text x="825.1" y="207.2" text-anchor="middle" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="8.8" font-weight="700" fill="#B45309">+ Drive</text></g>
+<rect x="321" y="236" width="538" height="40" rx="7" fill="#FFFFFF" stroke="#FDBA74" stroke-width="1.3"/>
+<text x="332" y="254" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="11.5" font-weight="700" fill="#7C2D12">JobContainerPage.tsx</text>
+<text x="332" y="269" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="10.1" fill="#475569">Monitoramento de status em tempo real via SSE (substitui polling)</text>
+<g><rect x="821.9" y="242.0" width="29.1" height="16" rx="4" fill="#CCFBF1" stroke="#5EEAD4" stroke-width="0.9"/><text x="836.4" y="253.2" text-anchor="middle" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="8.8" font-weight="700" fill="#0F766E">SSE</text></g>
+<rect x="321" y="282" width="538" height="40" rx="7" fill="#FFFFFF" stroke="#FDBA74" stroke-width="1.3"/>
+<text x="332" y="300" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="11.5" font-weight="700" fill="#7C2D12">SelectPlayerPage.tsx</text>
+<text x="332" y="315" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="10.1" fill="#475569">Validação HITL de candidatos detectados + botão Deep Scan (Refine)</text>
+<g><rect x="793.4" y="288.0" width="57.6" height="16" rx="4" fill="#FEF3C7" stroke="#FCD34D" stroke-width="0.9"/><text x="822.2" y="299.2" text-anchor="middle" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="8.8" font-weight="700" fill="#B45309">+ Refine</text></g>
+<rect x="321" y="328" width="538" height="40" rx="7" fill="#FFFFFF" stroke="#FDBA74" stroke-width="1.3"/>
+<text x="332" y="346" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="11.5" font-weight="700" fill="#7C2D12">ProcessingClips.tsx</text>
+<text x="332" y="361" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="10.1" fill="#475569">Exibição progressiva de clipes conforme extração da IA</text>
+<rect x="321" y="374" width="538" height="38" rx="7" fill="#FFFFFF" stroke="#FDBA74" stroke-width="1.3"/>
+<text x="332" y="392" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="11.5" font-weight="700" fill="#7C2D12">ClipsHistory.tsx</text>
+<text x="332" y="407" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="10.1" fill="#475569">Histórico, download em lote e publicação no Feed (TEMPORARY → PUBLISHED)</text>
+<g><rect x="782.0" y="380.0" width="69.0" height="16" rx="4" fill="#FEF3C7" stroke="#FCD34D" stroke-width="0.9"/><text x="816.5" y="391.2" text-anchor="middle" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="8.8" font-weight="700" fill="#B45309">+ Publicar</text></g>
+
+    <rect x="895" y="156" width="375" height="264" rx="10" fill="#F0FDF4" stroke="#86EFAC" stroke-width="1.3"/>
+    <text x="911" y="177" font-family="Segoe UI, sans-serif" font-size="11.5" font-weight="800" fill="#166534">MÓDULO PÚBLICO (ROTAS ABERTAS)</text>
+
+<rect x="911" y="190" width="343" height="44" rx="7" fill="#FFFFFF" stroke="#86EFAC" stroke-width="1.3"/>
+<text x="922" y="208" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="11.5" font-weight="700" fill="#14532D">LandingPage.tsx</text>
+<text x="922" y="223" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="10.1" fill="#475569">Apresentação da plataforma e CTA</text>
+<rect x="911" y="244" width="343" height="44" rx="7" fill="#FFFFFF" stroke="#86EFAC" stroke-width="1.3"/>
+<text x="922" y="262" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="11.5" font-weight="700" fill="#14532D">Login.tsx</text>
+<text x="922" y="277" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="10.1" fill="#475569">Autenticação de usuários (JWT)</text>
+<rect x="911" y="298" width="343" height="44" rx="7" fill="#FFFFFF" stroke="#86EFAC" stroke-width="1.3"/>
+<text x="922" y="316" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="11.5" font-weight="700" fill="#14532D">SignUp.tsx</text>
+<text x="922" y="331" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="10.1" fill="#475569">Cadastro multi-papel: Atleta, Scout ou Clube</text>
+<g><rect x="1205.5" y="304.0" width="40.5" height="16" rx="4" fill="#DCFCE7" stroke="#86EFAC" stroke-width="0.9"/><text x="1225.8" y="315.2" text-anchor="middle" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="8.8" font-weight="700" fill="#15803D">PI VI</text></g>
+<rect x="911" y="352" width="343" height="52" rx="7" fill="#FFFFFF" stroke="#86EFAC" stroke-width="1.3"/>
+<text x="922" y="370" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="11.5" font-weight="700" fill="#14532D">resetPassword.tsx &amp; NewPassword.tsx</text>
+<text x="922" y="385" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="10.1" fill="#475569">Solicitação e redefinição de senha por token</text>
+
+    <rect x="1290" y="156" width="875" height="264" rx="10" fill="#F5F3FF" stroke="#C4B5FD" stroke-width="1.4"/>
+    <text x="1308" y="177" font-family="Segoe UI, sans-serif" font-size="11.5" font-weight="800" fill="#5B21B6">MÓDULOS SOCIAIS &amp; PLATAFORMA (features/* + RoleRoute)</text>
+
+<g><rect x="2083.0" y="165.0" width="69.0" height="16" rx="4" fill="#EDE9FE" stroke="#A78BFA" stroke-width="0.9"/><text x="2117.5" y="176.2" text-anchor="middle" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="8.8" font-weight="700" fill="#6D28D9">NOVO PI VI</text></g>
+<rect x="1308" y="192" width="413" height="102" rx="7" fill="#FFFFFF" stroke="#C4B5FD" stroke-width="1.3"/>
+<text x="1319" y="210" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="11.5" font-weight="700" fill="#4C1D95">Feed &amp; Descoberta (features/feed)</text>
+<text x="1319" y="225" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="10.1" fill="#475569">feed.tsx • useFeed • useToggleLike</text>
+<text x="1319" y="246" font-family="Segoe UI, sans-serif" font-size="10" fill="#475569">• Feed paginado de clipes publicados por atletas</text>
+<text x="1319" y="262" font-family="Segoe UI, sans-serif" font-size="10" fill="#475569">• Filtros por posição/atleta e curtidas (clip_likes)</text>
+<text x="1319" y="278" font-family="Segoe UI, sans-serif" font-size="10" fill="#475569">• Integração direta com perfis públicos</text>
+<rect x="1736" y="192" width="413" height="102" rx="7" fill="#FFFFFF" stroke="#C4B5FD" stroke-width="1.3"/>
+<text x="1747" y="210" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="11.5" font-weight="700" fill="#4C1D95">Perfis Multi-Papel (features/profiles)</text>
+<text x="1747" y="225" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="10.1" fill="#475569">PublicProfile • ScoutProfile • ClubProfile • EditProfile</text>
+<text x="1747" y="246" font-family="Segoe UI, sans-serif" font-size="10" fill="#475569">• Páginas dedicadas: Atleta, Scout e Clube</text>
+<text x="1747" y="262" font-family="Segoe UI, sans-serif" font-size="10" fill="#475569">• Edição de perfil, histórico de clubes e vitrine de clipes</text>
+<text x="1747" y="278" font-family="Segoe UI, sans-serif" font-size="10" fill="#475569">• AvatarUploader + AvatarCropModal (recorte de imagem)</text>
+<rect x="1308" y="306" width="413" height="102" rx="7" fill="#FFFFFF" stroke="#C4B5FD" stroke-width="1.3"/>
+<text x="1319" y="324" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="11.5" font-weight="700" fill="#4C1D95">Oportunidades / Peneiras (features/opportunities)</text>
+<text x="1319" y="339" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="10.1" fill="#475569">Opportunities • Detail • Form • MyOpportunities • MyApplications</text>
+<text x="1319" y="360" font-family="Segoe UI, sans-serif" font-size="10" fill="#475569">• Clubes e Scouts criam, editam e gerenciam peneiras</text>
+<text x="1319" y="376" font-family="Segoe UI, sans-serif" font-size="10" fill="#475569">• Atletas filtram vagas e se candidatam (RoleRoute)</text>
+<text x="1319" y="392" font-family="Segoe UI, sans-serif" font-size="10" fill="#475569">• Acompanhamento de status de candidaturas</text>
+<rect x="1736" y="306" width="413" height="102" rx="7" fill="#FFFFFF" stroke="#C4B5FD" stroke-width="1.3"/>
+<text x="1747" y="324" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="11.5" font-weight="700" fill="#4C1D95">Mensageria / Chat (features/messaging)</text>
+<text x="1747" y="339" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="10.1" fill="#475569">Inbox.tsx • useConversations • useMessagingSocket</text>
+<text x="1747" y="360" font-family="Segoe UI, sans-serif" font-size="10" fill="#475569">• Conversas 1:1 entre Atletas, Scouts e Clubes</text>
+<text x="1747" y="376" font-family="Segoe UI, sans-serif" font-size="10" fill="#475569">• Push instantâneo via WebSocket (nova msg / leitura)</text>
+<text x="1747" y="392" font-family="Segoe UI, sans-serif" font-size="10" fill="#475569">• Contador de não lidas em tempo real no Header</text>
+<rect x="305" y="450" width="390" height="68" rx="7" fill="#F0FDFA" stroke="#5EEAD4" stroke-width="1.3"/>
+<text x="316" y="468" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="12" font-weight="700" fill="#115E59">Cliente SSE (EventSource)</text>
+<text x="316" y="483" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="10.1" fill="#0F766E">GET /api/v1/jobs/{jobId}/stream — progresso live</text>
+<rect x="715" y="450" width="995" height="68" rx="7" fill="#FEF2F2" stroke="#FCA5A5" stroke-width="1.3"/>
+<text x="726" y="468" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="12" font-weight="700" fill="#991B1B">Camada Cliente HTTP &amp; Cache (REST + JWT)</text>
+<text x="726" y="483" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="10.1" fill="#7F1D1D">shared/lib/httpClient.ts • TanStack Query (queryClient.ts) • features/*/api.ts • services/api.ts</text>
+<g><rect x="1587.4" y="456.0" width="114.6" height="16" rx="4" fill="#FEE2E2" stroke="#FCA5A5" stroke-width="0.9"/><text x="1644.7" y="467.2" text-anchor="middle" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="8.8" font-weight="700" fill="#991B1B">Evolução de api.ts</text></g>
+<rect x="1730" y="450" width="435" height="68" rx="7" fill="#F0FDFA" stroke="#5EEAD4" stroke-width="1.3"/>
+<text x="1741" y="468" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="12" font-weight="700" fill="#115E59">Cliente WebSocket (Chat)</text>
+<text x="1741" y="483" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="10.1" fill="#0F766E">WS /api/v1/messages/ws — eventos new_message / read</text>
+<g><rect x="2088.0" y="456.0" width="69.0" height="16" rx="4" fill="#CCFBF1" stroke="#5EEAD4" stroke-width="0.9"/><text x="2122.5" y="467.2" text-anchor="middle" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="8.8" font-weight="700" fill="#0F766E">NOVO PI VI</text></g>
+<path d="M 495.0 420.0 L 495.0 450.0" fill="none" stroke="#F8FAFC" stroke-width="4.8" stroke-linejoin="round" stroke-linecap="round" opacity="0.9"/>
+<path d="M 495.0 420.0 L 495.0 450.0" fill="none" stroke="#0D9488" stroke-width="1.8" stroke-dasharray="6,4" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arr-teal)"/>
+<path d="M 795.0 420.0 L 795.0 450.0" fill="none" stroke="#F8FAFC" stroke-width="4.8" stroke-linejoin="round" stroke-linecap="round" opacity="0.9"/>
+<path d="M 795.0 420.0 L 795.0 450.0" fill="none" stroke="#2563EB" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arr-blue)"/>
+<path d="M 1082.0 420.0 L 1082.0 450.0" fill="none" stroke="#F8FAFC" stroke-width="4.8" stroke-linejoin="round" stroke-linecap="round" opacity="0.9"/>
+<path d="M 1082.0 420.0 L 1082.0 450.0" fill="none" stroke="#2563EB" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arr-blue)"/>
+<path d="M 1500.0 420.0 L 1500.0 450.0" fill="none" stroke="#F8FAFC" stroke-width="4.8" stroke-linejoin="round" stroke-linecap="round" opacity="0.9"/>
+<path d="M 1500.0 420.0 L 1500.0 450.0" fill="none" stroke="#2563EB" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arr-blue)"/>
+<path d="M 1945.0 420.0 L 1945.0 450.0" fill="none" stroke="#F8FAFC" stroke-width="4.8" stroke-linejoin="round" stroke-linecap="round" opacity="0.9"/>
+<path d="M 1945.0 420.0 L 1945.0 450.0" fill="none" stroke="#0D9488" stroke-width="1.8" stroke-dasharray="6,4" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arr-teal)"/>
+
+  <g filter="url(#shadow)">
+    <rect x="28" y="624" width="220" height="766" rx="12" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.6" stroke-dasharray="6,4"/>
+    <text x="44" y="650" font-family="Segoe UI, sans-serif" font-size="12" font-weight="800" fill="#334155">SERVIÇOS EXTERNOS</text>
+    <text x="44" y="665" font-family="Segoe UI, sans-serif" font-size="10" fill="#64748B">&amp; INFRAESTRUTURA</text>
+  </g>
+
+<rect x="42" y="742" width="192" height="122" rx="7" fill="#FFFBEB" stroke="#FCD34D" stroke-width="1.3"/>
+<text x="53" y="760" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="11.5" font-weight="700" fill="#92400E">Google Drive API</text>
+<text x="53" y="775" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="10.1" fill="#B45309">Importação de vídeos</text>
+<g><rect x="185.5" y="748.0" width="40.5" height="16" rx="4" fill="#FEF3C7" stroke="#F59E0B" stroke-width="0.9"/><text x="205.8" y="759.2" text-anchor="middle" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="8.8" font-weight="700" fill="#B45309">PI VI</text></g>
+<text x="53" y="794" font-family="Segoe UI, sans-serif" font-size="9.8" fill="#475569">• Picker OAuth no Frontend</text>
+<text x="53" y="810" font-family="Segoe UI, sans-serif" font-size="9.8" fill="#475569">• Preview proxy na API</text>
+<text x="53" y="826" font-family="Segoe UI, sans-serif" font-size="9.8" fill="#475569">• Download streaming no</text>
+<text x="53" y="841" font-family="Segoe UI, sans-serif" font-size="9.8" fill="#475569">  Worker (token cifrado)</text>
+<rect x="42" y="892" width="192" height="102" rx="7" fill="#FFF1F2" stroke="#FDA4AF" stroke-width="1.3"/>
+<text x="53" y="910" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="11.5" font-weight="700" fill="#9F1239">Resend API</text>
+<text x="53" y="925" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="10.1" fill="#BE123C">Envio de E-mails</text>
+<g><rect x="185.5" y="898.0" width="40.5" height="16" rx="4" fill="#FFE4E6" stroke="#FDA4AF" stroke-width="0.9"/><text x="205.8" y="909.2" text-anchor="middle" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="8.8" font-weight="700" fill="#BE123C">PI VI</text></g>
+<text x="53" y="944" font-family="Segoe UI, sans-serif" font-size="9.8" fill="#475569">• Substitui SMTP legado</text>
+<text x="53" y="960" font-family="Segoe UI, sans-serif" font-size="9.8" fill="#475569">• Link de recuperação de</text>
+<text x="53" y="975" font-family="Segoe UI, sans-serif" font-size="9.8" fill="#475569">  senha (core/email.py)</text>
+<rect x="42" y="1034" width="192" height="336" rx="7" fill="#F8FAFC" stroke="#94A3B8" stroke-width="1.3"/>
+<text x="53" y="1052" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="11.5" font-weight="700" fill="#0F172A">Docker Compose</text>
+<text x="53" y="1067" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="10.1" fill="#475569">Orquestração local/deploy</text>
+<g><rect x="185.5" y="1040.0" width="40.5" height="16" rx="4" fill="#E2E8F0" stroke="#94A3B8" stroke-width="0.9"/><text x="205.8" y="1051.2" text-anchor="middle" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="8.8" font-weight="700" fill="#334155">PI VI</text></g>
+<text x="53" y="1090" font-family="Consolas, monospace" font-size="10.2" font-weight="700" fill="#1E3A8A">• web</text>
+<text x="64" y="1104" font-family="Segoe UI, sans-serif" font-size="9.6" fill="#475569">React + Vite (:5173)</text>
+<text x="53" y="1122" font-family="Consolas, monospace" font-size="10.2" font-weight="700" fill="#1E3A8A">• api</text>
+<text x="64" y="1136" font-family="Segoe UI, sans-serif" font-size="9.6" fill="#475569">FastAPI leve (:8000)</text>
+<text x="64" y="1150" font-family="Segoe UI, sans-serif" font-size="9.4" fill="#64748B">sem PyTorch / CUDA</text>
+<text x="53" y="1170" font-family="Consolas, monospace" font-size="10.2" font-weight="700" fill="#1E3A8A">• worker</text>
+<text x="64" y="1184" font-family="Segoe UI, sans-serif" font-size="9.6" fill="#475569">Celery + PyTorch/GPU</text>
+<text x="64" y="1198" font-family="Segoe UI, sans-serif" font-size="9.4" fill="#64748B">Dockerfile.worker</text>
+<text x="53" y="1218" font-family="Consolas, monospace" font-size="10.2" font-weight="700" fill="#1E3A8A">• redis</text>
+<text x="64" y="1232" font-family="Segoe UI, sans-serif" font-size="9.6" fill="#475569">Broker Redis 7 (:6379)</text>
+<text x="53" y="1250" font-family="Consolas, monospace" font-size="10.2" font-weight="700" fill="#1E3A8A">• postgres-test</text>
+<text x="64" y="1264" font-family="Segoe UI, sans-serif" font-size="9.6" fill="#475569">Postgres 16 (CI/Testes)</text>
+<text x="53" y="1282" font-family="Consolas, monospace" font-size="10.2" font-weight="700" fill="#1E3A8A">• Supabase</text>
+<text x="64" y="1296" font-family="Segoe UI, sans-serif" font-size="9.6" fill="#475569">PostgreSQL prod externo</text>
+
+  <g filter="url(#shadow)">
+    <rect x="285" y="624" width="560" height="766" rx="12" fill="#FFFFFF" stroke="#60A5FA" stroke-width="1.8" stroke-dasharray="8,5"/>
+    <rect x="285" y="624" width="560" height="38" rx="12" fill="#EFF6FF"/>
+    <rect x="285" y="650" width="560" height="12" fill="#EFF6FF"/>
+    <line x1="285" y1="662" x2="845" y2="662" stroke="#BFDBFE" stroke-width="1.2"/>
+    <text x="303" y="648" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="13.8" font-weight="800" fill="#1E3A8A">
+      Camada de Backend — FastAPI (backend/app/)
+    </text>
+  </g>
+
+<g><rect x="701.3" y="635.0" width="131.7" height="16" rx="4" fill="#DBEAFE" stroke="#93C5FD" stroke-width="0.9"/><text x="767.1" y="646.2" text-anchor="middle" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="8.8" font-weight="700" fill="#1D4ED8">api :8000 (sem torch)</text></g>
+
+    <rect x="303" y="676" width="524" height="74" rx="8" fill="#F1F5F9" stroke="#CBD5E1" stroke-width="1.2"/>
+    <text x="315" y="693" font-family="Segoe UI, sans-serif" font-size="10.5" font-weight="800" fill="#334155">INFRAESTRUTURA COMPARTILHADA (app/core/ + main.py)</text>
+
+<rect x="315" y="702" width="92" height="19" rx="4" fill="#FFFFFF" stroke="#94A3B8" stroke-width="0.9"/><text x="361.0" y="715" text-anchor="middle" font-family="Consolas, monospace" font-size="9.5" font-weight="700" fill="#1E293B">deps.py (JWT)</text>
+<rect x="414" y="702" width="74" height="19" rx="4" fill="#FFFFFF" stroke="#94A3B8" stroke-width="0.9"/><text x="451.0" y="715" text-anchor="middle" font-family="Consolas, monospace" font-size="9.5" font-weight="700" fill="#1E293B">security.py</text>
+<rect x="495" y="702" width="80" height="19" rx="4" fill="#FFFFFF" stroke="#94A3B8" stroke-width="0.9"/><text x="535.0" y="715" text-anchor="middle" font-family="Consolas, monospace" font-size="9.5" font-weight="700" fill="#1E293B">database.py</text>
+<rect x="582" y="702" width="88" height="19" rx="4" fill="#FFFFFF" stroke="#94A3B8" stroke-width="0.9"/><text x="626.0" y="715" text-anchor="middle" font-family="Consolas, monospace" font-size="9.5" font-weight="700" fill="#1E293B">exceptions.py</text>
+<rect x="677" y="702" width="72" height="19" rx="4" fill="#FFFFFF" stroke="#94A3B8" stroke-width="0.9"/><text x="713.0" y="715" text-anchor="middle" font-family="Consolas, monospace" font-size="9.5" font-weight="700" fill="#1E293B">storage.py</text>
+<rect x="756" y="702" width="60" height="19" rx="4" fill="#FFFFFF" stroke="#94A3B8" stroke-width="0.9"/><text x="786.0" y="715" text-anchor="middle" font-family="Consolas, monospace" font-size="9.5" font-weight="700" fill="#1E293B">email.py</text>
+<text x="315" y="740" font-family="Segoe UI, sans-serif" font-size="9.8" fill="#475569">DomainError Handler único • CORS • StaticFiles (/api/v1/uploads) • Celery Producer (.delay)</text>
+<text x="305" y="770" font-family="Segoe UI, sans-serif" font-size="10.8" font-weight="800" fill="#1E3A8A">MÓDULOS DE DOMÍNIO (app/modules/* — Reestruturação Modular PI VI)</text>
+<rect x="303" y="780" width="524" height="86" rx="8" fill="#DBEAFE" fill-opacity="0.55" stroke="#3B82F6" stroke-width="1.3"/>
+<text x="315" y="799" font-family="Consolas, monospace" font-size="12" font-weight="700" fill="#1E3A8A">modules/clips/</text>
+<text x="315" y="816" font-family="Segoe UI, sans-serif" font-size="10.2" fill="#1E293B">/api/v1/jobs · /clips · /videos — Upload, Drive import, SSE /stream, /confirm, /refine, /publish</text>
+<text x="315" y="834" font-family="Consolas, monospace" font-size="9.4" fill="#475569">router.py · models.py · schemas.py · tasks.py · google_drive.py · video_utils.py</text>
+<g><rect x="721.5" y="786.0" width="97.5" height="16" rx="4" fill="#FEF3C7" stroke="#FCD34D" stroke-width="0.9"/><text x="770.2" y="797.2" text-anchor="middle" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="8.8" font-weight="700" fill="#B45309">+ Drive/Publish</text></g>
+<rect x="303" y="876" width="524" height="76" rx="8" fill="#DBEAFE" fill-opacity="0.55" stroke="#3B82F6" stroke-width="1.3"/>
+<text x="315" y="895" font-family="Consolas, monospace" font-size="12" font-weight="700" fill="#1E3A8A">modules/identity/</text>
+<text x="315" y="912" font-family="Segoe UI, sans-serif" font-size="10.2" fill="#1E293B">/api/v1/auth — register (multi-papel), login, logout, forgot-password, reset-password</text>
+<text x="315" y="930" font-family="Consolas, monospace" font-size="9.4" fill="#475569">router.py · models.py (User, PasswordResetToken) · schemas.py</text>
+<rect x="303" y="962" width="524" height="76" rx="8" fill="#CCFBF1" fill-opacity="0.55" stroke="#14B8A6" stroke-width="1.3"/>
+<text x="315" y="981" font-family="Consolas, monospace" font-size="12" font-weight="700" fill="#115E59">modules/profiles/</text>
+<text x="315" y="998" font-family="Segoe UI, sans-serif" font-size="10.2" fill="#1E293B">/api/v1/profiles — Perfis Atleta, Scout e Clube, edição (/me) e avatar (/me/avatar)</text>
+<text x="315" y="1016" font-family="Consolas, monospace" font-size="9.4" fill="#475569">router.py · service.py · repository.py · models.py · schemas.py</text>
+<g><rect x="750.0" y="968.0" width="69.0" height="16" rx="4" fill="#F0FDFA" stroke="#5EEAD4" stroke-width="0.9"/><text x="784.5" y="979.2" text-anchor="middle" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="8.8" font-weight="700" fill="#0F766E">NOVO PI VI</text></g>
+<rect x="303" y="1048" width="524" height="74" rx="8" fill="#EDE9FE" fill-opacity="0.55" stroke="#8B5CF6" stroke-width="1.3"/>
+<text x="315" y="1067" font-family="Consolas, monospace" font-size="12" font-weight="700" fill="#5B21B6">modules/feed/</text>
+<text x="315" y="1084" font-family="Segoe UI, sans-serif" font-size="10.2" fill="#1E293B">/api/v1/feed — Feed paginado de clipes publicados e curtidas (/clips/{id}/like)</text>
+<text x="315" y="1102" font-family="Consolas, monospace" font-size="9.4" fill="#475569">router.py · repository.py · models.py (ClipLike) · schemas.py</text>
+<g><rect x="750.0" y="1054.0" width="69.0" height="16" rx="4" fill="#F5F3FF" stroke="#C4B5FD" stroke-width="0.9"/><text x="784.5" y="1065.2" text-anchor="middle" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="8.8" font-weight="700" fill="#6D28D9">NOVO PI VI</text></g>
+<rect x="303" y="1132" width="524" height="76" rx="8" fill="#FEF3C7" fill-opacity="0.55" stroke="#F59E0B" stroke-width="1.3"/>
+<text x="315" y="1151" font-family="Consolas, monospace" font-size="12" font-weight="700" fill="#92400E">modules/opportunities/</text>
+<text x="315" y="1168" font-family="Segoe UI, sans-serif" font-size="10.2" fill="#1E293B">/api/v1/opportunities — CRUD de peneiras, cancelamento e gestão de candidaturas</text>
+<text x="315" y="1186" font-family="Consolas, monospace" font-size="9.4" fill="#475569">router.py · service.py · repository.py · models.py · schemas.py</text>
+<g><rect x="750.0" y="1138.0" width="69.0" height="16" rx="4" fill="#FFFBEB" stroke="#FCD34D" stroke-width="0.9"/><text x="784.5" y="1149.2" text-anchor="middle" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="8.8" font-weight="700" fill="#B45309">NOVO PI VI</text></g>
+<rect x="303" y="1218" width="524" height="82" rx="8" fill="#FFE4E6" fill-opacity="0.55" stroke="#F43F5E" stroke-width="1.3"/>
+<text x="315" y="1237" font-family="Consolas, monospace" font-size="12" font-weight="700" fill="#9F1239">modules/messaging/</text>
+<text x="315" y="1254" font-family="Segoe UI, sans-serif" font-size="10.2" fill="#1E293B">/api/v1/messages — Conversas, mensagens, /read, /unread-count + WebSocket /ws</text>
+<text x="315" y="1272" font-family="Consolas, monospace" font-size="9.4" fill="#475569">router.py · service.py · connection_manager.py · models.py · schemas.py</text>
+<g><rect x="721.5" y="1224.0" width="97.5" height="16" rx="4" fill="#FFF1F2" stroke="#FDA4AF" stroke-width="0.9"/><text x="770.2" y="1235.2" text-anchor="middle" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="8.8" font-weight="700" fill="#BE123C">NOVO PI VI + WS</text></g>
+<rect x="303" y="1314" width="524" height="58" rx="7" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="1"/><text x="315" y="1333" font-family="Segoe UI, sans-serif" font-size="10.2" font-weight="700" fill="#334155">Separação de responsabilidades (F0 → M6):</text><text x="315" y="1349" font-family="Segoe UI, sans-serif" font-size="9.8" fill="#475569">• API nunca importa PyTorch/ML — apenas publica tasks no Redis e lê status no DB para o SSE.</text><text x="315" y="1363" font-family="Segoe UI, sans-serif" font-size="9.8" fill="#475569">• Chat usa POST para persistência (fonte da verdade) e WebSocket para push em tempo real.</text>
+
+  <g filter="url(#shadow)">
+    <rect x="945" y="624" width="560" height="766" rx="12" fill="#FFFFFF" stroke="#94A3B8" stroke-width="1.8" stroke-dasharray="8,5"/>
+    <rect x="945" y="624" width="560" height="38" rx="12" fill="#F8FAFC"/>
+    <rect x="945" y="650" width="560" height="12" fill="#F8FAFC"/>
+    <line x1="945" y1="662" x2="1505" y2="662" stroke="#E2E8F0" stroke-width="1.2"/>
+    <text x="964" y="648" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="14" font-weight="800" fill="#0F172A">
+      Mensageria Assíncrona &amp; Persistência de Dados
+    </text>
+  </g>
+
+
+    <rect x="963" y="678" width="524" height="166" rx="10" fill="#F5F3FF" stroke="#A78BFA" stroke-width="1.5"/>
+    <text x="978" y="700" font-family="Segoe UI, sans-serif" font-size="12.5" font-weight="800" fill="#5B21B6">
+      Fila Assíncrona — Redis 7 + Celery (celery_app.py)
+    </text>
+    <text x="978" y="717" font-family="Segoe UI, sans-serif" font-size="10.2" fill="#4C1D95">
+      Substitui BackgroundTasks em memória da API • Desacopla servidor web do Worker GPU/ML
+    </text>
+
+<g><rect x="1407.0" y="686.0" width="69.0" height="16" rx="4" fill="#EDE9FE" stroke="#A78BFA" stroke-width="0.9"/><text x="1441.5" y="697.2" text-anchor="middle" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="8.8" font-weight="700" fill="#6D28D9">NOVO PI VI</text></g>
+<rect x="978" y="730" width="232" height="24" rx="5" fill="#FFFFFF" stroke="#8B5CF6" stroke-width="1"/><text x="1094.0" y="745.5" text-anchor="middle" font-family="Consolas, monospace" font-size="10" font-weight="700" fill="#5B21B6">download_and_process_drive_video</text>
+<rect x="1218" y="730" width="120" height="24" rx="5" fill="#FFFFFF" stroke="#8B5CF6" stroke-width="1"/><text x="1278.0" y="745.5" text-anchor="middle" font-family="Consolas, monospace" font-size="10" font-weight="700" fill="#5B21B6">run_fast_scan</text>
+<rect x="1346" y="730" width="122" height="24" rx="5" fill="#FFFFFF" stroke="#8B5CF6" stroke-width="1"/><text x="1407.0" y="745.5" text-anchor="middle" font-family="Consolas, monospace" font-size="10" font-weight="700" fill="#5B21B6">run_deep_scan</text>
+<rect x="978" y="762" width="152" height="24" rx="5" fill="#FFFFFF" stroke="#8B5CF6" stroke-width="1"/><text x="1054.0" y="777.5" text-anchor="middle" font-family="Consolas, monospace" font-size="10" font-weight="700" fill="#5B21B6">run_full_tracking</text>
+<rect x="1138" y="762" width="214" height="24" rx="5" fill="#FFFFFF" stroke="#8B5CF6" stroke-width="1"/><text x="1245.0" y="777.5" text-anchor="middle" font-family="Consolas, monospace" font-size="10" font-weight="700" fill="#5B21B6">run_retention_policy (limpeza)</text>
+<text x="978" y="808" font-family="Segoe UI, sans-serif" font-size="9.8" fill="#475569">• task_acks_late=True &amp; reject_on_worker_lost=True (resiliência a queda de worker)</text>
+<text x="978" y="824" font-family="Segoe UI, sans-serif" font-size="9.8" fill="#475569">• worker_max_tasks_per_child=1 (libera VRAM GPU) • sem result backend (DB é fonte da verdade)</text>
+
+    <rect x="963" y="866" width="524" height="310" rx="10" fill="#F0FDF4" stroke="#86EFAC" stroke-width="1.5"/>
+
+<g>
+      <path d="M 976 894 L 976 940 A 26 9 0 0 0 1028 940 L 1028 894 Z" fill="#22C55E" stroke="#15803D" stroke-width="1.6"/>
+      <ellipse cx="1002" cy="894" rx="26" ry="9" fill="#86EFAC" stroke="#15803D" stroke-width="1.6"/>
+      <path d="M 976 910.1 A 26 7 0 0 0 1028 910.1" fill="none" stroke="#15803D" stroke-width="1" opacity="0.45"/>
+      <path d="M 976 925.3 A 26 7 0 0 0 1028 925.3" fill="none" stroke="#15803D" stroke-width="1" opacity="0.45"/>
+    </g>
+
+    <text x="1042" y="894" font-family="Segoe UI, sans-serif" font-size="13" font-weight="800" fill="#14532D">
+      Database — PostgreSQL (Supabase)
+    </text>
+    <text x="1042" y="912" font-family="Segoe UI, sans-serif" font-size="10.4" fill="#166534">
+      Schema versionado com Alembic (sem create_all) • Evoluiu de 6 → 15 tabelas
+    </text>
+    <text x="1042" y="928" font-family="Segoe UI, sans-serif" font-size="10" fill="#475569">
+      Estado dos jobs (lido pelo SSE), candidatos, clipes, perfis, feed, vagas e chat
+    </text>
+
+<g><rect x="1407.0" y="876.0" width="69.0" height="16" rx="4" fill="#DCFCE7" stroke="#4ADE80" stroke-width="0.9"/><text x="1441.5" y="887.2" text-anchor="middle" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="8.8" font-weight="700" fill="#15803D">+9 tabelas</text></g>
+<text x="976" y="970" font-family="Segoe UI, sans-serif" font-size="9.8" font-weight="700" fill="#1E3A8A">Identidade:</text>
+<rect x="1068.0" y="956" width="44.0" height="21" rx="4" fill="#EFF6FF" stroke="#93C5FD" stroke-width="1"/><text x="1090.0" y="970" text-anchor="middle" font-family="Consolas, monospace" font-size="9.6" font-weight="700" fill="#1E3A8A">users</text>
+<rect x="1118.0" y="956" width="140.0" height="21" rx="4" fill="#EFF6FF" stroke="#93C5FD" stroke-width="1"/><text x="1188.0" y="970" text-anchor="middle" font-family="Consolas, monospace" font-size="9.6" font-weight="700" fill="#1E3A8A">password_reset_tokens</text>
+<text x="976" y="1004" font-family="Segoe UI, sans-serif" font-size="9.8" font-weight="700" fill="#0F766E">Perfis (1:1):</text>
+<rect x="1068.0" y="990" width="110.0" height="21" rx="4" fill="#F0FDFA" stroke="#5EEAD4" stroke-width="1"/><text x="1123.0" y="1004" text-anchor="middle" font-family="Consolas, monospace" font-size="9.6" font-weight="700" fill="#0F766E">athlete_profiles</text>
+<rect x="1184.0" y="990" width="92.0" height="21" rx="4" fill="#F0FDFA" stroke="#5EEAD4" stroke-width="1"/><text x="1230.0" y="1004" text-anchor="middle" font-family="Consolas, monospace" font-size="9.6" font-weight="700" fill="#0F766E">club_profiles</text>
+<rect x="1282.0" y="990" width="98.0" height="21" rx="4" fill="#F0FDFA" stroke="#5EEAD4" stroke-width="1"/><text x="1331.0" y="1004" text-anchor="middle" font-family="Consolas, monospace" font-size="9.6" font-weight="700" fill="#0F766E">scout_profiles</text>
+<text x="976" y="1038" font-family="Segoe UI, sans-serif" font-size="9.8" font-weight="700" fill="#5B21B6">Vídeo &amp; IA:</text>
+<rect x="1068.0" y="1024" width="50.0" height="21" rx="4" fill="#F5F3FF" stroke="#C4B5FD" stroke-width="1"/><text x="1093.0" y="1038" text-anchor="middle" font-family="Consolas, monospace" font-size="9.6" font-weight="700" fill="#5B21B6">videos</text>
+<rect x="1124.0" y="1024" width="104.0" height="21" rx="4" fill="#F5F3FF" stroke="#C4B5FD" stroke-width="1"/><text x="1176.0" y="1038" text-anchor="middle" font-family="Consolas, monospace" font-size="9.6" font-weight="700" fill="#5B21B6">processing_jobs</text>
+<rect x="1234.0" y="1024" width="74.0" height="21" rx="4" fill="#F5F3FF" stroke="#C4B5FD" stroke-width="1"/><text x="1271.0" y="1038" text-anchor="middle" font-family="Consolas, monospace" font-size="9.6" font-weight="700" fill="#5B21B6">candidates</text>
+<rect x="1314.0" y="1024" width="44.0" height="21" rx="4" fill="#F5F3FF" stroke="#C4B5FD" stroke-width="1"/><text x="1336.0" y="1038" text-anchor="middle" font-family="Consolas, monospace" font-size="9.6" font-weight="700" fill="#5B21B6">clips</text>
+<rect x="1364.0" y="1024" width="74.0" height="21" rx="4" fill="#F5F3FF" stroke="#C4B5FD" stroke-width="1"/><text x="1401.0" y="1038" text-anchor="middle" font-family="Consolas, monospace" font-size="9.6" font-weight="700" fill="#5B21B6">clip_likes</text>
+<text x="976" y="1072" font-family="Segoe UI, sans-serif" font-size="9.8" font-weight="700" fill="#B45309">Oportunidades:</text>
+<rect x="1068.0" y="1058" width="92.0" height="21" rx="4" fill="#FFFBEB" stroke="#FCD34D" stroke-width="1"/><text x="1114.0" y="1072" text-anchor="middle" font-family="Consolas, monospace" font-size="9.6" font-weight="700" fill="#B45309">opportunities</text>
+<rect x="1166.0" y="1058" width="158.0" height="21" rx="4" fill="#FFFBEB" stroke="#FCD34D" stroke-width="1"/><text x="1245.0" y="1072" text-anchor="middle" font-family="Consolas, monospace" font-size="9.6" font-weight="700" fill="#B45309">opportunity_applications</text>
+<text x="976" y="1106" font-family="Segoe UI, sans-serif" font-size="9.8" font-weight="700" fill="#9F1239">Chat &amp; Sistema:</text>
+<rect x="1068.0" y="1092" width="92.0" height="21" rx="4" fill="#FFF1F2" stroke="#FDA4AF" stroke-width="1"/><text x="1114.0" y="1106" text-anchor="middle" font-family="Consolas, monospace" font-size="9.6" font-weight="700" fill="#9F1239">conversations</text>
+<rect x="1166.0" y="1092" width="62.0" height="21" rx="4" fill="#FFF1F2" stroke="#FDA4AF" stroke-width="1"/><text x="1197.0" y="1106" text-anchor="middle" font-family="Consolas, monospace" font-size="9.6" font-weight="700" fill="#9F1239">messages</text>
+<rect x="1234.0" y="1092" width="104.0" height="21" rx="4" fill="#FFF1F2" stroke="#FDA4AF" stroke-width="1"/><text x="1286.0" y="1106" text-anchor="middle" font-family="Consolas, monospace" font-size="9.6" font-weight="700" fill="#9F1239">alembic_version</text>
+
+    <rect x="963" y="1198" width="524" height="174" rx="10" fill="#F8FAFC" stroke="#94A3B8" stroke-width="1.5"/>
+
+<g>
+      <path d="M 978 1228 L 978 1270 A 24 9 0 0 0 1026 1270 L 1026 1228 Z" fill="#94A3B8" stroke="#475569" stroke-width="1.6"/>
+      <ellipse cx="1002" cy="1228" rx="24" ry="9" fill="#CBD5E1" stroke="#475569" stroke-width="1.6"/>
+      <path d="M 978 1242.7 A 24 7 0 0 0 1026 1242.7" fill="none" stroke="#475569" stroke-width="1" opacity="0.45"/>
+      <path d="M 978 1256.6 A 24 7 0 0 0 1026 1256.6" fill="none" stroke="#475569" stroke-width="1" opacity="0.45"/>
+    </g>
+
+    <text x="1042" y="1226" font-family="Segoe UI, sans-serif" font-size="13" font-weight="800" fill="#1E293B">
+      Armazenamento — StorageBackend (/uploads/)
+    </text>
+    <text x="1042" y="1244" font-family="Segoe UI, sans-serif" font-size="10.1" fill="#475569">
+      LocalStorageBackend (pronto p/ S3/Supabase) • Volume compartilhado API ↔ Worker
+    </text>
+
+<g><rect x="1395.6" y="1207.0" width="80.4" height="16" rx="4" fill="#E2E8F0" stroke="#94A3B8" stroke-width="0.9"/><text x="1435.8" y="1218.2" text-anchor="middle" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="8.8" font-weight="700" fill="#334155">core/storage</text></g>
+<rect x="978" y="1278" width="158" height="46" rx="7" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.3"/>
+<text x="989" y="1296" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="10.5" font-weight="700" fill="#0F172A">uploads/videos/</text>
+<text x="989" y="1311" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="10.1" fill="#64748B">Vídeos enviados &amp; H.264</text>
+<rect x="1146" y="1278" width="164" height="46" rx="7" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.3"/>
+<text x="1157" y="1296" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="10.5" font-weight="700" fill="#0F172A">uploads/clips/</text>
+<text x="1157" y="1311" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="10.1" fill="#64748B">Clipes MP4 &amp; Thumbs HITL</text>
+<rect x="1320" y="1278" width="152" height="46" rx="7" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.3"/>
+<text x="1331" y="1296" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="10.5" font-weight="700" fill="#0F172A">uploads/avatars/</text>
+<text x="1331" y="1311" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="10.1" fill="#64748B">Avatares de perfis [PI VI]</text>
+<text x="978" y="1344" font-family="Segoe UI, sans-serif" font-size="9.6" fill="#475569">• API grava uploads/avatares e expõe via StaticFiles (/api/v1/uploads).</text>
+<text x="978" y="1359" font-family="Segoe UI, sans-serif" font-size="9.6" fill="#475569">• Worker lê vídeos do volume compartilhado e grava clipes MP4 e thumbnails HITL.</text>
+
+  <g filter="url(#shadow)">
+    <rect x="1605" y="624" width="580" height="766" rx="12" fill="#FFFFFF" stroke="#FDBA74" stroke-width="1.8" stroke-dasharray="8,5"/>
+    <rect x="1605" y="624" width="580" height="38" rx="12" fill="#FFF7ED"/>
+    <rect x="1605" y="650" width="580" height="12" fill="#FFF7ED"/>
+    <line x1="1605" y1="662" x2="2185" y2="662" stroke="#FED7AA" stroke-width="1.2"/>
+    <text x="1624" y="648" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="13.8" font-weight="800" fill="#9A3412">
+      Worker Assíncrono &amp; Pipeline de IA (ml/scripts/)
+    </text>
+  </g>
+
+<g><rect x="2028.9" y="635.0" width="143.1" height="16" rx="4" fill="#FFEDD5" stroke="#FDBA74" stroke-width="0.9"/><text x="2100.5" y="646.2" text-anchor="middle" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="8.8" font-weight="700" fill="#C2410C">worker (PyTorch / CUDA)</text></g>
+<rect x="1623" y="678" width="544" height="84" rx="7" fill="#FFFBEB" stroke="#F59E0B" stroke-width="1.3"/>
+<text x="1634" y="696" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="12" font-weight="700" fill="#92400E">Celery Worker — modules/clips/tasks.py</text>
+<text x="1634" y="711" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="10.1" fill="#78350F">Consome fila Redis, normaliza vídeo H.264 (video_utils.ensure_h264) e grava callbacks no DB</text>
+<g><rect x="2067.2" y="684.0" width="91.8" height="16" rx="4" fill="#FEF3C7" stroke="#F59E0B" stroke-width="0.9"/><text x="2113.1" y="695.2" text-anchor="middle" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="8.8" font-weight="700" fill="#B45309">Isolado da API</text></g>
+<text x="1634" y="732" font-family="Consolas, monospace" font-size="9.6" fill="#78350F">• Lazy import de ml/* dentro da task • retry com backoff exponencial (max 3x)</text>
+<text x="1634" y="748" font-family="Consolas, monospace" font-size="9.6" fill="#78350F">• Google Drive streaming download + política de retenção de clipes temporários</text>
+<rect x="1665" y="794" width="460" height="62" rx="9" fill="#F97316" stroke="#C2410C" stroke-width="1.6"/><text x="1895" y="821" text-anchor="middle" font-family="Consolas, monospace" font-size="13.5" font-weight="700" fill="#FFFFFF">ml/scripts/video_pipeline.py</text><text x="1895" y="841" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="10.8" fill="#FFF7ED">VideoPipeline — Orquestra Fase 1 (Fast/Deep Scan) e Fase 2 (Tracking &amp; Writing)</text>
+<path d="M 1895.0 762.0 L 1895.0 794.0" fill="none" stroke="#F8FAFC" stroke-width="5.0" stroke-linejoin="round" stroke-linecap="round" opacity="0.9"/>
+<path d="M 1895.0 762.0 L 1895.0 794.0" fill="none" stroke="#EA580C" stroke-width="2.0" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arr-orange)"/>
+
+    <rect x="1623" y="888" width="544" height="126" rx="10" fill="#FFF7ED" stroke="#FDBA74" stroke-width="1.3"/>
+    <text x="1638" y="909" font-family="Segoe UI, sans-serif" font-size="11.2" font-weight="800" fill="#9A3412">FASE 1: FAST SCAN &amp; DEEP SCAN (VISÃO COMPUTACIONAL)</text>
+
+<rect x="1638" y="921" width="165" height="78" rx="7" fill="#FFEDD5" stroke="#FB923C" stroke-width="1.3"/>
+<text x="1649" y="939" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="10.8" font-weight="700" fill="#7C2D12">ml/detector.py</text>
+<text x="1649" y="954" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="10.1" fill="#9A3412">YoloDetector (best.pt)</text>
+<text x="1649" y="976" font-family="Segoe UI, sans-serif" font-size="9.2" fill="#7C2D12">Detecção de jogadores</text>
+<text x="1649" y="989" font-family="Segoe UI, sans-serif" font-size="9.2" fill="#7C2D12">e bounding boxes</text>
+<rect x="1813" y="921" width="165" height="78" rx="7" fill="#FFEDD5" stroke="#FB923C" stroke-width="1.3"/>
+<text x="1824" y="939" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="10.8" font-weight="700" fill="#7C2D12">color_extractor.py</text>
+<text x="1824" y="954" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="10.1" fill="#9A3412">ColorExtractor</text>
+<text x="1824" y="976" font-family="Segoe UI, sans-serif" font-size="9.2" fill="#7C2D12">Extração de cor RGB/HEX</text>
+<text x="1824" y="989" font-family="Segoe UI, sans-serif" font-size="9.2" fill="#7C2D12">da camisa do atleta</text>
+<rect x="1988" y="921" width="165" height="78" rx="7" fill="#FFEDD5" stroke="#FB923C" stroke-width="1.3"/>
+<text x="1999" y="939" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="10.8" font-weight="700" fill="#7C2D12">jersey_reader.py</text>
+<text x="1999" y="954" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="10.1" fill="#9A3412">+ ocr_reader.py</text>
+<text x="1999" y="976" font-family="Segoe UI, sans-serif" font-size="9.2" fill="#7C2D12">Leitura OCR do número</text>
+<text x="1999" y="989" font-family="Segoe UI, sans-serif" font-size="9.2" fill="#7C2D12">da camisa + assinatura</text>
+
+    <rect x="1623" y="1038" width="544" height="186" rx="10" fill="#FFF7ED" stroke="#FDBA74" stroke-width="1.3"/>
+    <text x="1638" y="1059" font-family="Segoe UI, sans-serif" font-size="11.2" font-weight="800" fill="#9A3412">FASE 2: TRACKING, EVENTOS &amp; GERAÇÃO DE CLIPES</text>
+
+<rect x="1638" y="1071" width="252" height="64" rx="7" fill="#FFEDD5" stroke="#FB923C" stroke-width="1.3"/>
+<text x="1649" y="1089" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="10.5" font-weight="700" fill="#7C2D12">trackers/tracker.py &amp; ball_tracker.py</text>
+<text x="1649" y="1104" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="10.1" fill="#9A3412">PlayerTracker + BallTracker (ball_tracker.pt)</text>
+<text x="1649" y="1123" font-family="Segoe UI, sans-serif" font-size="9.3" fill="#7C2D12">Rastreamento contínuo do atleta alvo e da bola</text>
+<rect x="1902" y="1071" width="251" height="64" rx="7" fill="#FFEDD5" stroke="#FB923C" stroke-width="1.3"/>
+<text x="1913" y="1089" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="10.5" font-weight="700" fill="#7C2D12">ball_event_detector.py</text>
+<text x="1913" y="1104" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="10.1" fill="#9A3412">BallEventDetector</text>
+<text x="1913" y="1123" font-family="Segoe UI, sans-serif" font-size="9.3" fill="#7C2D12">Identifica posse, toques e lances com bola</text>
+<rect x="1638" y="1146" width="252" height="64" rx="7" fill="#FFEDD5" stroke="#FB923C" stroke-width="1.3"/>
+<text x="1649" y="1164" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="10.5" font-weight="700" fill="#7C2D12">kinematic_analyzer.py</text>
+<text x="1649" y="1179" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="10.1" fill="#9A3412">+ geometry_utils.py</text>
+<text x="1649" y="1198" font-family="Segoe UI, sans-serif" font-size="9.3" fill="#7C2D12">Análise cinemática, proximidade e geometria</text>
+<rect x="1902" y="1146" width="251" height="64" rx="7" fill="#F97316" stroke="#C2410C" stroke-width="1.3"/>
+<text x="1913" y="1164" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="10.8" font-weight="700" fill="#FFFFFF">clip_writer.py</text>
+<text x="1913" y="1179" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="10.1" fill="#FFF7ED">ClipWriter (OpenCV / FFmpeg)</text>
+<text x="1913" y="1198" font-family="Segoe UI, sans-serif" font-size="9.3" fill="#FFF7ED">Recorte e escrita de clipes MP4 no storage</text>
+<path d="M 1895.0 856.0 L 1895.0 888.0" fill="none" stroke="#F8FAFC" stroke-width="4.9" stroke-linejoin="round" stroke-linecap="round" opacity="0.9"/>
+<path d="M 1895.0 856.0 L 1895.0 888.0" fill="none" stroke="#EA580C" stroke-width="1.9" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arr-orange)"/>
+<g><rect x="1823.4" y="862.5" width="143.2" height="19" rx="5" fill="#FFFFFF" stroke="#EA580C" stroke-width="1.1"/><text x="1895.0" y="875.7" text-anchor="middle" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="10.3" font-weight="700" fill="#EA580C">Extrai BBox, Cor e OCR</text></g>
+<path d="M 1895.0 1014.0 L 1895.0 1038.0" fill="none" stroke="#F8FAFC" stroke-width="4.9" stroke-linejoin="round" stroke-linecap="round" opacity="0.9"/>
+<path d="M 1895.0 1014.0 L 1895.0 1038.0" fill="none" stroke="#EA580C" stroke-width="1.9" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arr-orange)"/>
+
+    <rect x="1623" y="1244" width="544" height="128" rx="8" fill="#FEF9C3" stroke="#EAB308" stroke-width="1.3"/>
+    <text x="1638" y="1265" font-family="Segoe UI, sans-serif" font-size="11" font-weight="800" fill="#854D0E">RESUMO DO PIPELINE ASSÍNCRONO (HITL)</text>
+    <text x="1638" y="1284" font-family="Segoe UI, sans-serif" font-size="10.2" fill="#713F12">• Fase 1 (Fast Scan / Deep Scan): Detecta jogadores, extrai cor da camisa e OCR do</text>
+    <text x="1648" y="1299" font-family="Segoe UI, sans-serif" font-size="10.2" fill="#713F12">número; grava candidatos + thumbnail no banco para confirmação do usuário (HITL).</text>
+    <text x="1638" y="1319" font-family="Segoe UI, sans-serif" font-size="10.2" fill="#713F12">• Fase 2 (Tracking &amp; Writing): Após /confirm, rastreia o atleta alvo + bola, detecta</text>
+    <text x="1648" y="1334" font-family="Segoe UI, sans-serif" font-size="10.2" fill="#713F12">lances relevantes e grava os clipes MP4 no volume compartilhado, notificando via DB/SSE.</text>
+    <text x="1638" y="1355" font-family="Segoe UI, sans-serif" font-size="9.8" font-weight="700" fill="#854D0E">Modelos treinados: ml/models/best.pt (jogadores) • ml/models/ball_tracker.pt (bola)</text>
+
+<g id="inter-layer-arrows">
+<path d="M 450.0 518.0 L 450.0 624.0" fill="none" stroke="#F8FAFC" stroke-width="5.2" stroke-linejoin="round" stroke-linecap="round" opacity="0.9"/>
+<path d="M 450.0 518.0 L 450.0 624.0" fill="none" stroke="#0D9488" stroke-width="2.2" stroke-dasharray="6,4" stroke-linejoin="round" stroke-linecap="round" marker-start="url(#arr-teal)" marker-end="url(#arr-teal)"/>
+<g><rect x="375.5" y="561.5" width="149.0" height="19" rx="5" fill="#FFFFFF" stroke="#0D9488" stroke-width="1.1"/><text x="450.0" y="574.7" text-anchor="middle" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="10.3" font-weight="700" fill="#0D9488">SSE — /jobs/{id}/stream</text></g>
+<path d="M 1120.0 518.0 L 1120.0 550.0 Q 1120.0 560.0 1110.0 560.0 L 675.0 560.0 Q 665.0 560.0 665.0 570.0 L 665.0 624.0" fill="none" stroke="#F8FAFC" stroke-width="5.2" stroke-linejoin="round" stroke-linecap="round" opacity="0.9"/>
+<path d="M 1120.0 518.0 L 1120.0 550.0 Q 1120.0 560.0 1110.0 560.0 L 675.0 560.0 Q 665.0 560.0 665.0 570.0 L 665.0 624.0" fill="none" stroke="#2563EB" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" marker-start="url(#arr-blue)" marker-end="url(#arr-blue)"/>
+<g><rect x="820.4" y="550.5" width="143.2" height="19" rx="5" fill="#FFFFFF" stroke="#2563EB" stroke-width="1.1"/><text x="892.0" y="563.7" text-anchor="middle" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="10.3" font-weight="700" fill="#2563EB">REST HTTP / JSON (JWT)</text></g>
+<path d="M 1945.0 518.0 L 1945.0 582.0 Q 1945.0 592.0 1935.0 592.0 L 805.0 592.0 Q 795.0 592.0 795.0 602.0 L 795.0 624.0" fill="none" stroke="#F8FAFC" stroke-width="5.2" stroke-linejoin="round" stroke-linecap="round" opacity="0.9"/>
+<path d="M 1945.0 518.0 L 1945.0 582.0 Q 1945.0 592.0 1935.0 592.0 L 805.0 592.0 Q 795.0 592.0 795.0 602.0 L 795.0 624.0" fill="none" stroke="#0D9488" stroke-width="2.2" stroke-dasharray="6,4" stroke-linejoin="round" stroke-linecap="round" marker-start="url(#arr-teal)" marker-end="url(#arr-teal)"/>
+<g><rect x="1250.4" y="582.5" width="319.3" height="19" rx="5" fill="#FFFFFF" stroke="#0D9488" stroke-width="1.1"/><text x="1410.0" y="595.7" text-anchor="middle" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="10.3" font-weight="700" fill="#0D9488">WebSocket — WS /api/v1/messages/ws (chat tempo real)</text></g>
+<path d="M 216.0 742.0 L 216.0 612.0 Q 216.0 602.0 206.0 602.0 L 148.0 602.0 Q 138.0 602.0 138.0 592.0 L 138.0 220.0 Q 138.0 210.0 148.0 210.0 L 305.0 210.0" fill="none" stroke="#F8FAFC" stroke-width="5.2" stroke-linejoin="round" stroke-linecap="round" opacity="0.9"/>
+<path d="M 216.0 742.0 L 216.0 612.0 Q 216.0 602.0 206.0 602.0 L 148.0 602.0 Q 138.0 602.0 138.0 592.0 L 138.0 220.0 Q 138.0 210.0 148.0 210.0 L 305.0 210.0" fill="none" stroke="#D97706" stroke-width="2.2" stroke-dasharray="6,4" stroke-linejoin="round" stroke-linecap="round" marker-start="url(#arr-amber)" marker-end="url(#arr-amber)"/>
+<g><rect x="75.2" y="395.5" width="125.5" height="19" rx="5" fill="#FFFFFF" stroke="#D97706" stroke-width="1.1"/><text x="138.0" y="408.7" text-anchor="middle" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="10.3" font-weight="700" fill="#D97706">Google Picker OAuth</text></g>
+<path d="M 234.0 818.0 L 285.0 818.0" fill="none" stroke="#F8FAFC" stroke-width="5.2" stroke-linejoin="round" stroke-linecap="round" opacity="0.9"/>
+<path d="M 234.0 818.0 L 285.0 818.0" fill="none" stroke="#D97706" stroke-width="2.2" stroke-dasharray="6,4" stroke-linejoin="round" stroke-linecap="round" marker-start="url(#arr-amber)" marker-end="url(#arr-amber)"/>
+<path d="M 285.0 926.0 L 234.0 926.0" fill="none" stroke="#F8FAFC" stroke-width="5.2" stroke-linejoin="round" stroke-linecap="round" opacity="0.9"/>
+<path d="M 285.0 926.0 L 234.0 926.0" fill="none" stroke="#BE123C" stroke-width="2.2" stroke-dasharray="6,4" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arr-rose)"/>
+<path d="M 845.0 764.0 L 945.0 764.0" fill="none" stroke="#F8FAFC" stroke-width="5.2" stroke-linejoin="round" stroke-linecap="round" opacity="0.9"/>
+<path d="M 845.0 764.0 L 945.0 764.0" fill="none" stroke="#7C3AED" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arr-purple)"/>
+<g><rect x="864.5" y="730.5" width="61.0" height="19" rx="5" fill="#FFFFFF" stroke="#7C3AED" stroke-width="1.1"/><text x="895.0" y="743.7" text-anchor="middle" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="10.3" font-weight="700" fill="#7C3AED">.delay()</text></g>
+<path d="M 845.0 1020.0 L 945.0 1020.0" fill="none" stroke="#F8FAFC" stroke-width="5.2" stroke-linejoin="round" stroke-linecap="round" opacity="0.9"/>
+<path d="M 845.0 1020.0 L 945.0 1020.0" fill="none" stroke="#15803D" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" marker-start="url(#arr-green)" marker-end="url(#arr-green)"/>
+<g><rect x="864.5" y="986.5" width="61.0" height="19" rx="5" fill="#FFFFFF" stroke="#15803D" stroke-width="1.1"/><text x="895.0" y="999.7" text-anchor="middle" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="10.3" font-weight="700" fill="#15803D">SQLModel</text></g>
+<path d="M 845.0 1285.0 L 945.0 1285.0" fill="none" stroke="#F8FAFC" stroke-width="5.2" stroke-linejoin="round" stroke-linecap="round" opacity="0.9"/>
+<path d="M 845.0 1285.0 L 945.0 1285.0" fill="none" stroke="#475569" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" marker-start="url(#arr-slate)" marker-end="url(#arr-slate)"/>
+<g><rect x="867.5" y="1251.5" width="55.1" height="19" rx="5" fill="#FFFFFF" stroke="#475569" stroke-width="1.1"/><text x="895.0" y="1264.7" text-anchor="middle" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="10.3" font-weight="700" fill="#475569">Storage</text></g>
+<path d="M 1505.0 720.0 L 1605.0 720.0" fill="none" stroke="#F8FAFC" stroke-width="5.2" stroke-linejoin="round" stroke-linecap="round" opacity="0.9"/>
+<path d="M 1505.0 720.0 L 1605.0 720.0" fill="none" stroke="#7C3AED" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arr-purple)"/>
+<g><rect x="1527.5" y="686.5" width="55.1" height="19" rx="5" fill="#FFFFFF" stroke="#7C3AED" stroke-width="1.1"/><text x="1555.0" y="699.7" text-anchor="middle" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="10.3" font-weight="700" fill="#7C3AED">Consome</text></g>
+<path d="M 1605.0 970.0 L 1505.0 970.0" fill="none" stroke="#F8FAFC" stroke-width="5.2" stroke-linejoin="round" stroke-linecap="round" opacity="0.9"/>
+<path d="M 1605.0 970.0 L 1505.0 970.0" fill="none" stroke="#15803D" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" marker-end="url(#arr-green)"/>
+<g><rect x="1512.8" y="936.5" width="84.5" height="19" rx="5" fill="#FFFFFF" stroke="#15803D" stroke-width="1.1"/><text x="1555.0" y="949.7" text-anchor="middle" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="10.3" font-weight="700" fill="#15803D">Callbacks DB</text></g>
+<path d="M 1605.0 1285.0 L 1505.0 1285.0" fill="none" stroke="#F8FAFC" stroke-width="5.2" stroke-linejoin="round" stroke-linecap="round" opacity="0.9"/>
+<path d="M 1605.0 1285.0 L 1505.0 1285.0" fill="none" stroke="#EA580C" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round" marker-start="url(#arr-orange)" marker-end="url(#arr-orange)"/>
+<g><rect x="1509.8" y="1251.5" width="90.3" height="19" rx="5" fill="#FFFFFF" stroke="#EA580C" stroke-width="1.1"/><text x="1555.0" y="1264.7" text-anchor="middle" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="10.3" font-weight="700" fill="#EA580C">Vídeos/Clipes</text></g>
+</g>
+<text x="34" y="1424" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="10.8" fill="#64748B">SmartScout — Diagrama de Arquitetura (PI VI) • Reformado a partir da arquitetura do PI V com reestruturação modular (F0), desacoplamento Celery/Redis (F1) e módulos sociais (Perfis, Feed, Oportunidades e Chat WS).</text>
+</svg>

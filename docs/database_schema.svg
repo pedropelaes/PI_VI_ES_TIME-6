@@ -1,0 +1,799 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1840" height="1280" viewBox="0 0 1840 1280">
+  <defs>
+    <filter id="cardShadow" x="-4%" y="-4%" width="110%" height="112%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3.5" flood-color="#0F172A" flood-opacity="0.09"/>
+    </filter>
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#F8FAFC"/>
+      <stop offset="100%" stop-color="#F1F5F9"/>
+    </linearGradient>
+    <pattern id="dotGrid" width="24" height="24" patternUnits="userSpaceOnUse">
+      <circle cx="2" cy="2" r="0.9" fill="#CBD5E1" opacity="0.55"/>
+    </pattern>
+  </defs>
+
+  <!-- Canvas Background -->
+  <rect width="1840" height="1280" fill="url(#bgGrad)"/>
+  <rect width="1840" height="1280" fill="url(#dotGrid)"/>
+
+  <!-- Top Header Banner -->
+  <rect x="0" y="0" width="1840" height="82" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1"/>
+  <rect x="0" y="0" width="8" height="82" fill="#1E3A8A"/>
+  <text x="34" y="37" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="22" font-weight="700" fill="#0F172A">
+    Modelo Relacional do Banco de Dados (DER) — Schema public
+  </text>
+  <text x="34" y="61" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="13" fill="#475569">
+    PostgreSQL • 15 Tabelas • 17 Chaves Estrangeiras • Notação Pé-de-Galinha (Crow&#39;s Foot)
+  </text>
+
+<text x="955" y="33" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="11.5" font-weight="700" fill="#334155">DOMÍNIOS:</text>
+<rect x="1031.0" y="20" width="169.2" height="20" rx="5" fill="#EFF6FF" stroke="#93C5FD" stroke-width="1"/><circle cx="1040.0" cy="30" r="4" fill="#1E3A8A"/><text x="1049.0" y="34" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="10.8" font-weight="600" fill="#1E293B">Usuários &amp; Autenticação</text>
+<rect x="1208.2" y="20" width="98.8" height="20" rx="5" fill="#F0FDFA" stroke="#5EEAD4" stroke-width="1"/><circle cx="1217.2" cy="30" r="4" fill="#0F766E"/><text x="1226.2" y="34" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="10.8" font-weight="600" fill="#1E293B">Perfis (1:1)</text>
+<rect x="1315.0" y="20" width="143.6" height="20" rx="5" fill="#F5F3FF" stroke="#C4B5FD" stroke-width="1"/><circle cx="1324.0" cy="30" r="4" fill="#5B21B6"/><text x="1333.0" y="34" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="10.8" font-weight="600" fill="#1E293B">Vídeos, IA &amp; Clipes</text>
+<rect x="1466.6" y="20" width="105.2" height="20" rx="5" fill="#FFFBEB" stroke="#FCD34D" stroke-width="1"/><circle cx="1475.6" cy="30" r="4" fill="#B45309"/><text x="1484.6" y="34" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="10.8" font-weight="600" fill="#1E293B">Oportunidades</text>
+<rect x="1579.8" y="20" width="86.0" height="20" rx="5" fill="#FFF1F2" stroke="#FDA4AF" stroke-width="1"/><circle cx="1588.8" cy="30" r="4" fill="#9F1239"/><text x="1597.8" y="34" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="10.8" font-weight="600" fill="#1E293B">Mensageria</text>
+<rect x="1673.8" y="20" width="143.6" height="20" rx="5" fill="#F8FAFC" stroke="#CBD5E1" stroke-width="1"/><circle cx="1682.8" cy="30" r="4" fill="#475569"/><text x="1691.8" y="34" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="10.8" font-weight="600" fill="#1E293B">Sistema / Migrações</text>
+<text x="955" y="62" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="11.5" font-weight="700" fill="#334155">NOTAÇÃO:</text>
+<rect x="1031" y="50" width="24" height="16" rx="3" fill="#FEF3C7" stroke="#F59E0B" stroke-width="0.9"/><text x="1043" y="61.5" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="9.5" font-weight="700" fill="#B45309">PK</text><text x="1061" y="62" font-family="Segoe UI, sans-serif" font-size="11" fill="#475569">Chave Primária</text>
+<rect x="1160" y="50" width="24" height="16" rx="3" fill="#DBEAFE" stroke="#3B82F6" stroke-width="0.9"/><text x="1172" y="61.5" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="9.5" font-weight="700" fill="#1D4ED8">FK</text><text x="1190" y="62" font-family="Segoe UI, sans-serif" font-size="11" fill="#475569">Chave Estrangeira</text>
+<text x="1305" y="62" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#DC2626">*</text><text x="1315" y="62" font-family="Segoe UI, sans-serif" font-size="11" fill="#475569">NOT NULL</text>
+<line x1="1395" y1="58" x2="1437" y2="58" stroke="#0D9488" stroke-width="1.8"/>
+<line x1="1402.0" y1="52.5" x2="1402.0" y2="63.5" stroke="#0D9488" stroke-width="1.8" stroke-linecap="round"/>
+<line x1="1407.0" y1="52.5" x2="1407.0" y2="63.5" stroke="#0D9488" stroke-width="1.8" stroke-linecap="round"/>
+<line x1="1430.0" y1="63.5" x2="1430.0" y2="52.5" stroke="#0D9488" stroke-width="1.8" stroke-linecap="round"/>
+<circle cx="1422.0" cy="58.0" r="4.2" fill="#FFFFFF" stroke="#0D9488" stroke-width="1.8"/>
+<text x="1445" y="62" font-family="Segoe UI, sans-serif" font-size="11" fill="#475569">1 : 0..1</text>
+<line x1="1515" y1="58" x2="1559" y2="58" stroke="#2563EB" stroke-width="1.8"/>
+<line x1="1522.0" y1="52.5" x2="1522.0" y2="63.5" stroke="#2563EB" stroke-width="1.8" stroke-linecap="round"/>
+<line x1="1527.0" y1="52.5" x2="1527.0" y2="63.5" stroke="#2563EB" stroke-width="1.8" stroke-linecap="round"/>
+<path d="M 1559.0 51.5 L 1547.0 58.0 L 1559.0 64.5" fill="none" stroke="#2563EB" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="1541.5" cy="58.0" r="3.8" fill="#FFFFFF" stroke="#2563EB" stroke-width="1.7"/>
+<text x="1567" y="62" font-family="Segoe UI, sans-serif" font-size="11" fill="#475569">1 : 0..N</text>
+<rect x="24" y="98" width="357" height="954" rx="10" fill="#FFFFFF" fill-opacity="0.48" stroke="#99F6E4" stroke-width="1.4" stroke-dasharray="6,4"/><text x="40" y="114" font-family="Segoe UI, sans-serif" font-size="9.5" font-weight="700" letter-spacing="0.6" fill="#0F766E">PERFIS DE USUÁRIO (1:1)</text>
+<rect x="24" y="1094" width="357" height="108" rx="10" fill="#FFFFFF" fill-opacity="0.48" stroke="#CBD5E1" stroke-width="1.4" stroke-dasharray="6,4"/><text x="40" y="1110" font-family="Segoe UI, sans-serif" font-size="9.5" font-weight="700" letter-spacing="0.6" fill="#475569">CONTROLE DE VERSÃO</text>
+<g id="relationships">
+<path d="M 365.0 167.0 L 398.0 167.0 Q 408.0 167.0 408.0 177.0 L 408.0 440.0 Q 408.0 450.0 418.0 450.0 L 495.0 450.0" fill="none" stroke="#F8FAFC" stroke-width="5" stroke-linejoin="round" stroke-linecap="round" opacity="0.88"/>
+<path d="M 365.0 167.0 L 398.0 167.0 Q 408.0 167.0 408.0 177.0 L 408.0 440.0 Q 408.0 450.0 418.0 450.0 L 495.0 450.0" fill="none" stroke="#0D9488" stroke-width="1.9" stroke-linejoin="round" stroke-linecap="round"/>
+<line x1="372.0" y1="161.5" x2="372.0" y2="172.5" stroke="#0D9488" stroke-width="1.8" stroke-linecap="round"/>
+<circle cx="380.0" cy="167.0" r="4.2" fill="#FFFFFF" stroke="#0D9488" stroke-width="1.8"/>
+<line x1="488.0" y1="455.5" x2="488.0" y2="444.5" stroke="#0D9488" stroke-width="1.8" stroke-linecap="round"/>
+<line x1="483.0" y1="455.5" x2="483.0" y2="444.5" stroke="#0D9488" stroke-width="1.8" stroke-linecap="round"/>
+<path d="M 365.0 547.0 L 414.0 547.0 Q 424.0 547.0 424.0 537.0 L 424.0 502.0 Q 424.0 492.0 434.0 492.0 L 495.0 492.0" fill="none" stroke="#F8FAFC" stroke-width="5" stroke-linejoin="round" stroke-linecap="round" opacity="0.88"/>
+<path d="M 365.0 547.0 L 414.0 547.0 Q 424.0 547.0 424.0 537.0 L 424.0 502.0 Q 424.0 492.0 434.0 492.0 L 495.0 492.0" fill="none" stroke="#0D9488" stroke-width="1.9" stroke-linejoin="round" stroke-linecap="round"/>
+<line x1="372.0" y1="541.5" x2="372.0" y2="552.5" stroke="#0D9488" stroke-width="1.8" stroke-linecap="round"/>
+<circle cx="380.0" cy="547.0" r="4.2" fill="#FFFFFF" stroke="#0D9488" stroke-width="1.8"/>
+<line x1="488.0" y1="497.5" x2="488.0" y2="486.5" stroke="#0D9488" stroke-width="1.8" stroke-linecap="round"/>
+<line x1="483.0" y1="497.5" x2="483.0" y2="486.5" stroke="#0D9488" stroke-width="1.8" stroke-linecap="round"/>
+<path d="M 365.0 839.0 L 430.0 839.0 Q 440.0 839.0 440.0 829.0 L 440.0 544.0 Q 440.0 534.0 450.0 534.0 L 495.0 534.0" fill="none" stroke="#F8FAFC" stroke-width="5" stroke-linejoin="round" stroke-linecap="round" opacity="0.88"/>
+<path d="M 365.0 839.0 L 430.0 839.0 Q 440.0 839.0 440.0 829.0 L 440.0 544.0 Q 440.0 534.0 450.0 534.0 L 495.0 534.0" fill="none" stroke="#0D9488" stroke-width="1.9" stroke-linejoin="round" stroke-linecap="round"/>
+<line x1="372.0" y1="833.5" x2="372.0" y2="844.5" stroke="#0D9488" stroke-width="1.8" stroke-linecap="round"/>
+<circle cx="380.0" cy="839.0" r="4.2" fill="#FFFFFF" stroke="#0D9488" stroke-width="1.8"/>
+<line x1="488.0" y1="539.5" x2="488.0" y2="528.5" stroke="#0D9488" stroke-width="1.8" stroke-linecap="round"/>
+<line x1="483.0" y1="539.5" x2="483.0" y2="528.5" stroke="#0D9488" stroke-width="1.8" stroke-linecap="round"/>
+<path d="M 657.5 296.0 L 657.5 404.0" fill="none" stroke="#F8FAFC" stroke-width="5" stroke-linejoin="round" stroke-linecap="round" opacity="0.88"/>
+<path d="M 657.5 296.0 L 657.5 404.0" fill="none" stroke="#2563EB" stroke-width="1.9" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M 651.0 296.0 L 657.5 308.0 L 664.0 296.0" fill="none" stroke="#2563EB" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="657.5" cy="313.5" r="3.8" fill="#FFFFFF" stroke="#2563EB" stroke-width="1.7"/>
+<line x1="652.0" y1="397.0" x2="663.0" y2="397.0" stroke="#2563EB" stroke-width="1.8" stroke-linecap="round"/>
+<line x1="652.0" y1="392.0" x2="663.0" y2="392.0" stroke="#2563EB" stroke-width="1.8" stroke-linecap="round"/>
+<g><rect x="628.8" y="341.0" width="57.4" height="18" rx="4" fill="#FFFFFF" stroke="#2563EB" stroke-width="0.95" opacity="0.98"/><text x="657.5" y="353.6" text-anchor="middle" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="10.5" font-weight="600" fill="#2563EB">user_id</text></g>
+<path d="M 605.5 744.0 L 605.5 622.0" fill="none" stroke="#F8FAFC" stroke-width="5" stroke-linejoin="round" stroke-linecap="round" opacity="0.88"/>
+<path d="M 605.5 744.0 L 605.5 622.0" fill="none" stroke="#E11D48" stroke-width="1.9" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M 612.0 744.0 L 605.5 732.0 L 599.0 744.0" fill="none" stroke="#E11D48" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="605.5" cy="726.5" r="3.8" fill="#FFFFFF" stroke="#E11D48" stroke-width="1.7"/>
+<line x1="611.0" y1="629.0" x2="600.0" y2="629.0" stroke="#E11D48" stroke-width="1.8" stroke-linecap="round"/>
+<line x1="611.0" y1="634.0" x2="600.0" y2="634.0" stroke="#E11D48" stroke-width="1.8" stroke-linecap="round"/>
+<g><rect x="552.2" y="673.0" width="94.6" height="18" rx="4" fill="#FFFFFF" stroke="#E11D48" stroke-width="0.95" opacity="0.98"/><text x="599.5" y="685.6" text-anchor="middle" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="10.5" font-weight="600" fill="#E11D48">participant_a</text></g>
+<path d="M 709.5 744.0 L 709.5 622.0" fill="none" stroke="#F8FAFC" stroke-width="5" stroke-linejoin="round" stroke-linecap="round" opacity="0.88"/>
+<path d="M 709.5 744.0 L 709.5 622.0" fill="none" stroke="#E11D48" stroke-width="1.9" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M 716.0 744.0 L 709.5 732.0 L 703.0 744.0" fill="none" stroke="#E11D48" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="709.5" cy="726.5" r="3.8" fill="#FFFFFF" stroke="#E11D48" stroke-width="1.7"/>
+<line x1="715.0" y1="629.0" x2="704.0" y2="629.0" stroke="#E11D48" stroke-width="1.8" stroke-linecap="round"/>
+<line x1="715.0" y1="634.0" x2="704.0" y2="634.0" stroke="#E11D48" stroke-width="1.8" stroke-linecap="round"/>
+<g><rect x="668.2" y="673.0" width="94.6" height="18" rx="4" fill="#FFFFFF" stroke="#E11D48" stroke-width="0.95" opacity="0.98"/><text x="715.5" y="685.6" text-anchor="middle" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="10.5" font-weight="600" fill="#E11D48">participant_b</text></g>
+<path d="M 657.5 1000.0 L 657.5 896.0" fill="none" stroke="#F8FAFC" stroke-width="5" stroke-linejoin="round" stroke-linecap="round" opacity="0.88"/>
+<path d="M 657.5 1000.0 L 657.5 896.0" fill="none" stroke="#E11D48" stroke-width="1.9" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M 664.0 1000.0 L 657.5 988.0 L 651.0 1000.0" fill="none" stroke="#E11D48" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="657.5" cy="982.5" r="3.8" fill="#FFFFFF" stroke="#E11D48" stroke-width="1.7"/>
+<line x1="663.0" y1="903.0" x2="652.0" y2="903.0" stroke="#E11D48" stroke-width="1.8" stroke-linecap="round"/>
+<line x1="663.0" y1="908.0" x2="652.0" y2="908.0" stroke="#E11D48" stroke-width="1.8" stroke-linecap="round"/>
+<g><rect x="604.0" y="939.0" width="107.0" height="18" rx="4" fill="#FFFFFF" stroke="#E11D48" stroke-width="0.95" opacity="0.98"/><text x="657.5" y="951.6" text-anchor="middle" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="10.5" font-weight="600" fill="#E11D48">conversation_id</text></g>
+<path d="M 495.0 1089.0 L 468.0 1089.0 Q 458.0 1089.0 458.0 1079.0 L 458.0 586.0 Q 458.0 576.0 468.0 576.0 L 495.0 576.0" fill="none" stroke="#F8FAFC" stroke-width="5" stroke-linejoin="round" stroke-linecap="round" opacity="0.88"/>
+<path d="M 495.0 1089.0 L 468.0 1089.0 Q 458.0 1089.0 458.0 1079.0 L 458.0 586.0 Q 458.0 576.0 468.0 576.0 L 495.0 576.0" fill="none" stroke="#E11D48" stroke-width="1.9" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M 495.0 1082.5 L 483.0 1089.0 L 495.0 1095.5" fill="none" stroke="#E11D48" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="477.5" cy="1089.0" r="3.8" fill="#FFFFFF" stroke="#E11D48" stroke-width="1.7"/>
+<line x1="488.0" y1="581.5" x2="488.0" y2="570.5" stroke="#E11D48" stroke-width="1.8" stroke-linecap="round"/>
+<line x1="483.0" y1="581.5" x2="483.0" y2="570.5" stroke="#E11D48" stroke-width="1.8" stroke-linecap="round"/>
+<g><rect x="423.1" y="939.0" width="69.8" height="18" rx="4" fill="#FFFFFF" stroke="#E11D48" stroke-width="0.95" opacity="0.98"/><text x="458.0" y="951.6" text-anchor="middle" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="10.5" font-weight="600" fill="#E11D48">sender_id</text></g>
+<path d="M 960.0 189.0 L 906.0 189.0 Q 896.0 189.0 896.0 199.0 L 896.0 440.0 Q 896.0 450.0 886.0 450.0 L 820.0 450.0" fill="none" stroke="#F8FAFC" stroke-width="5" stroke-linejoin="round" stroke-linecap="round" opacity="0.88"/>
+<path d="M 960.0 189.0 L 906.0 189.0 Q 896.0 189.0 896.0 199.0 L 896.0 440.0 Q 896.0 450.0 886.0 450.0 L 820.0 450.0" fill="none" stroke="#7C3AED" stroke-width="1.9" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M 960.0 182.5 L 948.0 189.0 L 960.0 195.5" fill="none" stroke="#7C3AED" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="942.5" cy="189.0" r="3.8" fill="#FFFFFF" stroke="#7C3AED" stroke-width="1.7"/>
+<line x1="827.0" y1="444.5" x2="827.0" y2="455.5" stroke="#7C3AED" stroke-width="1.8" stroke-linecap="round"/>
+<line x1="832.0" y1="444.5" x2="832.0" y2="455.5" stroke="#7C3AED" stroke-width="1.8" stroke-linecap="round"/>
+<g><rect x="867.3" y="301.0" width="57.4" height="18" rx="4" fill="#FFFFFF" stroke="#7C3AED" stroke-width="0.95" opacity="0.98"/><text x="896.0" y="313.6" text-anchor="middle" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="10.5" font-weight="600" fill="#7C3AED">user_id</text></g>
+<path d="M 960.0 523.0 L 906.0 523.0 Q 896.0 523.0 896.0 513.0 L 896.0 506.0 Q 896.0 496.0 886.0 496.0 L 820.0 496.0" fill="none" stroke="#F8FAFC" stroke-width="5" stroke-linejoin="round" stroke-linecap="round" opacity="0.88"/>
+<path d="M 960.0 523.0 L 906.0 523.0 Q 896.0 523.0 896.0 513.0 L 896.0 506.0 Q 896.0 496.0 886.0 496.0 L 820.0 496.0" fill="none" stroke="#7C3AED" stroke-width="1.9" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M 960.0 516.5 L 948.0 523.0 L 960.0 529.5" fill="none" stroke="#7C3AED" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="942.5" cy="523.0" r="3.8" fill="#FFFFFF" stroke="#7C3AED" stroke-width="1.7"/>
+<line x1="827.0" y1="490.5" x2="827.0" y2="501.5" stroke="#7C3AED" stroke-width="1.8" stroke-linecap="round"/>
+<line x1="832.0" y1="490.5" x2="832.0" y2="501.5" stroke="#7C3AED" stroke-width="1.8" stroke-linecap="round"/>
+<g><rect x="867.3" y="487.0" width="57.4" height="18" rx="4" fill="#FFFFFF" stroke="#7C3AED" stroke-width="0.95" opacity="0.98"/><text x="896.0" y="499.6" text-anchor="middle" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="10.5" font-weight="600" fill="#7C3AED">user_id</text></g>
+<path d="M 960.0 767.0 L 916.0 767.0 Q 906.0 767.0 906.0 757.0 L 906.0 554.0 Q 906.0 544.0 896.0 544.0 L 820.0 544.0" fill="none" stroke="#F8FAFC" stroke-width="5" stroke-linejoin="round" stroke-linecap="round" opacity="0.88"/>
+<path d="M 960.0 767.0 L 916.0 767.0 Q 906.0 767.0 906.0 757.0 L 906.0 554.0 Q 906.0 544.0 896.0 544.0 L 820.0 544.0" fill="none" stroke="#D97706" stroke-width="1.9" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M 960.0 760.5 L 948.0 767.0 L 960.0 773.5" fill="none" stroke="#D97706" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="942.5" cy="767.0" r="3.8" fill="#FFFFFF" stroke="#D97706" stroke-width="1.7"/>
+<line x1="827.0" y1="538.5" x2="827.0" y2="549.5" stroke="#D97706" stroke-width="1.8" stroke-linecap="round"/>
+<line x1="832.0" y1="538.5" x2="832.0" y2="549.5" stroke="#D97706" stroke-width="1.8" stroke-linecap="round"/>
+<g><rect x="861.8" y="641.0" width="88.4" height="18" rx="4" fill="#FFFFFF" stroke="#D97706" stroke-width="0.95" opacity="0.98"/><text x="906.0" y="653.6" text-anchor="middle" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="10.5" font-weight="600" fill="#D97706">organizer_id</text></g>
+<path d="M 1577.5 1138.0 L 1577.5 1208.0 Q 1577.5 1218.0 1567.5 1218.0 L 866.0 1218.0 Q 856.0 1218.0 856.0 1208.0 L 856.0 600.0 Q 856.0 590.0 846.0 590.0 L 820.0 590.0" fill="none" stroke="#F8FAFC" stroke-width="5" stroke-linejoin="round" stroke-linecap="round" opacity="0.88"/>
+<path d="M 1577.5 1138.0 L 1577.5 1208.0 Q 1577.5 1218.0 1567.5 1218.0 L 866.0 1218.0 Q 856.0 1218.0 856.0 1208.0 L 856.0 600.0 Q 856.0 590.0 846.0 590.0 L 820.0 590.0" fill="none" stroke="#D97706" stroke-width="1.9" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M 1571.0 1138.0 L 1577.5 1150.0 L 1584.0 1138.0" fill="none" stroke="#D97706" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="1577.5" cy="1155.5" r="3.8" fill="#FFFFFF" stroke="#D97706" stroke-width="1.7"/>
+<line x1="827.0" y1="584.5" x2="827.0" y2="595.5" stroke="#D97706" stroke-width="1.8" stroke-linecap="round"/>
+<line x1="832.0" y1="584.5" x2="832.0" y2="595.5" stroke="#D97706" stroke-width="1.8" stroke-linecap="round"/>
+<g><rect x="1062.9" y="1209.0" width="144.2" height="18" rx="4" fill="#FFFFFF" stroke="#D97706" stroke-width="0.95" opacity="0.98"/><text x="1135.0" y="1221.6" text-anchor="middle" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="10.5" font-weight="600" fill="#D97706">athlete_id → users.id</text></g>
+<path d="M 1410.0 189.0 L 1362.0 189.0 Q 1352.0 189.0 1352.0 179.0 L 1352.0 177.0 Q 1352.0 167.0 1342.0 167.0 L 1295.0 167.0" fill="none" stroke="#F8FAFC" stroke-width="5" stroke-linejoin="round" stroke-linecap="round" opacity="0.88"/>
+<path d="M 1410.0 189.0 L 1362.0 189.0 Q 1352.0 189.0 1352.0 179.0 L 1352.0 177.0 Q 1352.0 167.0 1342.0 167.0 L 1295.0 167.0" fill="none" stroke="#7C3AED" stroke-width="1.9" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M 1410.0 182.5 L 1398.0 189.0 L 1410.0 195.5" fill="none" stroke="#7C3AED" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="1392.5" cy="189.0" r="3.8" fill="#FFFFFF" stroke="#7C3AED" stroke-width="1.7"/>
+<line x1="1302.0" y1="161.5" x2="1302.0" y2="172.5" stroke="#7C3AED" stroke-width="1.8" stroke-linecap="round"/>
+<line x1="1307.0" y1="161.5" x2="1307.0" y2="172.5" stroke="#7C3AED" stroke-width="1.8" stroke-linecap="round"/>
+<g><rect x="1320.2" y="129.0" width="63.6" height="18" rx="4" fill="#FFFFFF" stroke="#7C3AED" stroke-width="0.95" opacity="0.98"/><text x="1352.0" y="141.6" text-anchor="middle" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="10.5" font-weight="600" fill="#7C3AED">video_id</text></g>
+<path d="M 1577.5 436.0 L 1577.5 362.0" fill="none" stroke="#F8FAFC" stroke-width="5" stroke-linejoin="round" stroke-linecap="round" opacity="0.88"/>
+<path d="M 1577.5 436.0 L 1577.5 362.0" fill="none" stroke="#7C3AED" stroke-width="1.9" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M 1584.0 436.0 L 1577.5 424.0 L 1571.0 436.0" fill="none" stroke="#7C3AED" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="1577.5" cy="418.5" r="3.8" fill="#FFFFFF" stroke="#7C3AED" stroke-width="1.7"/>
+<line x1="1583.0" y1="369.0" x2="1572.0" y2="369.0" stroke="#7C3AED" stroke-width="1.8" stroke-linecap="round"/>
+<line x1="1583.0" y1="374.0" x2="1572.0" y2="374.0" stroke="#7C3AED" stroke-width="1.8" stroke-linecap="round"/>
+<g><rect x="1551.9" y="390.0" width="51.2" height="18" rx="4" fill="#FFFFFF" stroke="#7C3AED" stroke-width="0.95" opacity="0.98"/><text x="1577.5" y="402.6" text-anchor="middle" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="10.5" font-weight="600" fill="#7C3AED">job_id</text></g>
+<path d="M 1745.0 773.0 L 1776.0 773.0 Q 1786.0 773.0 1786.0 763.0 L 1786.0 177.0 Q 1786.0 167.0 1776.0 167.0 L 1745.0 167.0" fill="none" stroke="#F8FAFC" stroke-width="5" stroke-linejoin="round" stroke-linecap="round" opacity="0.88"/>
+<path d="M 1745.0 773.0 L 1776.0 773.0 Q 1786.0 773.0 1786.0 763.0 L 1786.0 177.0 Q 1786.0 167.0 1776.0 167.0 L 1745.0 167.0" fill="none" stroke="#7C3AED" stroke-width="1.9" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M 1745.0 779.5 L 1757.0 773.0 L 1745.0 766.5" fill="none" stroke="#7C3AED" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="1762.5" cy="773.0" r="3.8" fill="#FFFFFF" stroke="#7C3AED" stroke-width="1.7"/>
+<line x1="1752.0" y1="161.5" x2="1752.0" y2="172.5" stroke="#7C3AED" stroke-width="1.8" stroke-linecap="round"/>
+<line x1="1757.0" y1="161.5" x2="1757.0" y2="172.5" stroke="#7C3AED" stroke-width="1.8" stroke-linecap="round"/>
+<g><rect x="1760.4" y="461.0" width="51.2" height="18" rx="4" fill="#FFFFFF" stroke="#7C3AED" stroke-width="0.95" opacity="0.98"/><text x="1786.0" y="473.6" text-anchor="middle" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="10.5" font-weight="600" fill="#7C3AED">job_id</text></g>
+<path d="M 1295.0 545.0 L 1342.0 545.0 Q 1352.0 545.0 1352.0 535.0 L 1352.0 491.0 Q 1352.0 481.0 1362.0 481.0 L 1410.0 481.0" fill="none" stroke="#F8FAFC" stroke-width="5" stroke-linejoin="round" stroke-linecap="round" opacity="0.88"/>
+<path d="M 1295.0 545.0 L 1342.0 545.0 Q 1352.0 545.0 1352.0 535.0 L 1352.0 491.0 Q 1352.0 481.0 1362.0 481.0 L 1410.0 481.0" fill="none" stroke="#7C3AED" stroke-width="1.9" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M 1295.0 551.5 L 1307.0 545.0 L 1295.0 538.5" fill="none" stroke="#7C3AED" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="1312.5" cy="545.0" r="3.8" fill="#FFFFFF" stroke="#7C3AED" stroke-width="1.7"/>
+<line x1="1403.0" y1="486.5" x2="1403.0" y2="475.5" stroke="#7C3AED" stroke-width="1.8" stroke-linecap="round"/>
+<line x1="1398.0" y1="486.5" x2="1398.0" y2="475.5" stroke="#7C3AED" stroke-width="1.8" stroke-linecap="round"/>
+<g><rect x="1323.3" y="557.0" width="57.4" height="18" rx="4" fill="#FFFFFF" stroke="#7C3AED" stroke-width="0.95" opacity="0.98"/><text x="1352.0" y="569.6" text-anchor="middle" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="10.5" font-weight="600" fill="#7C3AED">clip_id</text></g>
+<path d="M 1410.0 1031.0 L 1362.0 1031.0 Q 1352.0 1031.0 1352.0 1021.0 L 1352.0 755.0 Q 1352.0 745.0 1342.0 745.0 L 1295.0 745.0" fill="none" stroke="#F8FAFC" stroke-width="5" stroke-linejoin="round" stroke-linecap="round" opacity="0.88"/>
+<path d="M 1410.0 1031.0 L 1362.0 1031.0 Q 1352.0 1031.0 1352.0 1021.0 L 1352.0 755.0 Q 1352.0 745.0 1342.0 745.0 L 1295.0 745.0" fill="none" stroke="#D97706" stroke-width="1.9" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M 1410.0 1024.5 L 1398.0 1031.0 L 1410.0 1037.5" fill="none" stroke="#D97706" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="1392.5" cy="1031.0" r="3.8" fill="#FFFFFF" stroke="#D97706" stroke-width="1.7"/>
+<line x1="1302.0" y1="739.5" x2="1302.0" y2="750.5" stroke="#D97706" stroke-width="1.8" stroke-linecap="round"/>
+<line x1="1307.0" y1="739.5" x2="1307.0" y2="750.5" stroke="#D97706" stroke-width="1.8" stroke-linecap="round"/>
+<g><rect x="1301.6" y="877.0" width="100.8" height="18" rx="4" fill="#FFFFFF" stroke="#D97706" stroke-width="0.95" opacity="0.98"/><text x="1352.0" y="889.6" text-anchor="middle" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="10.5" font-weight="600" fill="#D97706">opportunity_id</text></g>
+</g>
+<g id="tables">
+
+  <g filter="url(#cardShadow)">
+    <defs>
+      <clipPath id="clip_athlete_profiles">
+        <rect x="40" y="122" width="325" height="350" rx="8"/>
+      </clipPath>
+    </defs>
+    <rect x="40" y="122" width="325" height="350" rx="8" fill="#FFFFFF" stroke="#5EEAD4" stroke-width="1.5"/>
+    <g clip-path="url(#clip_athlete_profiles)">
+      <rect x="40" y="122" width="325" height="34" fill="#0F766E"/>
+      <text x="52" y="144" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="13.2" font-weight="700" fill="#FFFFFF">athlete_profiles</text>
+      <text x="355" y="143" text-anchor="end" font-family="Consolas, monospace" font-size="10" fill="#E2E8F0" opacity="0.85">public</text>
+
+      <rect x="48" y="160" width="21" height="14" rx="3" fill="#FEF3C7" stroke="#F59E0B" stroke-width="0.8"/>      <text x="58.5" y="170" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="8.5" font-weight="700" fill="#B45309">PK</text>
+      <rect x="72" y="160" width="21" height="14" rx="3" fill="#DBEAFE" stroke="#3B82F6" stroke-width="0.8"/>      <text x="82.5" y="170" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="8.5" font-weight="700" fill="#1D4ED8">FK</text>
+      <text x="98" y="171" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="700" fill="#0F172A">user_id</text>
+      <text x="347" y="171" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">uuid</text>
+      <text x="356" y="172" text-anchor="end" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#DC2626">*</text>
+      <rect x="40" y="178" width="325" height="22" fill="#F8FAFC"/>
+      <text x="98" y="193" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="400" fill="#334155">position</text>
+      <text x="355" y="193" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">enum</text>
+      <text x="98" y="215" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="400" fill="#334155">birth_date</text>
+      <text x="355" y="215" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">date</text>
+      <rect x="40" y="222" width="325" height="22" fill="#F8FAFC"/>
+      <text x="98" y="237" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="400" fill="#334155">height_cm</text>
+      <text x="355" y="237" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">integer</text>
+      <text x="98" y="259" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="400" fill="#334155">dominant_foot</text>
+      <text x="355" y="259" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">enum</text>
+      <rect x="40" y="266" width="325" height="22" fill="#F8FAFC"/>
+      <text x="98" y="281" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="400" fill="#334155">state</text>
+      <text x="355" y="281" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">varchar</text>
+      <text x="98" y="303" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="400" fill="#334155">city</text>
+      <text x="355" y="303" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">varchar</text>
+      <rect x="40" y="310" width="325" height="22" fill="#F8FAFC"/>
+      <text x="98" y="325" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="400" fill="#334155">current_club</text>
+      <text x="355" y="325" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">varchar</text>
+      <text x="98" y="347" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="400" fill="#334155">bio</text>
+      <text x="355" y="347" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">varchar</text>
+      <rect x="40" y="354" width="325" height="22" fill="#F8FAFC"/>
+      <text x="98" y="369" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="400" fill="#334155">avatar_path</text>
+      <text x="355" y="369" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">varchar</text>
+      <text x="98" y="391" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="400" fill="#334155">status</text>
+      <text x="347" y="391" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">enum</text>
+      <text x="356" y="392" text-anchor="end" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#DC2626">*</text>
+      <rect x="40" y="398" width="325" height="22" fill="#F8FAFC"/>
+      <text x="98" y="413" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="400" fill="#334155">created_at</text>
+      <text x="347" y="413" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">timestamp</text>
+      <text x="356" y="414" text-anchor="end" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#DC2626">*</text>
+      <text x="98" y="435" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="400" fill="#334155">updated_at</text>
+      <text x="347" y="435" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">timestamp</text>
+      <text x="356" y="436" text-anchor="end" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#DC2626">*</text>
+      <rect x="40" y="442" width="325" height="22" fill="#F8FAFC"/>
+      <text x="98" y="457" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="400" fill="#334155">club_history</text>
+      <text x="355" y="457" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">varchar</text>
+    </g>
+  </g>
+
+  <g filter="url(#cardShadow)">
+    <defs>
+      <clipPath id="clip_club_profiles">
+        <rect x="40" y="502" width="325" height="262" rx="8"/>
+      </clipPath>
+    </defs>
+    <rect x="40" y="502" width="325" height="262" rx="8" fill="#FFFFFF" stroke="#5EEAD4" stroke-width="1.5"/>
+    <g clip-path="url(#clip_club_profiles)">
+      <rect x="40" y="502" width="325" height="34" fill="#0F766E"/>
+      <text x="52" y="524" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="13.2" font-weight="700" fill="#FFFFFF">club_profiles</text>
+      <text x="355" y="523" text-anchor="end" font-family="Consolas, monospace" font-size="10" fill="#E2E8F0" opacity="0.85">public</text>
+
+      <rect x="48" y="540" width="21" height="14" rx="3" fill="#FEF3C7" stroke="#F59E0B" stroke-width="0.8"/>      <text x="58.5" y="550" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="8.5" font-weight="700" fill="#B45309">PK</text>
+      <rect x="72" y="540" width="21" height="14" rx="3" fill="#DBEAFE" stroke="#3B82F6" stroke-width="0.8"/>      <text x="82.5" y="550" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="8.5" font-weight="700" fill="#1D4ED8">FK</text>
+      <text x="98" y="551" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="700" fill="#0F172A">user_id</text>
+      <text x="347" y="551" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">uuid</text>
+      <text x="356" y="552" text-anchor="end" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#DC2626">*</text>
+      <rect x="40" y="558" width="325" height="22" fill="#F8FAFC"/>
+      <text x="98" y="573" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="400" fill="#334155">legal_name</text>
+      <text x="355" y="573" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">varchar</text>
+      <text x="98" y="595" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="400" fill="#334155">cnpj</text>
+      <text x="355" y="595" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">varchar</text>
+      <rect x="40" y="602" width="325" height="22" fill="#F8FAFC"/>
+      <text x="98" y="617" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="400" fill="#334155">categories</text>
+      <text x="347" y="617" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">json</text>
+      <text x="356" y="618" text-anchor="end" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#DC2626">*</text>
+      <text x="98" y="639" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="400" fill="#334155">state</text>
+      <text x="355" y="639" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">varchar</text>
+      <rect x="40" y="646" width="325" height="22" fill="#F8FAFC"/>
+      <text x="98" y="661" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="400" fill="#334155">city</text>
+      <text x="355" y="661" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">varchar</text>
+      <text x="98" y="683" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="400" fill="#334155">bio</text>
+      <text x="355" y="683" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">varchar</text>
+      <rect x="40" y="690" width="325" height="22" fill="#F8FAFC"/>
+      <text x="98" y="705" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="400" fill="#334155">avatar_path</text>
+      <text x="355" y="705" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">varchar</text>
+      <text x="98" y="727" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="400" fill="#334155">created_at</text>
+      <text x="347" y="727" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">timestamp</text>
+      <text x="356" y="728" text-anchor="end" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#DC2626">*</text>
+      <rect x="40" y="734" width="325" height="22" fill="#F8FAFC"/>
+      <text x="98" y="749" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="400" fill="#334155">updated_at</text>
+      <text x="347" y="749" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">timestamp</text>
+      <text x="356" y="750" text-anchor="end" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#DC2626">*</text>
+    </g>
+  </g>
+
+  <g filter="url(#cardShadow)">
+    <defs>
+      <clipPath id="clip_scout_profiles">
+        <rect x="40" y="794" width="325" height="240" rx="8"/>
+      </clipPath>
+    </defs>
+    <rect x="40" y="794" width="325" height="240" rx="8" fill="#FFFFFF" stroke="#5EEAD4" stroke-width="1.5"/>
+    <g clip-path="url(#clip_scout_profiles)">
+      <rect x="40" y="794" width="325" height="34" fill="#0F766E"/>
+      <text x="52" y="816" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="13.2" font-weight="700" fill="#FFFFFF">scout_profiles</text>
+      <text x="355" y="815" text-anchor="end" font-family="Consolas, monospace" font-size="10" fill="#E2E8F0" opacity="0.85">public</text>
+
+      <rect x="48" y="832" width="21" height="14" rx="3" fill="#FEF3C7" stroke="#F59E0B" stroke-width="0.8"/>      <text x="58.5" y="842" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="8.5" font-weight="700" fill="#B45309">PK</text>
+      <rect x="72" y="832" width="21" height="14" rx="3" fill="#DBEAFE" stroke="#3B82F6" stroke-width="0.8"/>      <text x="82.5" y="842" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="8.5" font-weight="700" fill="#1D4ED8">FK</text>
+      <text x="98" y="843" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="700" fill="#0F172A">user_id</text>
+      <text x="347" y="843" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">uuid</text>
+      <text x="356" y="844" text-anchor="end" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#DC2626">*</text>
+      <rect x="40" y="850" width="325" height="22" fill="#F8FAFC"/>
+      <text x="98" y="865" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="400" fill="#334155">organization</text>
+      <text x="355" y="865" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">varchar</text>
+      <text x="98" y="887" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="400" fill="#334155">credential</text>
+      <text x="355" y="887" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">varchar</text>
+      <rect x="40" y="894" width="325" height="22" fill="#F8FAFC"/>
+      <text x="98" y="909" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="400" fill="#334155">state</text>
+      <text x="355" y="909" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">varchar</text>
+      <text x="98" y="931" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="400" fill="#334155">city</text>
+      <text x="355" y="931" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">varchar</text>
+      <rect x="40" y="938" width="325" height="22" fill="#F8FAFC"/>
+      <text x="98" y="953" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="400" fill="#334155">bio</text>
+      <text x="355" y="953" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">varchar</text>
+      <text x="98" y="975" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="400" fill="#334155">avatar_path</text>
+      <text x="355" y="975" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">varchar</text>
+      <rect x="40" y="982" width="325" height="22" fill="#F8FAFC"/>
+      <text x="98" y="997" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="400" fill="#334155">created_at</text>
+      <text x="347" y="997" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">timestamp</text>
+      <text x="356" y="998" text-anchor="end" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#DC2626">*</text>
+      <text x="98" y="1019" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="400" fill="#334155">updated_at</text>
+      <text x="347" y="1019" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">timestamp</text>
+      <text x="356" y="1020" text-anchor="end" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#DC2626">*</text>
+    </g>
+  </g>
+
+  <g filter="url(#cardShadow)">
+    <defs>
+      <clipPath id="clip_alembic_version">
+        <rect x="40" y="1122" width="325" height="64" rx="8"/>
+      </clipPath>
+    </defs>
+    <rect x="40" y="1122" width="325" height="64" rx="8" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="1.5"/>
+    <g clip-path="url(#clip_alembic_version)">
+      <rect x="40" y="1122" width="325" height="34" fill="#475569"/>
+      <text x="52" y="1144" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="13.2" font-weight="700" fill="#FFFFFF">alembic_version</text>
+      <text x="355" y="1143" text-anchor="end" font-family="Consolas, monospace" font-size="10" fill="#E2E8F0" opacity="0.85">public</text>
+
+      <rect x="48" y="1160" width="21" height="14" rx="3" fill="#FEF3C7" stroke="#F59E0B" stroke-width="0.8"/>      <text x="58.5" y="1170" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="8.5" font-weight="700" fill="#B45309">PK</text>
+      <text x="98" y="1171" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="700" fill="#0F172A">version_num</text>
+      <text x="347" y="1171" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">varchar</text>
+      <text x="356" y="1172" text-anchor="end" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#DC2626">*</text>
+    </g>
+  </g>
+
+  <g filter="url(#cardShadow)">
+    <defs>
+      <clipPath id="clip_password_reset_tokens">
+        <rect x="495" y="122" width="325" height="174" rx="8"/>
+      </clipPath>
+    </defs>
+    <rect x="495" y="122" width="325" height="174" rx="8" fill="#FFFFFF" stroke="#93C5FD" stroke-width="1.5"/>
+    <g clip-path="url(#clip_password_reset_tokens)">
+      <rect x="495" y="122" width="325" height="34" fill="#1E3A8A"/>
+      <text x="507" y="144" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="13.2" font-weight="700" fill="#FFFFFF">password_reset_tokens</text>
+      <text x="810" y="143" text-anchor="end" font-family="Consolas, monospace" font-size="10" fill="#E2E8F0" opacity="0.85">public</text>
+
+      <rect x="503" y="160" width="21" height="14" rx="3" fill="#FEF3C7" stroke="#F59E0B" stroke-width="0.8"/>      <text x="513.5" y="170" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="8.5" font-weight="700" fill="#B45309">PK</text>
+      <text x="553" y="171" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="700" fill="#0F172A">id</text>
+      <text x="802" y="171" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">uuid</text>
+      <text x="811" y="172" text-anchor="end" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#DC2626">*</text>
+      <rect x="495" y="178" width="325" height="22" fill="#F8FAFC"/>
+      <rect x="503" y="182" width="21" height="14" rx="3" fill="#DBEAFE" stroke="#3B82F6" stroke-width="0.8"/>      <text x="513.5" y="192" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="8.5" font-weight="700" fill="#1D4ED8">FK</text>
+      <text x="553" y="193" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="600" fill="#0F172A">user_id</text>
+      <text x="802" y="193" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">uuid</text>
+      <text x="811" y="194" text-anchor="end" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#DC2626">*</text>
+      <text x="553" y="215" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="400" fill="#334155">token</text>
+      <text x="802" y="215" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">varchar</text>
+      <text x="811" y="216" text-anchor="end" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#DC2626">*</text>
+      <rect x="495" y="222" width="325" height="22" fill="#F8FAFC"/>
+      <text x="553" y="237" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="400" fill="#334155">expires_at</text>
+      <text x="802" y="237" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">timestamp</text>
+      <text x="811" y="238" text-anchor="end" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#DC2626">*</text>
+      <text x="553" y="259" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="400" fill="#334155">used</text>
+      <text x="802" y="259" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">boolean</text>
+      <text x="811" y="260" text-anchor="end" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#DC2626">*</text>
+      <rect x="495" y="266" width="325" height="22" fill="#F8FAFC"/>
+      <text x="553" y="281" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="400" fill="#334155">created_at</text>
+      <text x="802" y="281" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">timestamp</text>
+      <text x="811" y="282" text-anchor="end" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#DC2626">*</text>
+    </g>
+  </g>
+
+  <g filter="url(#cardShadow)">
+    <defs>
+      <clipPath id="clip_users">
+        <rect x="495" y="404" width="325" height="218" rx="8"/>
+      </clipPath>
+    </defs>
+    <rect x="495" y="404" width="325" height="218" rx="8" fill="#FFFFFF" stroke="#93C5FD" stroke-width="1.5"/>
+    <g clip-path="url(#clip_users)">
+      <rect x="495" y="404" width="325" height="34" fill="#1E3A8A"/>
+      <text x="507" y="426" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="13.2" font-weight="700" fill="#FFFFFF">users</text>
+      <text x="810" y="425" text-anchor="end" font-family="Consolas, monospace" font-size="10" fill="#E2E8F0" opacity="0.85">public</text>
+
+      <rect x="503" y="442" width="21" height="14" rx="3" fill="#FEF3C7" stroke="#F59E0B" stroke-width="0.8"/>      <text x="513.5" y="452" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="8.5" font-weight="700" fill="#B45309">PK</text>
+      <text x="553" y="453" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="700" fill="#0F172A">id</text>
+      <text x="802" y="453" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">uuid</text>
+      <text x="811" y="454" text-anchor="end" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#DC2626">*</text>
+      <rect x="495" y="460" width="325" height="22" fill="#F8FAFC"/>
+      <text x="553" y="475" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="400" fill="#334155">email</text>
+      <text x="802" y="475" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">varchar</text>
+      <text x="811" y="476" text-anchor="end" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#DC2626">*</text>
+      <text x="553" y="497" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="400" fill="#334155">password_hash</text>
+      <text x="802" y="497" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">varchar</text>
+      <text x="811" y="498" text-anchor="end" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#DC2626">*</text>
+      <rect x="495" y="504" width="325" height="22" fill="#F8FAFC"/>
+      <text x="553" y="519" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="400" fill="#334155">first_name</text>
+      <text x="802" y="519" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">varchar</text>
+      <text x="811" y="520" text-anchor="end" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#DC2626">*</text>
+      <text x="553" y="541" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="400" fill="#334155">last_name</text>
+      <text x="802" y="541" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">varchar</text>
+      <text x="811" y="542" text-anchor="end" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#DC2626">*</text>
+      <rect x="495" y="548" width="325" height="22" fill="#F8FAFC"/>
+      <text x="553" y="563" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="400" fill="#334155">max_clips_allowed</text>
+      <text x="802" y="563" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">integer</text>
+      <text x="811" y="564" text-anchor="end" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#DC2626">*</text>
+      <text x="553" y="585" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="400" fill="#334155">created_at</text>
+      <text x="802" y="585" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">timestamp</text>
+      <text x="811" y="586" text-anchor="end" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#DC2626">*</text>
+      <rect x="495" y="592" width="325" height="22" fill="#F8FAFC"/>
+      <text x="553" y="607" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="400" fill="#334155">role</text>
+      <text x="802" y="607" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">enum</text>
+      <text x="811" y="608" text-anchor="end" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#DC2626">*</text>
+    </g>
+  </g>
+
+  <g filter="url(#cardShadow)">
+    <defs>
+      <clipPath id="clip_conversations">
+        <rect x="495" y="744" width="325" height="152" rx="8"/>
+      </clipPath>
+    </defs>
+    <rect x="495" y="744" width="325" height="152" rx="8" fill="#FFFFFF" stroke="#FDA4AF" stroke-width="1.5"/>
+    <g clip-path="url(#clip_conversations)">
+      <rect x="495" y="744" width="325" height="34" fill="#9F1239"/>
+      <text x="507" y="766" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="13.2" font-weight="700" fill="#FFFFFF">conversations</text>
+      <text x="810" y="765" text-anchor="end" font-family="Consolas, monospace" font-size="10" fill="#E2E8F0" opacity="0.85">public</text>
+
+      <rect x="503" y="782" width="21" height="14" rx="3" fill="#FEF3C7" stroke="#F59E0B" stroke-width="0.8"/>      <text x="513.5" y="792" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="8.5" font-weight="700" fill="#B45309">PK</text>
+      <text x="553" y="793" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="700" fill="#0F172A">id</text>
+      <text x="802" y="793" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">uuid</text>
+      <text x="811" y="794" text-anchor="end" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#DC2626">*</text>
+      <rect x="495" y="800" width="325" height="22" fill="#F8FAFC"/>
+      <rect x="503" y="804" width="21" height="14" rx="3" fill="#DBEAFE" stroke="#3B82F6" stroke-width="0.8"/>      <text x="513.5" y="814" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="8.5" font-weight="700" fill="#1D4ED8">FK</text>
+      <text x="553" y="815" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="600" fill="#0F172A">participant_a_id</text>
+      <text x="802" y="815" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">uuid</text>
+      <text x="811" y="816" text-anchor="end" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#DC2626">*</text>
+      <rect x="503" y="826" width="21" height="14" rx="3" fill="#DBEAFE" stroke="#3B82F6" stroke-width="0.8"/>      <text x="513.5" y="836" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="8.5" font-weight="700" fill="#1D4ED8">FK</text>
+      <text x="553" y="837" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="600" fill="#0F172A">participant_b_id</text>
+      <text x="802" y="837" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">uuid</text>
+      <text x="811" y="838" text-anchor="end" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#DC2626">*</text>
+      <rect x="495" y="844" width="325" height="22" fill="#F8FAFC"/>
+      <text x="553" y="859" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="400" fill="#334155">created_at</text>
+      <text x="802" y="859" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">timestamp</text>
+      <text x="811" y="860" text-anchor="end" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#DC2626">*</text>
+      <text x="553" y="881" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="400" fill="#334155">last_message_at</text>
+      <text x="802" y="881" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">timestamp</text>
+      <text x="811" y="882" text-anchor="end" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#DC2626">*</text>
+    </g>
+  </g>
+
+  <g filter="url(#cardShadow)">
+    <defs>
+      <clipPath id="clip_messages">
+        <rect x="495" y="1000" width="325" height="174" rx="8"/>
+      </clipPath>
+    </defs>
+    <rect x="495" y="1000" width="325" height="174" rx="8" fill="#FFFFFF" stroke="#FDA4AF" stroke-width="1.5"/>
+    <g clip-path="url(#clip_messages)">
+      <rect x="495" y="1000" width="325" height="34" fill="#9F1239"/>
+      <text x="507" y="1022" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="13.2" font-weight="700" fill="#FFFFFF">messages</text>
+      <text x="810" y="1021" text-anchor="end" font-family="Consolas, monospace" font-size="10" fill="#E2E8F0" opacity="0.85">public</text>
+
+      <rect x="503" y="1038" width="21" height="14" rx="3" fill="#FEF3C7" stroke="#F59E0B" stroke-width="0.8"/>      <text x="513.5" y="1048" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="8.5" font-weight="700" fill="#B45309">PK</text>
+      <text x="553" y="1049" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="700" fill="#0F172A">id</text>
+      <text x="802" y="1049" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">uuid</text>
+      <text x="811" y="1050" text-anchor="end" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#DC2626">*</text>
+      <rect x="495" y="1056" width="325" height="22" fill="#F8FAFC"/>
+      <rect x="503" y="1060" width="21" height="14" rx="3" fill="#DBEAFE" stroke="#3B82F6" stroke-width="0.8"/>      <text x="513.5" y="1070" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="8.5" font-weight="700" fill="#1D4ED8">FK</text>
+      <text x="553" y="1071" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="600" fill="#0F172A">conversation_id</text>
+      <text x="802" y="1071" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">uuid</text>
+      <text x="811" y="1072" text-anchor="end" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#DC2626">*</text>
+      <rect x="503" y="1082" width="21" height="14" rx="3" fill="#DBEAFE" stroke="#3B82F6" stroke-width="0.8"/>      <text x="513.5" y="1092" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="8.5" font-weight="700" fill="#1D4ED8">FK</text>
+      <text x="553" y="1093" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="600" fill="#0F172A">sender_id</text>
+      <text x="802" y="1093" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">uuid</text>
+      <text x="811" y="1094" text-anchor="end" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#DC2626">*</text>
+      <rect x="495" y="1100" width="325" height="22" fill="#F8FAFC"/>
+      <text x="553" y="1115" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="400" fill="#334155">body</text>
+      <text x="802" y="1115" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">varchar</text>
+      <text x="811" y="1116" text-anchor="end" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#DC2626">*</text>
+      <text x="553" y="1137" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="400" fill="#334155">created_at</text>
+      <text x="802" y="1137" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">timestamp</text>
+      <text x="811" y="1138" text-anchor="end" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#DC2626">*</text>
+      <rect x="495" y="1144" width="325" height="22" fill="#F8FAFC"/>
+      <text x="553" y="1159" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="400" fill="#334155">read_at</text>
+      <text x="810" y="1159" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">timestamp</text>
+    </g>
+  </g>
+
+  <g filter="url(#cardShadow)">
+    <defs>
+      <clipPath id="clip_videos">
+        <rect x="960" y="122" width="335" height="196" rx="8"/>
+      </clipPath>
+    </defs>
+    <rect x="960" y="122" width="335" height="196" rx="8" fill="#FFFFFF" stroke="#C4B5FD" stroke-width="1.5"/>
+    <g clip-path="url(#clip_videos)">
+      <rect x="960" y="122" width="335" height="34" fill="#5B21B6"/>
+      <text x="972" y="144" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="13.2" font-weight="700" fill="#FFFFFF">videos</text>
+      <text x="1285" y="143" text-anchor="end" font-family="Consolas, monospace" font-size="10" fill="#E2E8F0" opacity="0.85">public</text>
+
+      <rect x="968" y="160" width="21" height="14" rx="3" fill="#FEF3C7" stroke="#F59E0B" stroke-width="0.8"/>      <text x="978.5" y="170" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="8.5" font-weight="700" fill="#B45309">PK</text>
+      <text x="1018" y="171" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="700" fill="#0F172A">id</text>
+      <text x="1277" y="171" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">uuid</text>
+      <text x="1286" y="172" text-anchor="end" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#DC2626">*</text>
+      <rect x="960" y="178" width="335" height="22" fill="#F8FAFC"/>
+      <rect x="968" y="182" width="21" height="14" rx="3" fill="#DBEAFE" stroke="#3B82F6" stroke-width="0.8"/>      <text x="978.5" y="192" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="8.5" font-weight="700" fill="#1D4ED8">FK</text>
+      <text x="1018" y="193" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="600" fill="#0F172A">user_id</text>
+      <text x="1277" y="193" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">uuid</text>
+      <text x="1286" y="194" text-anchor="end" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#DC2626">*</text>
+      <text x="1018" y="215" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="400" fill="#334155">original_filename</text>
+      <text x="1277" y="215" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">varchar</text>
+      <text x="1286" y="216" text-anchor="end" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#DC2626">*</text>
+      <rect x="960" y="222" width="335" height="22" fill="#F8FAFC"/>
+      <text x="1018" y="237" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="400" fill="#334155">storage_path</text>
+      <text x="1285" y="237" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">varchar</text>
+      <text x="1018" y="259" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="400" fill="#334155">duration_seconds</text>
+      <text x="1285" y="259" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">double</text>
+      <rect x="960" y="266" width="335" height="22" fill="#F8FAFC"/>
+      <text x="1018" y="281" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="400" fill="#334155">file_size_mb</text>
+      <text x="1285" y="281" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">double</text>
+      <text x="1018" y="303" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="400" fill="#334155">uploaded_at</text>
+      <text x="1277" y="303" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">timestamp</text>
+      <text x="1286" y="304" text-anchor="end" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#DC2626">*</text>
+    </g>
+  </g>
+
+  <g filter="url(#cardShadow)">
+    <defs>
+      <clipPath id="clip_clip_likes">
+        <rect x="960" y="478" width="335" height="108" rx="8"/>
+      </clipPath>
+    </defs>
+    <rect x="960" y="478" width="335" height="108" rx="8" fill="#FFFFFF" stroke="#C4B5FD" stroke-width="1.5"/>
+    <g clip-path="url(#clip_clip_likes)">
+      <rect x="960" y="478" width="335" height="34" fill="#5B21B6"/>
+      <text x="972" y="500" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="13.2" font-weight="700" fill="#FFFFFF">clip_likes</text>
+      <text x="1285" y="499" text-anchor="end" font-family="Consolas, monospace" font-size="10" fill="#E2E8F0" opacity="0.85">public</text>
+
+      <rect x="968" y="516" width="21" height="14" rx="3" fill="#FEF3C7" stroke="#F59E0B" stroke-width="0.8"/>      <text x="978.5" y="526" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="8.5" font-weight="700" fill="#B45309">PK</text>
+      <rect x="992" y="516" width="21" height="14" rx="3" fill="#DBEAFE" stroke="#3B82F6" stroke-width="0.8"/>      <text x="1002.5" y="526" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="8.5" font-weight="700" fill="#1D4ED8">FK</text>
+      <text x="1018" y="527" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="700" fill="#0F172A">user_id</text>
+      <text x="1277" y="527" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">uuid</text>
+      <text x="1286" y="528" text-anchor="end" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#DC2626">*</text>
+      <rect x="960" y="534" width="335" height="22" fill="#F8FAFC"/>
+      <rect x="968" y="538" width="21" height="14" rx="3" fill="#FEF3C7" stroke="#F59E0B" stroke-width="0.8"/>      <text x="978.5" y="548" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="8.5" font-weight="700" fill="#B45309">PK</text>
+      <rect x="992" y="538" width="21" height="14" rx="3" fill="#DBEAFE" stroke="#3B82F6" stroke-width="0.8"/>      <text x="1002.5" y="548" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="8.5" font-weight="700" fill="#1D4ED8">FK</text>
+      <text x="1018" y="549" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="700" fill="#0F172A">clip_id</text>
+      <text x="1277" y="549" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">uuid</text>
+      <text x="1286" y="550" text-anchor="end" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#DC2626">*</text>
+      <text x="1018" y="571" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="400" fill="#334155">created_at</text>
+      <text x="1277" y="571" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">timestamptz</text>
+      <text x="1286" y="572" text-anchor="end" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#DC2626">*</text>
+    </g>
+  </g>
+
+  <g filter="url(#cardShadow)">
+    <defs>
+      <clipPath id="clip_opportunities">
+        <rect x="960" y="700" width="335" height="438" rx="8"/>
+      </clipPath>
+    </defs>
+    <rect x="960" y="700" width="335" height="438" rx="8" fill="#FFFFFF" stroke="#FCD34D" stroke-width="1.5"/>
+    <g clip-path="url(#clip_opportunities)">
+      <rect x="960" y="700" width="335" height="34" fill="#B45309"/>
+      <text x="972" y="722" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="13.2" font-weight="700" fill="#FFFFFF">opportunities</text>
+      <text x="1285" y="721" text-anchor="end" font-family="Consolas, monospace" font-size="10" fill="#E2E8F0" opacity="0.85">public</text>
+
+      <rect x="968" y="738" width="21" height="14" rx="3" fill="#FEF3C7" stroke="#F59E0B" stroke-width="0.8"/>      <text x="978.5" y="748" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="8.5" font-weight="700" fill="#B45309">PK</text>
+      <text x="1018" y="749" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="700" fill="#0F172A">id</text>
+      <text x="1277" y="749" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">uuid</text>
+      <text x="1286" y="750" text-anchor="end" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#DC2626">*</text>
+      <rect x="960" y="756" width="335" height="22" fill="#F8FAFC"/>
+      <rect x="968" y="760" width="21" height="14" rx="3" fill="#DBEAFE" stroke="#3B82F6" stroke-width="0.8"/>      <text x="978.5" y="770" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="8.5" font-weight="700" fill="#1D4ED8">FK</text>
+      <text x="1018" y="771" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="600" fill="#0F172A">organizer_id</text>
+      <text x="1277" y="771" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">uuid</text>
+      <text x="1286" y="772" text-anchor="end" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#DC2626">*</text>
+      <text x="1018" y="793" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="400" fill="#334155">title</text>
+      <text x="1277" y="793" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">varchar</text>
+      <text x="1286" y="794" text-anchor="end" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#DC2626">*</text>
+      <rect x="960" y="800" width="335" height="22" fill="#F8FAFC"/>
+      <text x="1018" y="815" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="400" fill="#334155">description</text>
+      <text x="1277" y="815" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">varchar</text>
+      <text x="1286" y="816" text-anchor="end" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#DC2626">*</text>
+      <text x="1018" y="837" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="400" fill="#334155">mode</text>
+      <text x="1277" y="837" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">enum</text>
+      <text x="1286" y="838" text-anchor="end" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#DC2626">*</text>
+      <rect x="960" y="844" width="335" height="22" fill="#F8FAFC"/>
+      <text x="1018" y="859" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="400" fill="#334155">state</text>
+      <text x="1285" y="859" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">varchar</text>
+      <text x="1018" y="881" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="400" fill="#334155">city</text>
+      <text x="1285" y="881" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">varchar</text>
+      <rect x="960" y="888" width="335" height="22" fill="#F8FAFC"/>
+      <text x="1018" y="903" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="400" fill="#334155">address</text>
+      <text x="1285" y="903" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">varchar</text>
+      <text x="1018" y="925" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="400" fill="#334155">meeting_url</text>
+      <text x="1285" y="925" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">varchar</text>
+      <rect x="960" y="932" width="335" height="22" fill="#F8FAFC"/>
+      <text x="1018" y="947" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="400" fill="#334155">event_at</text>
+      <text x="1277" y="947" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">timestamptz</text>
+      <text x="1286" y="948" text-anchor="end" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#DC2626">*</text>
+      <text x="1018" y="969" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="400" fill="#334155">registration_deadline</text>
+      <text x="1277" y="969" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">timestamptz</text>
+      <text x="1286" y="970" text-anchor="end" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#DC2626">*</text>
+      <rect x="960" y="976" width="335" height="22" fill="#F8FAFC"/>
+      <text x="1018" y="991" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="400" fill="#334155">min_age</text>
+      <text x="1285" y="991" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">integer</text>
+      <text x="1018" y="1013" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="400" fill="#334155">max_age</text>
+      <text x="1285" y="1013" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">integer</text>
+      <rect x="960" y="1020" width="335" height="22" fill="#F8FAFC"/>
+      <text x="1018" y="1035" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="400" fill="#334155">positions</text>
+      <text x="1277" y="1035" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">jsonb</text>
+      <text x="1286" y="1036" text-anchor="end" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#DC2626">*</text>
+      <text x="1018" y="1057" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="400" fill="#334155">max_applications</text>
+      <text x="1285" y="1057" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">integer</text>
+      <rect x="960" y="1064" width="335" height="22" fill="#F8FAFC"/>
+      <text x="1018" y="1079" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="400" fill="#334155">cancelled_at</text>
+      <text x="1285" y="1079" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">timestamptz</text>
+      <text x="1018" y="1101" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="400" fill="#334155">created_at</text>
+      <text x="1277" y="1101" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">timestamptz</text>
+      <text x="1286" y="1102" text-anchor="end" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#DC2626">*</text>
+      <rect x="960" y="1108" width="335" height="22" fill="#F8FAFC"/>
+      <text x="1018" y="1123" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="400" fill="#334155">updated_at</text>
+      <text x="1277" y="1123" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">timestamptz</text>
+      <text x="1286" y="1124" text-anchor="end" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#DC2626">*</text>
+    </g>
+  </g>
+
+  <g filter="url(#cardShadow)">
+    <defs>
+      <clipPath id="clip_processing_jobs">
+        <rect x="1410" y="122" width="335" height="240" rx="8"/>
+      </clipPath>
+    </defs>
+    <rect x="1410" y="122" width="335" height="240" rx="8" fill="#FFFFFF" stroke="#C4B5FD" stroke-width="1.5"/>
+    <g clip-path="url(#clip_processing_jobs)">
+      <rect x="1410" y="122" width="335" height="34" fill="#5B21B6"/>
+      <text x="1422" y="144" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="13.2" font-weight="700" fill="#FFFFFF">processing_jobs</text>
+      <text x="1735" y="143" text-anchor="end" font-family="Consolas, monospace" font-size="10" fill="#E2E8F0" opacity="0.85">public</text>
+
+      <rect x="1418" y="160" width="21" height="14" rx="3" fill="#FEF3C7" stroke="#F59E0B" stroke-width="0.8"/>      <text x="1428.5" y="170" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="8.5" font-weight="700" fill="#B45309">PK</text>
+      <text x="1468" y="171" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="700" fill="#0F172A">id</text>
+      <text x="1727" y="171" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">uuid</text>
+      <text x="1736" y="172" text-anchor="end" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#DC2626">*</text>
+      <rect x="1410" y="178" width="335" height="22" fill="#F8FAFC"/>
+      <rect x="1418" y="182" width="21" height="14" rx="3" fill="#DBEAFE" stroke="#3B82F6" stroke-width="0.8"/>      <text x="1428.5" y="192" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="8.5" font-weight="700" fill="#1D4ED8">FK</text>
+      <text x="1468" y="193" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="600" fill="#0F172A">video_id</text>
+      <text x="1727" y="193" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">uuid</text>
+      <text x="1736" y="194" text-anchor="end" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#DC2626">*</text>
+      <text x="1468" y="215" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="400" fill="#334155">target_number</text>
+      <text x="1727" y="215" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">integer</text>
+      <text x="1736" y="216" text-anchor="end" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#DC2626">*</text>
+      <rect x="1410" y="222" width="335" height="22" fill="#F8FAFC"/>
+      <text x="1468" y="237" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="400" fill="#334155">status</text>
+      <text x="1727" y="237" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">varchar</text>
+      <text x="1736" y="238" text-anchor="end" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#DC2626">*</text>
+      <text x="1468" y="259" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="400" fill="#334155">hitl_thumbnail_path</text>
+      <text x="1735" y="259" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">varchar</text>
+      <rect x="1410" y="266" width="335" height="22" fill="#F8FAFC"/>
+      <text x="1468" y="281" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="400" fill="#334155">created_at</text>
+      <text x="1727" y="281" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">timestamp</text>
+      <text x="1736" y="282" text-anchor="end" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#DC2626">*</text>
+      <text x="1468" y="303" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="400" fill="#334155">updated_at</text>
+      <text x="1727" y="303" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">timestamp</text>
+      <text x="1736" y="304" text-anchor="end" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#DC2626">*</text>
+      <rect x="1410" y="310" width="335" height="22" fill="#F8FAFC"/>
+      <text x="1468" y="325" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="400" fill="#334155">trim_start</text>
+      <text x="1735" y="325" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">double</text>
+      <text x="1468" y="347" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="400" fill="#334155">trim_end</text>
+      <text x="1735" y="347" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">double</text>
+    </g>
+  </g>
+
+  <g filter="url(#cardShadow)">
+    <defs>
+      <clipPath id="clip_clips">
+        <rect x="1410" y="436" width="335" height="218" rx="8"/>
+      </clipPath>
+    </defs>
+    <rect x="1410" y="436" width="335" height="218" rx="8" fill="#FFFFFF" stroke="#C4B5FD" stroke-width="1.5"/>
+    <g clip-path="url(#clip_clips)">
+      <rect x="1410" y="436" width="335" height="34" fill="#5B21B6"/>
+      <text x="1422" y="458" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="13.2" font-weight="700" fill="#FFFFFF">clips</text>
+      <text x="1735" y="457" text-anchor="end" font-family="Consolas, monospace" font-size="10" fill="#E2E8F0" opacity="0.85">public</text>
+
+      <rect x="1418" y="474" width="21" height="14" rx="3" fill="#FEF3C7" stroke="#F59E0B" stroke-width="0.8"/>      <text x="1428.5" y="484" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="8.5" font-weight="700" fill="#B45309">PK</text>
+      <text x="1468" y="485" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="700" fill="#0F172A">id</text>
+      <text x="1727" y="485" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">uuid</text>
+      <text x="1736" y="486" text-anchor="end" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#DC2626">*</text>
+      <rect x="1410" y="492" width="335" height="22" fill="#F8FAFC"/>
+      <rect x="1418" y="496" width="21" height="14" rx="3" fill="#DBEAFE" stroke="#3B82F6" stroke-width="0.8"/>      <text x="1428.5" y="506" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="8.5" font-weight="700" fill="#1D4ED8">FK</text>
+      <text x="1468" y="507" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="600" fill="#0F172A">job_id</text>
+      <text x="1727" y="507" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">uuid</text>
+      <text x="1736" y="508" text-anchor="end" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#DC2626">*</text>
+      <text x="1468" y="529" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="400" fill="#334155">storage_path</text>
+      <text x="1735" y="529" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">varchar</text>
+      <rect x="1410" y="536" width="335" height="22" fill="#F8FAFC"/>
+      <text x="1468" y="551" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="400" fill="#334155">start_timestamp</text>
+      <text x="1727" y="551" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">double</text>
+      <text x="1736" y="552" text-anchor="end" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#DC2626">*</text>
+      <text x="1468" y="573" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="400" fill="#334155">end_timestamp</text>
+      <text x="1727" y="573" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">double</text>
+      <text x="1736" y="574" text-anchor="end" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#DC2626">*</text>
+      <rect x="1410" y="580" width="335" height="22" fill="#F8FAFC"/>
+      <text x="1468" y="595" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="400" fill="#334155">created_at</text>
+      <text x="1727" y="595" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">timestamp</text>
+      <text x="1736" y="596" text-anchor="end" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#DC2626">*</text>
+      <text x="1468" y="617" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="400" fill="#334155">status</text>
+      <text x="1727" y="617" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">varchar</text>
+      <text x="1736" y="618" text-anchor="end" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#DC2626">*</text>
+      <rect x="1410" y="624" width="335" height="22" fill="#F8FAFC"/>
+      <text x="1468" y="639" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="400" fill="#334155">published_at</text>
+      <text x="1735" y="639" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">timestamptz</text>
+    </g>
+  </g>
+
+  <g filter="url(#cardShadow)">
+    <defs>
+      <clipPath id="clip_candidates">
+        <rect x="1410" y="706" width="335" height="218" rx="8"/>
+      </clipPath>
+    </defs>
+    <rect x="1410" y="706" width="335" height="218" rx="8" fill="#FFFFFF" stroke="#C4B5FD" stroke-width="1.5"/>
+    <g clip-path="url(#clip_candidates)">
+      <rect x="1410" y="706" width="335" height="34" fill="#5B21B6"/>
+      <text x="1422" y="728" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="13.2" font-weight="700" fill="#FFFFFF">candidates</text>
+      <text x="1735" y="727" text-anchor="end" font-family="Consolas, monospace" font-size="10" fill="#E2E8F0" opacity="0.85">public</text>
+
+      <rect x="1418" y="744" width="21" height="14" rx="3" fill="#FEF3C7" stroke="#F59E0B" stroke-width="0.8"/>      <text x="1428.5" y="754" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="8.5" font-weight="700" fill="#B45309">PK</text>
+      <text x="1468" y="755" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="700" fill="#0F172A">id</text>
+      <text x="1727" y="755" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">uuid</text>
+      <text x="1736" y="756" text-anchor="end" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#DC2626">*</text>
+      <rect x="1410" y="762" width="335" height="22" fill="#F8FAFC"/>
+      <rect x="1418" y="766" width="21" height="14" rx="3" fill="#DBEAFE" stroke="#3B82F6" stroke-width="0.8"/>      <text x="1428.5" y="776" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="8.5" font-weight="700" fill="#1D4ED8">FK</text>
+      <text x="1468" y="777" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="600" fill="#0F172A">job_id</text>
+      <text x="1727" y="777" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">uuid</text>
+      <text x="1736" y="778" text-anchor="end" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#DC2626">*</text>
+      <text x="1468" y="799" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="400" fill="#334155">signature</text>
+      <text x="1727" y="799" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">varchar</text>
+      <text x="1736" y="800" text-anchor="end" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#DC2626">*</text>
+      <rect x="1410" y="806" width="335" height="22" fill="#F8FAFC"/>
+      <text x="1468" y="821" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="400" fill="#334155">name</text>
+      <text x="1727" y="821" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">varchar</text>
+      <text x="1736" y="822" text-anchor="end" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#DC2626">*</text>
+      <text x="1468" y="843" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="400" fill="#334155">number</text>
+      <text x="1727" y="843" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">integer</text>
+      <text x="1736" y="844" text-anchor="end" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#DC2626">*</text>
+      <rect x="1410" y="850" width="335" height="22" fill="#F8FAFC"/>
+      <text x="1468" y="865" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="400" fill="#334155">color_hex</text>
+      <text x="1735" y="865" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">varchar</text>
+      <text x="1468" y="887" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="400" fill="#334155">image_path</text>
+      <text x="1735" y="887" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">varchar</text>
+      <rect x="1410" y="894" width="335" height="22" fill="#F8FAFC"/>
+      <text x="1468" y="909" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="400" fill="#334155">is_target</text>
+      <text x="1727" y="909" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">boolean</text>
+      <text x="1736" y="910" text-anchor="end" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#DC2626">*</text>
+    </g>
+  </g>
+
+  <g filter="url(#cardShadow)">
+    <defs>
+      <clipPath id="clip_opportunity_applications">
+        <rect x="1410" y="986" width="335" height="152" rx="8"/>
+      </clipPath>
+    </defs>
+    <rect x="1410" y="986" width="335" height="152" rx="8" fill="#FFFFFF" stroke="#FCD34D" stroke-width="1.5"/>
+    <g clip-path="url(#clip_opportunity_applications)">
+      <rect x="1410" y="986" width="335" height="34" fill="#B45309"/>
+      <text x="1422" y="1008" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="13.2" font-weight="700" fill="#FFFFFF">opportunity_applications</text>
+      <text x="1735" y="1007" text-anchor="end" font-family="Consolas, monospace" font-size="10" fill="#E2E8F0" opacity="0.85">public</text>
+
+      <rect x="1418" y="1024" width="21" height="14" rx="3" fill="#FEF3C7" stroke="#F59E0B" stroke-width="0.8"/>      <text x="1428.5" y="1034" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="8.5" font-weight="700" fill="#B45309">PK</text>
+      <rect x="1442" y="1024" width="21" height="14" rx="3" fill="#DBEAFE" stroke="#3B82F6" stroke-width="0.8"/>      <text x="1452.5" y="1034" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="8.5" font-weight="700" fill="#1D4ED8">FK</text>
+      <text x="1468" y="1035" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="700" fill="#0F172A">opportunity_id</text>
+      <text x="1727" y="1035" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">uuid</text>
+      <text x="1736" y="1036" text-anchor="end" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#DC2626">*</text>
+      <rect x="1410" y="1042" width="335" height="22" fill="#F8FAFC"/>
+      <rect x="1418" y="1046" width="21" height="14" rx="3" fill="#FEF3C7" stroke="#F59E0B" stroke-width="0.8"/>      <text x="1428.5" y="1056" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="8.5" font-weight="700" fill="#B45309">PK</text>
+      <rect x="1442" y="1046" width="21" height="14" rx="3" fill="#DBEAFE" stroke="#3B82F6" stroke-width="0.8"/>      <text x="1452.5" y="1056" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="8.5" font-weight="700" fill="#1D4ED8">FK</text>
+      <text x="1468" y="1057" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="700" fill="#0F172A">athlete_id</text>
+      <text x="1727" y="1057" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">uuid</text>
+      <text x="1736" y="1058" text-anchor="end" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#DC2626">*</text>
+      <text x="1468" y="1079" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="400" fill="#334155">status</text>
+      <text x="1727" y="1079" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">enum</text>
+      <text x="1736" y="1080" text-anchor="end" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#DC2626">*</text>
+      <rect x="1410" y="1086" width="335" height="22" fill="#F8FAFC"/>
+      <text x="1468" y="1101" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="400" fill="#334155">created_at</text>
+      <text x="1727" y="1101" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">timestamptz</text>
+      <text x="1736" y="1102" text-anchor="end" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#DC2626">*</text>
+      <text x="1468" y="1123" font-family="Consolas, Menlo, monospace" font-size="11.2" font-weight="400" fill="#334155">updated_at</text>
+      <text x="1727" y="1123" text-anchor="end" font-family="Consolas, Menlo, monospace" font-size="10.5" fill="#64748B">timestamptz</text>
+      <text x="1736" y="1124" text-anchor="end" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#DC2626">*</text>
+    </g>
+  </g>
+</g>
+<text x="34" y="1264" font-family="Segoe UI, Inter, Arial, sans-serif" font-size="10.5" fill="#64748B">Nota: Campos com * indicam restrição NOT NULL. Tipos USER-DEFINED representados como enum. Relacionamentos derivados das constraints FOREIGN KEY.</text>
+</svg>
