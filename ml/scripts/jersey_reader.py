@@ -82,10 +82,6 @@ class JerseyReader:
                 x_min = float(box.xyxy[0][0])
                 cls_id = int(box.cls[0])
                 conf = float(box.conf[0]) # <--- REINSERINDO A EXTRAÇÃO DA CONFIANÇA
-
-                if cls_id == 8 and conf < 0.75:
-                    continue
-                
                 digits.append((x_min, cls_id, conf))
 
             if not digits:
@@ -142,10 +138,6 @@ class JerseyReader:
             x_min = float(box.xyxy[0][0]) 
             cls_id = int(box.cls[0])      
             conf = float(box.conf[0]) # <--- EXTRAINDO CONFIANÇA
-            
-            if cls_id == 8 and conf < 0.75:
-                continue
-                
             digits.append((x_min, cls_id, conf))
 
         if not digits:

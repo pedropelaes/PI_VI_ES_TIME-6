@@ -66,9 +66,6 @@ OCR_MIN_CONFIDENCE = 0.40
 TORSO_Y_START = 0.10
 TORSO_Y_END = 0.65
 
-# Fator de upscale do crop antes do OCR (maior = melhor, mas mais lento)
-OCR_UPSCALE_FACTOR = 3
-
 # Tamanho mínimo do crop para rodar OCR (abaixo disso, descartamos)
 # 35px filtra crops de torcedores parcialmente visíveis na arquibancada
 MIN_CROP_H = 15
@@ -76,35 +73,38 @@ MIN_CROP_W = 8
 
 
 # ==========================================================
-# FALLBACK EASYOCR (CROSS-CHECK DE DÍGITOS AMBÍGUOS DO YOLO)
+# FALLBACK EASYOCR (VALIDAÇÃO / REFORÇO DE LEITURAS DO YOLO)
 # ==========================================================
-# Dígitos que o modelo YOLO especialista (best.pt) confunde entre si
-# por semelhança visual (curvas/loops parecidos: 2, 6 e 8). Uma leitura
-# contendo algum desses dígitos com confiança baixa dispara o EasyOCR
-# como segunda opinião (cross-check), sem substituir o YOLO como
-# leitor primário.
-AMBIGUOUS_DIGITS = frozenset({2, 6, 8})
+# Confiança média do YOLO abaixo da qual qualquer leitura
+# (independente do dígito) aciona o EasyOCR como segunda opinião para
+# validação/reforço.
+LOW_CONF_YOLO_THRESHOLD = 0.60
 
-# Confiança média do YOLO abaixo da qual, SE a leitura contiver um
-# dígito do conjunto acima, disparamos o fallback via EasyOCR.
-AMBIGUOUS_YOLO_CONFIDENCE_THRESHOLD = 0.75
+# Define se crops sem leitura do YOLO (None) devem acionar o EasyOCR.
+# Desligado por padrão para evitar leituras espúrias em frentes de
+# camisa, listras ou patrocínios quando o número não está visível.
+FALLBACK_ON_EMPTY_YOLO = False
+
+# Define se o EasyOCR pode sobrescrever o número do YOLO em caso de
+# discordância. Desligado por padrão: com o modelo YOLO balanceado,
+# o EasyOCR atua apenas validando/reforçando concordâncias.
+ALLOW_EASYOCR_OVERRIDE = False
 
 # Confiança mínima (já ponderada pela "completeness") para aceitar uma
-# leitura de fallback do EasyOCR — seja para preencher um crop que o
-# YOLO não leu, seja para vencer um desempate contra uma leitura
-# ambígua do YOLO.
+# leitura do EasyOCR — seja para aplicar bônus de concordância, seja
+# quando FALLBACK_ON_EMPTY_YOLO / ALLOW_EASYOCR_OVERRIDE estiverem ativos.
 EASYOCR_MIN_CONFIDENCE = 0.40
 
 # Peso aplicado à confiança do EasyOCR quando ele é a ÚNICA fonte da
-# leitura final (YOLO não leu nada, ou perdeu o desempate). O EasyOCR
-# não foi treinado nas fontes estilizadas de camisas de futebol, então
-# seu voto isolado vale menos que um voto do YOLO no soft-voting.
+# leitura final (quando FALLBACK_ON_EMPTY_YOLO ou ALLOW_EASYOCR_OVERRIDE
+# estão ativos). O EasyOCR não foi treinado nas fontes estilizadas de
+# camisas de futebol, então seu voto isolado vale menos que um voto do
+# YOLO no soft-voting.
 EASYOCR_ALONE_VOTE_WEIGHT = 0.6
 
 # Multiplicador de reforço quando YOLO e EasyOCR concordam no mesmo
-# número: a concordância resolve a ambiguidade original com confiança
-# maior que a leitura isolada do YOLO. Resultado é limitado (clamp) a
-# 1.0 no código de merge.
+# número: a concordância reforça leituras de baixa confiança do YOLO.
+# Resultado é limitado (clamp) a 1.0 no código de merge.
 EASYOCR_AGREEMENT_BONUS = 1.3
 
 

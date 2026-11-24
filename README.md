@@ -88,7 +88,7 @@ O sistema apoia-se em dois pilares principais:
 | PyTorch | 2.7.1+cu118 | Base de inferência acelerada por GPU (CUDA 11.8) |
 | Ultralytics (YOLOv8) | 8.0+ | Detecção de jogadores (`yolov8s.pt`), dígitos (`best.pt`) e bola (`ball_tracker.pt`) |
 | DeepSort Realtime | 1.3+ | Rastreamento multi-objeto contínuo |
-| EasyOCR | 1.7+ | *Cross-check* e fallback óptico para dígitos ambíguos (`2`, `6`, `8`) |
+| EasyOCR | 1.7+ | *Cross-check* e reforço óptico para leituras de baixa confiança do YOLO |
 | OpenCV + Supervision | 4.8+ / 0.18+ | Processamento de frames, geometria e distância de cor (LAB) |
 | FFmpeg (`imageio-ffmpeg`) | 0.6+ | Normalização automática para H.264 e geração de clipes MP4 |
 
@@ -156,7 +156,7 @@ O schema `public` no PostgreSQL é versionado integralmente pelo **Alembic** (`1
 ### Pipeline de Vídeo & Visão Computacional
 - **Upload local ou via Google Drive**: envio em streaming (chunks de 4 MB) ou importação direta via Google Picker OAuth com proxy HTTP Range (`206 Partial Content`) para pré-visualização instantânea.
 - **Corte temporal (*trim*) e normalização de codec**: seleção de trecho inicial/final antes da análise e conversão automática para H.264 via FFmpeg quando necessário.
-- **Fast Scan & Deep Scan (Refinamento)**: varredura inicial rápida (1 frame a cada 30) ou aprofundada sob demanda (1 frame a cada 10) combinando `best.pt` (YOLO especialista em números), fallback **EasyOCR** para dígitos ambíguos (`2`, `6`, `8`) e cor predominante do uniforme no espaço LAB.
+- **Fast Scan & Deep Scan (Refinamento)**: varredura inicial rápida (1 frame a cada 30) ou aprofundada sob demanda (1 frame a cada 10) combinando `best.pt` (YOLO especialista em números), validação/reforço **EasyOCR** para leituras de baixa confiança e cor predominante do uniforme no espaço LAB.
 - **Seleção HITL (*Human-in-the-Loop*)**: exibição dos candidatos detectados com foto de confirmação, número e cor da camisa antes do processamento completo.
 - **Tracking de Jogador, Bola e Eventos Cinemáticos**: rastreamento contínuo (`YoloDetector` + `BallDetector` + `PlayerTracker` + `BallTracker`), detecção de proximidade/toque na bola (`BallEventDetector`) e análise cinemática (`KinematicAnalyzer`) para gerar clipes precisos.
 - **Acompanhamento em tempo real (SSE) & Download em lote**: exibição progressiva dos clipes conforme são gravados no disco, download individual ou em lote e histórico organizado por data.
@@ -367,7 +367,7 @@ PI_VI_ES_TIME-6/
 │   └── scripts/
 │       ├── video_pipeline.py            # Orquestrador Fast/Deep Scan e Full Tracking
 │       ├── jersey_reader.py             # Leitor YOLO especialista em números de camisa
-│       ├── ocr_reader.py                # Fallback EasyOCR para dígitos ambíguos (2, 6, 8)
+│       ├── ocr_reader.py                # Validação/reforço EasyOCR para leituras de baixa confiança do YOLO
 │       ├── color_extractor.py           # Extração e comparação de cor de uniforme (LAB)
 │       ├── ball_event_detector.py       # Proximidade e toque na bola
 │       ├── kinematic_analyzer.py        # Detecção de anomalias de velocidade/aceleração

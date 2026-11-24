@@ -18,27 +18,22 @@ from ml.scripts.ocr_reader import (
 # ===========================================================================
 
 class TestNeedsOcrFallback:
-    def test_yolo_read_nothing_triggers_fallback(self):
-        assert needs_ocr_fallback(None) is True
+    def test_yolo_read_nothing_skips_fallback_by_default(self):
+        assert needs_ocr_fallback(None) is False
 
-    def test_ambiguous_digit_low_confidence_triggers_fallback(self):
+    def test_yolo_read_nothing_triggers_fallback_when_enabled(self):
+        assert needs_ocr_fallback(None, fallback_on_empty=True) is True
+
+    def test_any_digit_below_threshold_triggers_fallback(self):
         assert needs_ocr_fallback((8, 0.5)) is True
+        assert needs_ocr_fallback((5, 0.45)) is True
+        assert needs_ocr_fallback((17, 0.59)) is True
 
-    def test_ambiguous_digit_high_confidence_skips_fallback(self):
-        assert needs_ocr_fallback((8, 0.9)) is False
-
-    def test_non_ambiguous_digit_low_confidence_skips_fallback(self):
-        assert needs_ocr_fallback((5, 0.1)) is False
-
-    def test_multi_digit_number_with_one_ambiguous_digit_triggers_fallback(self):
-        assert needs_ocr_fallback((21, 0.5)) is True
-
-    def test_multi_digit_number_without_ambiguous_digit_skips_fallback(self):
-        assert needs_ocr_fallback((17, 0.1)) is False
-
-    def test_confidence_exactly_at_threshold_skips_fallback(self):
-        # Threshold is exclusive: conf < threshold triggers, conf == threshold does not.
+    def test_any_digit_at_or_above_threshold_skips_fallback(self):
+        # Threshold is exclusive: conf < threshold triggers, conf >= threshold does not.
+        assert needs_ocr_fallback((8, 0.60)) is False
         assert needs_ocr_fallback((6, 0.75)) is False
+        assert needs_ocr_fallback((17, 0.90)) is False
 
 
 # ===========================================================================
@@ -74,18 +69,33 @@ class TestMergeJerseyReading:
         _, conf, _ = merge_jersey_reading((9, 0.95), (9, 0.99, 1.0))
         assert conf <= 1.0
 
-    def test_disagreement_ocr_wins_when_more_confident_and_above_minimum(self):
-        num, conf, source = merge_jersey_reading((8, 0.5), (3, 0.9, 1.0))
+    def test_agreement_below_min_ocr_confidence_does_not_boost(self):
+        # effective_ocr = 0.5 * 0.4 = 0.2, below EASYOCR_MIN_CONFIDENCE (0.4)
+        result = merge_jersey_reading((8, 0.5), (8, 0.5, 0.4))
+        assert result == (8, 0.5, "yolo")
+
+    def test_disagreement_keeps_yolo_by_default(self):
+        result = merge_jersey_reading((8, 0.5), (3, 0.9, 1.0))
+        assert result == (8, 0.5, "yolo")
+
+    def test_disagreement_ocr_wins_when_override_enabled_and_more_confident(self):
+        num, conf, source = merge_jersey_reading(
+            (8, 0.5), (3, 0.9, 1.0), allow_override=True
+        )
         assert (num, source) == (3, "ocr")
         assert conf == pytest.approx(0.9 * 0.6)
 
-    def test_disagreement_yolo_wins_when_ocr_below_minimum(self):
+    def test_disagreement_yolo_wins_when_override_enabled_but_ocr_below_minimum(self):
         # effective_ocr = 0.9 * 0.4 = 0.36, below EASYOCR_MIN_CONFIDENCE (0.4)
-        result = merge_jersey_reading((8, 0.5), (3, 0.9, 0.4))
+        result = merge_jersey_reading(
+            (8, 0.5), (3, 0.9, 0.4), allow_override=True
+        )
         assert result == (8, 0.5, "yolo")
 
-    def test_disagreement_yolo_wins_when_more_confident_than_ocr(self):
-        result = merge_jersey_reading((8, 0.85), (3, 0.5, 1.0))
+    def test_disagreement_yolo_wins_when_override_enabled_and_yolo_more_confident(self):
+        result = merge_jersey_reading(
+            (8, 0.85), (3, 0.5, 1.0), allow_override=True
+        )
         assert result == (8, 0.85, "yolo")
 
 
