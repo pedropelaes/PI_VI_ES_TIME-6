@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ClipCard, ClipData } from "../../components/clip-card/ClipCard";
 import { Grid } from "../../components/grid/Grid";
@@ -9,7 +10,7 @@ type ProcessingClipsProps = {
   job: JobStatus;
 };
 
-function toClipData(clip: ClipResult, index: number): ClipData {
+function toClipData(clip: ClipResult, index: number, published: boolean): ClipData {
   return {
     id:           clip.id,
     title:        `CLIP#${String(index + 1).padStart(3, "0")}`,
@@ -17,6 +18,7 @@ function toClipData(clip: ClipResult, index: number): ClipData {
     thumbnailUrl: undefined,
     duration:     `${Math.floor(clip.duration / 60)}:${String(Math.round(clip.duration % 60)).padStart(2, "0")}`,
     videoUrl:     clip.file_url || undefined,
+    published,
   };
 }
 
@@ -33,6 +35,14 @@ export default function ProcessingClipsView({ job }: ProcessingClipsProps) {
   const isDone  = job.status === "COMPLETED";
   const isError = job.status === "ERROR";
   const clips   = job.clips ?? [];
+
+  // Mudancas feitas pelo usuario nesta tela. Tem prioridade sobre o que veio do servidor,
+  // porque o progresso (SSE) pode demorar a refletir a publicacao.
+  const [overrides, setOverrides] = useState<Record<string, boolean>>({});
+
+  function handlePublishChanged(clipId: string, published: boolean) {
+    setOverrides(prev => ({ ...prev, [clipId]: published }));
+  }
 
   function getTitle() {
     switch (job.status) {
@@ -66,7 +76,16 @@ export default function ProcessingClipsView({ job }: ProcessingClipsProps) {
 
         <div className="processing-scrollable">
           <Grid>
-            {clips.map((clip, i) => <ClipCard key={clip.id} clip={toClipData(clip, i)} />)}
+            {clips.map((clip, i) => {
+              const published = overrides[clip.id] ?? Boolean(clip.published_at);
+              return (
+                <ClipCard
+                  key={clip.id}
+                  clip={toClipData(clip, i, published)}
+                  onPublishChanged={handlePublishChanged}
+                />
+              );
+            })}
             {job?.status === "EXTRACTING" && <ClipCard key={skeletonClip.id} clip={skeletonClip} />}
           </Grid>
 
