@@ -218,6 +218,30 @@ def test_forgot_password_nonexistent_email(client: TestClient):
     mock_send.assert_not_called()
 
 
+def test_forgot_password_without_resend_api_key_logs_and_succeeds(client: TestClient, monkeypatch, caplog):
+    """Sem RESEND_API_KEY, não deve estourar 500: gera o token, loga o link e retorna 204."""
+    email = "nokey@example.com"
+    register_and_get_token(client, email=email)
+    monkeypatch.delenv("RESEND_API_KEY", raising=False)
+
+    with caplog.at_level("WARNING", logger="app.core.email"):
+        resp = client.post("/api/v1/auth/forgot-password", json={"email": email})
+
+    assert resp.status_code == 204
+    assert any("/new-password?token=" in rec.message for rec in caplog.records)
+
+
+def test_forgot_password_email_provider_error_returns_503(client: TestClient):
+    """Se o provedor de e-mail falhar, retorna 503 com mensagem clara em vez de 500."""
+    email = "providerfail@example.com"
+    register_and_get_token(client, email=email)
+
+    with patch("app.modules.identity.router.send_reset_email", side_effect=RuntimeError("Resend down")):
+        resp = client.post("/api/v1/auth/forgot-password", json={"email": email})
+
+    assert resp.status_code == 503
+
+
 # ---------------------------------------------------------------------------
 # Reset password
 # ---------------------------------------------------------------------------

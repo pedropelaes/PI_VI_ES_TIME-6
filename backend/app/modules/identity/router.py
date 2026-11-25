@@ -126,7 +126,13 @@ def forgot_password(data: ForgotPasswordRequest, session: Session = Depends(get_
     session.add(reset)
     session.commit()
 
-    send_reset_email(user.email, token)
+    try:
+        send_reset_email(user.email, token)
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Não foi possível enviar o e-mail de redefinição no momento.",
+        )
     return None
 
 
